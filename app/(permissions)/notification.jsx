@@ -5,10 +5,22 @@ import { icons } from "@/constants/index";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 
-import { useUserPermissionStore } from "@/context/userPermissionStore";
+import { registerForPushNotificationsAsync } from "@/services/registerNotification";
+import { useNotificationStore } from "@/context/useNotificationStore";
 
 const Notification = () => {
-  const location = useUserPermissionStore((state) => state.location);
+  const setNotificationToken = useNotificationStore((state) => state.setNotificationToken);
+  const setNotification = useNotificationStore((state) => state.setNotification);
+
+  async function getNotificationPermission() {
+    // const token = await registerForPushNotificationsAsync();
+    // if (token) {
+    //   setNotificationToken(token);
+    //   setNotification(true);
+    //   router.replace("/radar");
+    // }
+    router.replace("/radar");
+  }
 
   return (
     <>
@@ -33,7 +45,7 @@ const Notification = () => {
 
               {/* Custom Button */}
               <View className={`h-fit w-fit`}>
-                <TouchableOpacity className="" onPress={() => router.push("/notification")} activeOpacity={0.7}>
+                <TouchableOpacity className="" onPress={getNotificationPermission} activeOpacity={0.7}>
                   <Text className={`bg-white text-center px-36 py-3 rounded-xl font-semibold`}>Get Started</Text>
                 </TouchableOpacity>
               </View>

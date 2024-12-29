@@ -9,13 +9,16 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.expo.tanaw"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/tanaw-logo.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "dev.expo.tanaw",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -41,7 +44,12 @@
       "image": "./assets/images/tanaw-logo-circle.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d9de4701-66fb-4402-88b5-18644a256c8e"
+      }
+    },
+    "owner": "jules-pecaoco"
   }
- 
 }

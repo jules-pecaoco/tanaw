@@ -3,7 +3,7 @@ import React from 'react'
 
 const Alert = () => {
   return (
-    <View>
+    <View className='h-full flex items-center justify-center'>
       <Text>Alert</Text>
     </View>
   )

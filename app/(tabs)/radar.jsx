@@ -3,8 +3,8 @@ import React from 'react'
 
 const Radar = () => {
   return (
-    <View>
-      <Text>Radar</Text>
+    <View className='h-full flex items-center justify-center bg-white'>
+      <Text className='text-center'>Radar</Text>
     </View>
   )
 }

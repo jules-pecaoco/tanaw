@@ -3,7 +3,40 @@ import { useFonts } from "expo-font";
 import { Stack, SplashScreen } from "expo-router";
 import "../global.css";
 
+
+// import { TaskManager } from "expo-task-manager";
+import * as Notifications from "expo-notifications";
+import { useNotificationSetup } from "../hooks/useNotificationSetup";
+
+
+
+
+// const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
+
+// TaskManager.defineTask(
+//   BACKGROUND_NOTIFICATION_TASK,
+//   ({ data, error, executionInfo }) => {
+//     console.log("✅ Received a notification in the background!", {
+//       data,
+//       error,
+//       executionInfo,
+//     });
+//   }
+// );
+// Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
+
+
+
 SplashScreen.preventAutoHideAsync();
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
 
 export default function RootLayout() {
   const [fontsLoaded, error] = useFonts({
@@ -33,8 +66,9 @@ export default function RootLayout() {
     return null;
   }
 
+  // useNotificationSetup();
+
   return (
-    <>
       <Stack>
         <Stack.Screen
           name="index"
@@ -55,6 +89,5 @@ export default function RootLayout() {
           }}
         ></Stack.Screen>
       </Stack>
-    </>
   );
 }

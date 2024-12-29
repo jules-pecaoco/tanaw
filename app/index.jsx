@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 // import CustomButton from "@/components/CustomButton";
 
+
 export default function Index() {
   return (
     <>

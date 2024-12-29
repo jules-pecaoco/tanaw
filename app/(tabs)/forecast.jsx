@@ -3,7 +3,7 @@ import React from 'react'
 
 const Forecast = () => {
   return (
-    <View>
+    <View className='h-full flex items-center justify-center'>
       <Text>Forecast</Text>
     </View>
   )

@@ -4,26 +4,27 @@ import { StatusBar } from "expo-status-bar";
 import { icons } from "@/constants/index";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useUserPermissionStore } from "@/context/userPermissionStore";
+
+import { useLocationStore } from "@/context/useLocationStore";
 import * as Location from "expo-location";
 
 const Geolocation = () => {
-  const setLocation =  useUserPermissionStore((state) => state.setLocation);
-  const setLocationPermission = useUserPermissionStore((state) => state.setLocationPermission);
-  
+  const setLocation = useLocationStore((state) => state.setLocation);
+  const setLocationPermission = useLocationStore((state) => state.setLocationPermission);
+
   async function getCurrentLocation() {
     let { status } = await Location.requestForegroundPermissionsAsync();
 
     if (status !== "granted") {
-      setLocationPermission(false); 
-      router.push("/notification"); 
+      setLocationPermission(false);
+      router.push("/notification");
       return;
     }
 
     // CURRENT LCOATION
     let location = await Location.getCurrentPositionAsync({});
-    setLocation(location);//STORED AS OBJECTS
-    router.push("/notification"); 
+    setLocation(location); //STORED AS OBJECTS
+    router.push("/notification");
   }
 
   return (
