@@ -4,14 +4,13 @@ module.exports = {
   content: ["./app/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
   theme: {
-    colors: {
-      primary: "#F47C25",
-      secondary: "#3C454C",
-      tertiary: "#E84E4C",
-      white: "#ffffff",
-
-    },
     extend: {
+      colors: {
+        'primary': "#F47C25",
+        'secondary': "#3C454C",
+        'tertiary': "#E84E4C",
+        'white': "#ffffff",
+      },
       fontFamily: {
         rthin: ["RobotoCondensed-Thin", "sans-serif"],
         rextralight: ["RobotoCondensed-ExtraLight", "sans-serif"],

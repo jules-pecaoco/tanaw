@@ -1,20 +1,26 @@
-import { Stack } from "expo-router/stack";
+import React from "react";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 
-export default function Layout() {
+const PermissionLayout = () => {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: {
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-        },
-      }}
-    >
-      <Stack.Screen>
-        <Text className="bg-primary">Tanaw</Text>
-      </Stack.Screen>
-    </Stack>
+    <>
+      <Stack>
+        <Stack.Screen
+          name="geolocation"
+          options={{
+            headerShown: false,
+          }}
+        ></Stack.Screen>
+        <Stack.Screen
+          name="notification"
+          options={{
+            headerShown: false,
+          }}
+        ></Stack.Screen>
+      </Stack>
+    </>
   );
-}
+};
+
+export default PermissionLayout;

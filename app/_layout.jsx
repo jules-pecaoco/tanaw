@@ -3,6 +3,8 @@ import { useFonts } from "expo-font";
 import { Stack, SplashScreen } from "expo-router";
 import "../global.css";
 
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
   const [fontsLoaded, error] = useFonts({
     "RobotoCondensed-Black": require("../assets/fonts/RobotoCondensed-Black.ttf"),
@@ -32,26 +34,27 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack>
-      <Stack.Screen
-        name="index"
-        options={{
-          headerShown: false,
-        }}
-      ></Stack.Screen>
-      <Stack.Screen
-        name="(permissions)"
-        options={{
-          headerShown: false,
-        }}
-      ></Stack.Screen>
-      <Stack.Screen
-        name="(tabs)"
-        options={{
-          headerShown: false,
-        }}
-      ></Stack.Screen>
-      
-    </Stack>
+    <>
+      <Stack>
+        <Stack.Screen
+          name="index"
+          options={{
+            headerShown: false,
+          }}
+        ></Stack.Screen>
+        <Stack.Screen
+          name="(permissions)"
+          options={{
+            headerShown: false,
+          }}
+        ></Stack.Screen>
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            headerShown: false,
+          }}
+        ></Stack.Screen>
+      </Stack>
+    </>
   );
 }
