@@ -6,19 +6,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 
 import { registerForPushNotificationsAsync } from "@/services/registerNotification";
-import { useNotificationStore } from "@/context/useNotificationStore";
+import { userPermissionStore } from "@/context/userPermissionStore";
+
 
 const Notification = () => {
-  const setNotificationToken = useNotificationStore((state) => state.setNotificationToken);
-  const setNotification = useNotificationStore((state) => state.setNotification);
 
   async function getNotificationPermission() {
-    // const token = await registerForPushNotificationsAsync();
-    // if (token) {
-    //   setNotificationToken(token);
-    //   setNotification(true);
-    //   router.replace("/radar");
-    // }
+    const token = await registerForPushNotificationsAsync();
+    if (token) {
+      // setExpoPushToken(token);
+      userPermissionStore.setItem("expoPushToken",token);
+      router.replace("/radar");
+      return; 
+    }
+    
     router.replace("/radar");
   }
 
@@ -31,6 +32,7 @@ const Notification = () => {
             <View className="h-2/4 flex items-center justify-center gap-5 mt-10">
               <Image source={icons.notifications} resizeMethod="contain"></Image>
               <View className="gap-3 flex mb-16">
+                <Text className="text-white font-rbold text-4xl text-center"></Text>
                 <Text className="text-gray-400  font-rbold text-sm text-center">NOTIFICATION PERMISSION</Text>
                 <Text className="text-white font-rbold text-4xl text-center">Turn On Notifications for Alerts</Text>
                 <Text className="text-gray-400 font-rregular text-center text-sm px-5">

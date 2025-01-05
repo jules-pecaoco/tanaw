@@ -4,10 +4,26 @@ import { StatusBar } from "expo-status-bar";
 import { images } from "../constants/index";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { useEffect } from "react";
+
+
+import { userPermissionStore } from "@/context/userPermissionStore";
 // import CustomButton from "@/components/CustomButton";
 
-
 export default function Index() {
+  // TODO--------------
+  // Render directly to home after first permissions
+  
+  useEffect(() => {
+    const location = userPermissionStore.getItem("location");
+    const token = userPermissionStore.getItem("expoPushToken");
+
+    // check if null
+    if (location || token) {
+      router.replace("/home");
+    }
+  }, []);
+
   return (
     <>
       <SafeAreaView>

@@ -1,12 +1,13 @@
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
-import { Stack, SplashScreen } from "expo-router";
+import { Stack, SplashScreen, Redirect } from "expo-router";
 import "../global.css";
 
 
-// import { TaskManager } from "expo-task-manager";
 import * as Notifications from "expo-notifications";
-import { useNotificationSetup } from "../hooks/useNotificationSetup";
+// import { useNotificationSetup } from "../hooks/useNotificationSetup";
+// import { TaskManager } from "expo-task-manager";
+
 
 
 
@@ -67,6 +68,7 @@ export default function RootLayout() {
   }
 
   // useNotificationSetup();
+  
 
   return (
       <Stack>

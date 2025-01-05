@@ -1,9 +1,8 @@
 import { useEffect, useRef } from "react";
 import * as Notifications from "expo-notifications";
-import { useNotificationStore } from "@/context/useNotificationStore";
 
 export function useNotificationSetup() {
-  const { setExpoPushToken, setNotification } = useNotificationStore();
+  const { setExpoPushToken, setNotification } = userPermissionStore();
   const notificationListener = useRef();
   const responseListener = useRef();
 

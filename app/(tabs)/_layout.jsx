@@ -22,7 +22,7 @@ export default function Layout() {
         screenOptions={{
           tabBarShowLabel: false,
           headerShown: false,
-          tabBarActiveTintColor: "#FFA001",
+          tabBarActiveTintColor: "#F47C25",
           tabBarInactiveTintColor: "#94a3b8",
           tabBarStyle: {
             backgroundColor: "#ffffff",
