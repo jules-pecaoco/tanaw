@@ -4,24 +4,27 @@ import { StatusBar } from "expo-status-bar";
 import { images } from "../constants/index";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useEffect } from "react";
-
 
 import { userPermissionStore } from "@/context/userPermissionStore";
+import { useEffect } from "react";
 // import CustomButton from "@/components/CustomButton";
 
 export default function Index() {
   // TODO--------------
   // Render directly to home after first permissions
-  
-  useEffect(() => {
-    const location = userPermissionStore.getItem("location");
-    const token = userPermissionStore.getItem("expoPushToken");
 
-    // check if null
-    if (location || token) {
-      router.replace("/home");
-    }
+  useEffect(() => {
+    const checkPermissions = () => {
+      const location = userPermissionStore.getItem("location");
+      const expoPushToken = userPermissionStore.getItem("expoPushToken");
+
+      console.log(location, expoPushToken);
+      if (location || expoPushToken) {
+        router.replace("/radar");
+      }
+    };
+
+    setTimeout(checkPermissions, 0);
   }, []);
 
   return (
@@ -43,9 +46,9 @@ export default function Index() {
               </View>
 
               {/* Custom Button */}
-              <View className={`h-fit w-fit`}>
+              <View className={`h-fit w-10/12`}>
                 <TouchableOpacity className="" onPress={() => router.push("/geolocation")} activeOpacity={0.7}>
-                  <Text className={`bg-white text-center px-36 py-3 rounded-xl font-semibold`}>Let's Start</Text>
+                  <Text className={`bg-white text-center py-3 rounded-xl font-semibold`}>Let's Start</Text>
                 </TouchableOpacity>
               </View>
             </View>

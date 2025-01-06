@@ -46,11 +46,12 @@ const Geolocation = () => {
               </View>
 
               {/* Custom Button */}
-              <View className={`h-fit w-fit`}>
+              <View className={`h-fit w-10/12`}>
                 <TouchableOpacity className="" onPress={getCurrentLocation} activeOpacity={0.7}>
-                  <Text className={`bg-white text-center px-36 py-3 rounded-xl font-semibold`}>Next</Text>
+                  <Text className={`bg-white text-center py-3 rounded-xl font-semibold`}>Next</Text>
                 </TouchableOpacity>
               </View>
+              
             </View>
           </View>
         </LinearGradient>

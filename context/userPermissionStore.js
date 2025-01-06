@@ -1,15 +1,4 @@
-// import { create } from "zustand";
 
-// export const userPermissionStore = create((set) => ({
-//   location: null,
-//   setLocation: (location) => set({ location }),
-
-//   expoPushToken: null,
-//   setExpoPushToken: (expoPushToken) => set({ expoPushToken }),
-
-//   notification: null,
-//   setNotification: (notification) => set({ notification }),
-// }));
 
 import { MMKV } from "react-native-mmkv";
 
@@ -27,8 +16,3 @@ export const userPermissionStore = {
     return storage.delete(name);
   },
 };
-
-// how to access this
-// import { userPermissionStore } from "@/context/userPermissionStore";
-
-
