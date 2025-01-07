@@ -5,7 +5,7 @@ import { icons } from "@/constants/index";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 
-import { registerForPushNotificationsAsync } from "@/services/registerNotification";
+import { registerForPushNotificationsAsync } from "@/utilities/registerNotification";
 import { userPermissionStore } from "@/context/userPermissionStore";
 
 const Notification = () => {
