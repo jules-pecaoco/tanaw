@@ -2,7 +2,7 @@
   "expo": {
     "name": "Tanaw",
     "slug": "tanaw",
-    "version": "1.0.1",
+    "version": "0.1.5",
     "orientation": "portrait",
     "icon": "./assets/images/tanaw-logo.png",
     "scheme": "myapp",

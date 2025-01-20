@@ -7,9 +7,11 @@ import { router } from "expo-router";
 
 import { registerForPushNotificationsAsync } from "@/utilities/registerNotification";
 import { userPermissionStore } from "@/context/userPermissionStore";
+import CustomButton from "@/components/components/CustomButton";
+
 
 const Notification = () => {
-  async function getNotificationPermission() {
+  const getNotificationPermission = async () => {
     const token = await registerForPushNotificationsAsync();
     if (token) {
       userPermissionStore.setItem("expoPushToken", token);
@@ -19,11 +21,11 @@ const Notification = () => {
 
     userPermissionStore.setItem("expoPushToken", "false");
     router.replace("/radar");
-  }
+  };
 
   return (
     <>
-      <SafeAreaView>
+      <SafeAreaView className="h-full">
         <LinearGradient locations={[0, 0.4]} className="h-full" colors={["#E8434C", "#3c454c"]}>
           <View className="h-full">
             <View className="h-2/5"></View>
@@ -42,12 +44,12 @@ const Notification = () => {
                 </View>
               </View>
 
-              {/* Custom Button */}
-              <View className={`h-fit w-10/12`}>
-                <TouchableOpacity className="" onPress={getNotificationPermission} activeOpacity={0.7}>
-                  <Text className={`bg-white text-center py-3 rounded-xl font-semibold`}>Get Started</Text>
-                </TouchableOpacity>
-              </View>
+              <CustomButton
+                title="Let's Start"
+                handlePress={() => getNotificationPermission()}
+                containerStyles="h-fit w-10/12"
+                textStyles="bg-white text-center py-3 rounded-xl font-semibold bg"
+              ></CustomButton>
             </View>
           </View>
         </LinearGradient>

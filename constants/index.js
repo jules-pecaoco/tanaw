@@ -1,5 +1,5 @@
 import icons from './icons';
 import images from './images';
-import data_icons from './data_icons';
+import testicons from './testicons';
 
-export { icons, images, data_icons };
+export { icons, images, testicons };

@@ -7,9 +7,10 @@ import { router } from "expo-router";
 import * as Location from "expo-location";
 
 import { userPermissionStore } from "@/context/userPermissionStore";
+import CustomButton from "@/components/components/CustomButton";
 
 const Geolocation = () => {
-  async function getCurrentLocation() {
+  const getCurrentLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
 
     if (status !== "granted") {
@@ -22,11 +23,11 @@ const Geolocation = () => {
     let location = await Location.getCurrentPositionAsync({});
     userPermissionStore.setItem("location", JSON.stringify(location));
     router.push("/notification");
-  }
+  };
 
   return (
     <>
-      <SafeAreaView>
+      <SafeAreaView className="h-full">
         <LinearGradient locations={[0, 0.4]} className="h-full" colors={["#FFFFFF", "#3c454c"]}>
           <View className="h-full">
             <View className="h-2/5"></View>
@@ -45,13 +46,12 @@ const Geolocation = () => {
                 </View>
               </View>
 
-              {/* Custom Button */}
-              <View className={`h-fit w-10/12`}>
-                <TouchableOpacity className="" onPress={getCurrentLocation} activeOpacity={0.7}>
-                  <Text className={`bg-white text-center py-3 rounded-xl font-semibold`}>Next</Text>
-                </TouchableOpacity>
-              </View>
-              
+              <CustomButton
+                handlePress={() => getCurrentLocation()}
+                title="Next"
+                containerStyles="h-fit w-10/12"
+                textStyles="bg-white text-center py-3 rounded-xl font-semibold bg"
+              />
             </View>
           </View>
         </LinearGradient>

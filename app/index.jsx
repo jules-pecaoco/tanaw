@@ -7,12 +7,9 @@ import { router } from "expo-router";
 
 import { userPermissionStore } from "@/context/userPermissionStore";
 import { useEffect } from "react";
-// import CustomButton from "@/components/CustomButton";
+import CustomButton from "@/components/components/CustomButton";
 
 export default function Index() {
-  // TODO--------------
-  // Render directly to home after first permissions
-
   useEffect(() => {
     const checkPermissions = () => {
       const location = userPermissionStore.getItem("location");
@@ -29,7 +26,7 @@ export default function Index() {
 
   return (
     <>
-      <SafeAreaView>
+      <SafeAreaView className="h-full">
         <LinearGradient locations={[0.05, 0.1, 0.4, 0.6]} className="h-full" colors={["#E84E4C", "#f47c25", "#FFFFFF", "#3c454c"]}>
           <View className="h-full">
             <View className="h-2/5"></View>
@@ -45,12 +42,12 @@ export default function Index() {
                 <Text className="text-gray-400 font-rregular text-center text-sm">Start you setup in 2 easy steps</Text>
               </View>
 
-              {/* Custom Button */}
-              <View className={`h-fit w-10/12`}>
-                <TouchableOpacity className="" onPress={() => router.push("/geolocation")} activeOpacity={0.7}>
-                  <Text className={`bg-white text-center py-3 rounded-xl font-semibold`}>Let's Start</Text>
-                </TouchableOpacity>
-              </View>
+              <CustomButton
+                title="Let's Start"
+                handlePress={() => router.push("/geolocation")}
+                containerStyles="h-fit w-10/12"
+                textStyles="bg-white text-center py-3 rounded-xl font-semibold"
+              ></CustomButton>
             </View>
           </View>
         </LinearGradient>
