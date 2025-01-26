@@ -35,8 +35,8 @@ export default function Layout() {
         <Tabs.Screen
           name="radar"
           options={{
-            title: "Home",
-            tabBarIcon: ({ color, focused }) => <TabIcon icon={icons.radar} color={color} name="Home" focused={focused}></TabIcon>,
+            title: "Radar",
+            tabBarIcon: ({ color, focused }) => <TabIcon icon={icons.radar} color={color} name="Radar" focused={focused}></TabIcon>,
           }}
         />
         <Tabs.Screen
@@ -47,7 +47,7 @@ export default function Layout() {
           }}
         />
         <Tabs.Screen
-          name="alert"
+          name="notification"
           options={{
             title: "Notifications",
             tabBarIcon: ({ color, focused }) => <TabIcon icon={icons.bell} color={color} name="Notifications" focused={focused}></TabIcon>,

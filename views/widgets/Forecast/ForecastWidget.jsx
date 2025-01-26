@@ -20,8 +20,8 @@ const Hourcast = ({ time, temp, icon }) => {
   return (
     <View className="flex flex-col items-center justify-center gap-2">
       <Text className="text-md font-rregular">{time}</Text>
-      <Text className="text-md font-rregular">{temp}</Text>
       <Image source={icon}></Image>
+      <Text className="text-md font-rregular">{temp}</Text>
     </View>
   );
 };
@@ -32,26 +32,27 @@ const ForecastWidget = ({ data }) => {
       {/* HOURLY FORECAST */}
       <View className="flex flex-col items-center justify-around bg-white w-[95%] p-4 gap-3 rounded-xl">
         <View className="flex flex-row items-center w-full gap-3">
-          <Image source={data[2][0].HourcastIcon}></Image>
+          <Image source={data.icons.hour}></Image>
           <Text className="font-rregular text-md">Hourly Forecast</Text>
         </View>
         {/* TIMESTAMP */}
         <View className="flex flex-row items-center justify-around w-full">
-          {data[1].map((item) => (
-            <Hourcast key={item.id} time={item.time} temp={item.temp} icon={item.icon} />
+          {data.hourCast.map((item) => (
+            <Hourcast key={item.id} time={item.time} temp={item.temp} icon={data.icons.heat} />
           ))}
         </View>
       </View>
 
       {/* DAY FORECAST */}
       <FlatList
+        showsVerticalScrollIndicator={false}
         className="w-full flex"
-        data={data[0]}
-        renderItem={({ item }) => <Daycast time={item.time} caution={item.caution} temp={item.temp} icon={item.icon} />}
+        data={data.dayCast}
+        renderItem={({ item }) => <Daycast time={item.time} caution={item.caution} temp={item.temp} icon={data.icons.heatindex} />}
         keyExtractor={(item) => item.id}
       />
     </>
   );
 };
 
-export { ForecastWidget };
+export default ForecastWidget;

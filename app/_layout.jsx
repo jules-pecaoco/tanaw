@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
 import { Stack, SplashScreen, Redirect } from "expo-router";
-import "../global.css";
-
-
 import * as Notifications from "expo-notifications";
+
+
+import "../global.css";
 // import { useNotificationSetup } from "../hooks/useNotificationSetup";
 // import { TaskManager } from "expo-task-manager";
 
