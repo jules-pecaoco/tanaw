@@ -1,5 +1,7 @@
-const fetchEmergencyFacilities = async (query = "hospital", longitude, latitude) => {
-  const accessToken = "YOUR_MAPBOX_ACCESS_TOKEN";
+import KEY from "@/constants/key";
+
+const fetchEmergencyFacilities = async (query, longitude, latitude) => {
+  const accessToken = KEY.MAPBOX_PUBLIC_TOKEN;
   const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?proximity=${longitude},${latitude}&access_token=${accessToken}`;
 
   try {

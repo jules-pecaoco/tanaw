@@ -1,7 +1,8 @@
 import { Platform } from "react-native";
 import * as Device from "expo-device";
-import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
+
+import KEY from "@/constants/keys";
 
 function handleRegistrationError(errorMessage) {
   alert(errorMessage);
@@ -37,7 +38,7 @@ const accessNotification = async () => {
       return null;
     }
 
-    const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+    const projectId = KEY.PROJECT_ID;
 
     if (!projectId) {
       handleRegistrationError("Project ID not found");

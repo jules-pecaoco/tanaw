@@ -1,5 +1,3 @@
-
-
 {
   "expo": {
     "name": "Tanaw",
@@ -41,7 +39,7 @@
       [
         "@rnmapbox/maps",
         {
-          "RNMapboxMapsDownloadToken": "${MAPBOX_SECRET_KEY}"
+          "RNMapboxMapsDownloadToken": "sk.eyJ1IjoianVsZXMtcCIsImEiOiJjbTZkdDNybm8wcm41Mmlxc2U4bDBrZnlxIn0.y9Ey0uiECrNGJCv3m2FKdw"
         }
       ]
     ],
@@ -57,7 +55,7 @@
       "eas": {
         "projectId": "d9de4701-66fb-4402-88b5-18644a256c8e"
       },
-      "MAPBOX_PUBLIC_KEY": "${MAPBOX_PUBLIC_KEY}"
+      "MAPBOX_PUBLIC_KEY": "pk.eyJ1IjoianVsZXMtcCIsImEiOiJjbTZkc3ZsYXgwbXNzMmpwbjhsb3U2YmJyIn0.QpoW_6OWYJwpRkkjP7VDkg"
     },
     "owner": "jules-pecaoco"
   }
