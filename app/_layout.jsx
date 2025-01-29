@@ -1,16 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useFonts } from "expo-font";
-import { Stack, SplashScreen, Redirect } from "expo-router";
+import { Stack, SplashScreen } from "expo-router";
 import * as Notifications from "expo-notifications";
 
-
-import "../global.css";
+import "@/global.css";
 // import { useNotificationSetup } from "../hooks/useNotificationSetup";
 // import { TaskManager } from "expo-task-manager";
-
-
-
-
 
 // const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
 
@@ -26,8 +21,6 @@ import "../global.css";
 // );
 // Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
 
-
-
 SplashScreen.preventAutoHideAsync();
 
 Notifications.setNotificationHandler({
@@ -38,8 +31,8 @@ Notifications.setNotificationHandler({
   }),
 });
 
+const RootLayout = () => {
 
-export default function RootLayout() {
   const [fontsLoaded, error] = useFonts({
     "RobotoCondensed-Black": require("../assets/fonts/RobotoCondensed-Black.ttf"),
     "RobotoCondensed-Bold": require("../assets/fonts/RobotoCondensed-Bold.ttf"),
@@ -67,29 +60,28 @@ export default function RootLayout() {
     return null;
   }
 
-  // useNotificationSetup();
-  
-
   return (
-      <Stack>
-        <Stack.Screen
-          name="index"
-          options={{
-            headerShown: false,
-          }}
-        ></Stack.Screen>
-        <Stack.Screen
-          name="(permissions)"
-          options={{
-            headerShown: false,
-          }}
-        ></Stack.Screen>
-        <Stack.Screen
-          name="(tabs)"
-          options={{
-            headerShown: false,
-          }}
-        ></Stack.Screen>
-      </Stack>
+    <Stack>
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: false,
+        }}
+      ></Stack.Screen>
+      <Stack.Screen
+        name="(permissions)"
+        options={{
+          headerShown: false,
+        }}
+      ></Stack.Screen>
+      <Stack.Screen
+        name="(tabs)"
+        options={{
+          headerShown: false,
+        }}
+      ></Stack.Screen>
+    </Stack>
   );
-}
+};
+
+export default RootLayout;

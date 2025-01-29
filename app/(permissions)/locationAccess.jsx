@@ -1,25 +1,19 @@
 import { router } from "expo-router";
-import * as Location from "expo-location";
 
 import { icons } from "@/constants/index";
-import { userPermissionStore } from "@/context/userPermissionStore";
 import { PermissionData } from "@/data/contentData";
 import PermissionScreen from "@/views/screens/Permission/PermissionScreen";
-
+import userPermissionStore from "@/context/userPermissionStore";
+import accessLocation from "@/utilities/accessLocation";
 
 const Geolocation = () => {
   // CURRENT LOCATION
-  const getCurrentLocation = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-
-    if (status !== "granted") {
-      userPermissionStore.setItem("location", "false");
-      router.push("/notificationAccess");
-      return;
+  const getLocation = async () => {
+    const location = await accessLocation();
+    if (location) {
+      userPermissionStore.setItem("location", JSON.stringify(location));
     }
 
-    let location = await Location.getCurrentPositionAsync({});
-    userPermissionStore.setItem("location", JSON.stringify(location));
     router.push("/notificationAccess");
   };
 
@@ -37,7 +31,7 @@ const Geolocation = () => {
       permissionTitle={PermissionData.location.title}
       permissionTitleDescription={PermissionData.location.titleDescription}
       permissionDescription={PermissionData.location.description}
-      handlePress={() => getCurrentLocation()}
+      handlePress={() => getLocation()}
       gradient={gradient}
       statusBarColor={statusBarColor}
       permissionType="location"

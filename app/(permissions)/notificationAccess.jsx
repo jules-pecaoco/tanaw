@@ -1,22 +1,21 @@
 import { router } from "expo-router";
 
 import { icons } from "@/constants/index";
-import { registerForPushNotificationsAsync } from "@/utilities/registerNotification";
-import { userPermissionStore } from "@/context/userPermissionStore";
+import accessNotification from "@/utilities/accessNotification";
+import userPermissionStore from "@/context/userPermissionStore";
 import PermissionScreen from "@/views/screens/Permission/PermissionScreen";
 import { PermissionData } from "@/data/contentData";
 
 const Notification = () => {
   // NOTIFICATION PERMISSION
   const getNotificationPermission = async () => {
-    const token = await registerForPushNotificationsAsync();
+    const token = await accessNotification();
     if (token) {
       userPermissionStore.setItem("expoPushToken", token);
-      router.replace("/radar");
-      return;
+      
     }
 
-    userPermissionStore.setItem("expoPushToken", "false");
+    userPermissionStore.setItem("hasVisitedPermissionScreen", "true");
     router.replace("/radar");
   };
 

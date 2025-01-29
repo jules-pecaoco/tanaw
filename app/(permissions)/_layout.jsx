@@ -6,13 +6,13 @@ const PermissionLayout = () => {
     <>
       <Stack>
         <Stack.Screen
-          name="geolocation"
+          name="locationAccess"
           options={{
             headerShown: false,
           }}
         ></Stack.Screen>
         <Stack.Screen
-          name="notification"
+          name="notificationAccess"
           options={{
             headerShown: false,
           }}

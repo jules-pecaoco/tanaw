@@ -1,3 +1,5 @@
+
+
 {
   "expo": {
     "name": "Tanaw",
@@ -35,6 +37,12 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsDownloadToken": "${MAPBOX_SECRET_KEY}"
+        }
       ]
     ],
     "experiments": {
@@ -48,7 +56,8 @@
     "extra": {
       "eas": {
         "projectId": "d9de4701-66fb-4402-88b5-18644a256c8e"
-      }
+      },
+      "MAPBOX_PUBLIC_KEY": "${MAPBOX_PUBLIC_KEY}"
     },
     "owner": "jules-pecaoco"
   }

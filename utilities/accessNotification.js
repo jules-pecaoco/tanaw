@@ -9,7 +9,7 @@ function handleRegistrationError(errorMessage) {
 }
 
 // REQUEST PERMISSION TO SEND NOTIFICATION
-export async function registerForPushNotificationsAsync() {
+const accessNotification = async () => {
   // SET NOTIFICATION CHANNEL FOR ANDROID
   if (Platform.OS === "android") {
     Notifications.setNotificationChannelAsync("default", {
@@ -26,15 +26,17 @@ export async function registerForPushNotificationsAsync() {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
-    if (existingStatus !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    if (finalStatus !== "granted") {
-      return;
+    if (existingStatus === "granted") {
+      return true;
     }
 
-    // GET PROJECT ID FROM APP.JSON
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+
+    if (finalStatus !== "granted") {
+      return null;
+    }
+
     const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
 
     if (!projectId) {
@@ -56,4 +58,6 @@ export async function registerForPushNotificationsAsync() {
   } else {
     handleRegistrationError("Must use physical device for push notifications");
   }
-}
+};
+
+export default accessNotification;

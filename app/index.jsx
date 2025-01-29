@@ -1,25 +1,33 @@
 import { router } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { images } from "@/constants/index";
-import { userPermissionStore } from "@/context/userPermissionStore";
+import userPermissionStore from "@/context/userPermissionStore";
 import IndexScreen from "@/views/screens/IndexScreen";
-import {IndexData} from "@/data/contentData";
+import { IndexData } from "@/data/contentData";
 
-export default function Index() {
+const Index = () => {
+  const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
-    const checkPermissions = () => {
-      const location = userPermissionStore.getItem("location");
-      const expoPushToken = userPermissionStore.getItem("expoPushToken");
+    const checkVisitedStatus = () => {
+      const hasVisitedPermissionScreen = userPermissionStore.getItem("hasVisitedPermissionScreen");
 
-      console.log(location, expoPushToken);
-      if (location || expoPushToken) {
-        router.replace("/radar");
+      if (hasVisitedPermissionScreen) {
+        setTimeout(() => {
+          setIsReady(true);
+          router.replace("/radar");
+        }, 0);
       }
     };
 
-    setTimeout(checkPermissions, 0);
+    checkVisitedStatus();
   }, []);
+
+  // If the user has visited the permission screen, then we don't need to show the index screen
+  if (!isReady && userPermissionStore.getItem("hasVisitedPermissionScreen")) {
+    return null;
+  }
 
   const icon = images.tanawLogoWhite;
 
@@ -33,4 +41,6 @@ export default function Index() {
       handlePress={() => router.push("/locationAccess")}
     />
   );
-}
+};
+
+export default Index;
