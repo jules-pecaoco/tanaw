@@ -4,11 +4,11 @@ import { StatusBar } from "expo-status-bar";
 import { React, useEffect, useState } from "react";
 
 import { testicons } from "@/constants/index";
-import CustomButton from "@/views/components/CustomButton";
-import ForecastWidget from "@/views/widgets/Forecast/ForecastWidget";
-import AnalyticsWidget from "@/views/widgets/Forecast/AnalyticsWidget";
-import TrendsWidget from "@/views/widgets/Forecast/TrendsWidget";
 import { AnalyticsData, ForecastData, CurrentLocation } from "@/data/sampleData";
+import CustomButton from "@/views/components/CustomButton";
+import ForecastWidget from "@/views/Forecast/widgets/ForecastWidget";
+import AnalyticsWidget from "@/views/Forecast/widgets/AnalyticsWidget";
+import TrendsWidget from "@/views/Forecast/widgets/TrendsWidget";
 
 const Forecast = () => {
   const [active, setActive] = useState("forecast");

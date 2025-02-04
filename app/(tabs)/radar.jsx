@@ -1,14 +1,13 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { SafeAreaView, View, Text, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import Mapbox, { MapView, Camera, UserLocation } from "@rnmapbox/maps";
+import Mapbox, { MapView, Camera, UserLocation, MarkerView, VectorSource, FillExtrusionLayer } from "@rnmapbox/maps";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 
-import userPermissionStore from "@/context/userPermissionStore";
 import { icons } from "@/constants/index";
+import userPermissionStore from "@/context/userPermissionStore";
 import KEY from "@/constants/keys";
-import CustomButton from "@/views/components/CustomButton";
 
 Mapbox.setAccessToken(KEY.MAPBOX_PUBLIC_TOKEN);
 
@@ -115,10 +114,35 @@ const EmergencyBottomSheet = ({ setShowButtomSheet }) => {
   );
 };
 
+const Marker = ({ coordinates }) => {
+  const [showInfo, setShowInfo] = useState(false);
+  return (
+    <MarkerView coordinate={coordinates}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => {
+          setShowInfo(showInfo ? false : true);
+        }}
+      >
+        <View className="flex flex-col items-center gap-2">
+          {!showInfo && <View className="bg-primary size-10 rounded-full" />}
+          {showInfo && (
+            <View className="bg-white p-2 rounded-lg">
+              <Text className="text-black">UNO-R</Text>
+              <Text className="text-black">Lizares Street</Text>
+              <Text className="text-black">None</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    </MarkerView>
+  );
+};
+
 const Radar = () => {
   const expoPushToken = userPermissionStore.getItem("expoPushToken");
   const userLocation = JSON.parse(userPermissionStore.getItem("location"));
-  const [zoom, setZoom] = useState(14);
+  const [zoom, setZoom] = useState(10);
   const [active, setActive] = useState(null);
   const [showEmergencyBottomSheet, setShowEmergencyBottomSheet] = useState(false);
   const [showHazardBottomSheet, setShowHazardBottomSheet] = useState(false);
@@ -136,11 +160,8 @@ const Radar = () => {
             setZoom(event.zoomLevel);
           }}
         >
-          <UserLocation visible={true} />
-          <Camera zoomLevel={zoom} centerCoordinate={[userLocation.coords.longitude, userLocation.coords.latitude]} />
-
-          {/* 3D BUILDING */}
-          {/* <VectorSource id="buildingSource" url="mapbox://mapbox.mapbox-streets-v8">
+          {/* 3D BUILDING
+          <VectorSource id="buildingSource" url="mapbox://mapbox.mapbox-streets-v8">
             <FillExtrusionLayer
               id="3d-buildings"
               sourceLayerID="building"
@@ -152,6 +173,9 @@ const Radar = () => {
               }}
             />
           </VectorSource> */}
+          <Camera zoomLevel={zoom} centerCoordinate={[userLocation.coords.longitude, userLocation.coords.latitude]} />
+          {/* POINT ANNOTATION */}
+          <Marker coordinates={[122.948, 10.65709]} />
         </MapView>
 
         {/* SIDE BUTTONS */}

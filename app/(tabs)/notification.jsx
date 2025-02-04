@@ -1,8 +1,9 @@
 import React from "react";
 
-import NotificationScreen from "@/views/screens/Notification/NotificationScreen";
 import { NotificationData } from "@/data/sampleData";
 import { testicons } from "@/constants/index";
+import NotificationScreen from "@/views/Notification/NotificationScreen";
+
 
 const Notification = () => {
   NotificationData.map((data) => {
@@ -11,7 +12,6 @@ const Notification = () => {
 
   NotificationData.sort((a, b) => new Date(b.date) - new Date(a.date));
  
-
   return <NotificationScreen notificationData={NotificationData} />;
 };
 

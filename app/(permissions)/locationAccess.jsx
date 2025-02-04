@@ -1,8 +1,8 @@
 import { router } from "expo-router";
 
 import { icons } from "@/constants/index";
-import { PermissionData } from "@/data/contentData";
-import PermissionScreen from "@/views/screens/Permission/PermissionScreen";
+import { PermissionData } from "@/data/textContent";
+import PermissionScreen from "@/views/Permissions/PermissionScreen";
 import userPermissionStore from "@/context/userPermissionStore";
 import accessLocation from "@/utilities/accessLocation";
 

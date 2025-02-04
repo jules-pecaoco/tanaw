@@ -2,9 +2,9 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 
 import { images } from "@/constants/index";
+import { IndexData } from "@/data/textContent";
 import userPermissionStore from "@/context/userPermissionStore";
-import IndexScreen from "@/views/screens/IndexScreen";
-import { IndexData } from "@/data/contentData";
+import IndexScreen from "@/views/IndexScreen";
 
 const Index = () => {
   const [isReady, setIsReady] = useState(false);

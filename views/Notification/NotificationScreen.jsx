@@ -3,7 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import React from "react";
 
-import NotificationWidget from "@/views/widgets/Notification/NotificationWidget";
+import NotificationWidget from "./widgets/NotificationWidget";
 
 const NotificationScreen = ({ notificationData }) => {
   return (
