@@ -6,27 +6,14 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "autoIncrement": true,
-      "env": {
-        "MAPBOX_PUBLIC_KEY": "pk.eyJ1IjoianVsZXMtcCIsImEiOiJjbTZkc3ZsYXgwbXNzMmpwbjhsb3U2YmJyIn0.QpoW_6OWYJwpRkkjP7VDkg",
-        "MAPBOX_SECRET_KEY": "sk.eyJ1IjoianVsZXMtcCIsImEiOiJjbTZkdDNybm8wcm41Mmlxc2U4bDBrZnlxIn0.y9Ey0uiECrNGJCv3m2FKdw"
-      }
+      "distribution": "internal"
     },
     "preview": {
       "distribution": "internal",
-      "autoIncrement": true,
-      "env": {
-        "MAPBOX_PUBLIC_KEY": "${MAPBOX_PUBLIC_KEY}",
-        "MAPBOX_SECRET_KEY": "${MAPBOX_SECRET_KEY}"
-      }
+      "autoIncrement": true
     },
     "production": {
-      "autoIncrement": true,
-      "env": {
-        "MAPBOX_PUBLIC_KEY": "{MAPBOX_PUBLIC_KEY}",
-        "MAPBOX_SECRET_KEY": "{MAPBOX_SECRET_KEY}"
-      }
+      "autoIncrement": true
     }
   },
   "submit": {

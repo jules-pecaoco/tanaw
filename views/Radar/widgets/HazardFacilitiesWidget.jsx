@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { SafeAreaView, View, Text, TouchableOpacity, Image } from "react-native";
-import Mapbox, { MapView, Camera, UserLocation, MarkerView, VectorSource, FillExtrusionLayer } from "@rnmapbox/maps";
+import Mapbox, { MapView, Camera, UserLocation, MarkerView, VectorSource, FillExtrusionLayer, LineLayer, FillLayer } from "@rnmapbox/maps";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 
 import { icons } from "@/constants/index";
 import userPermissionStore from "@/context/userPermissionStore";
-import KEY from "@/constants/keys";
+// import tokens from "@/tokens/tokens";
 
-Mapbox.setAccessToken(KEY.MAPBOX_PUBLIC_TOKEN);
+Mapbox.setAccessToken("pk.eyJ1IjoianVsZXMtcCIsImEiOiJjbTZkc3ZsYXgwbXNzMmpwbjhsb3U2YmJyIn0.QpoW_6OWYJwpRkkjP7VDkg");
 
 const SheetButton = ({ title, onPress, child }) => {
   return (
@@ -153,7 +153,46 @@ const HazardFacilitiesWidget = () => {
   return (
     <SafeAreaView className="flex-1 bg-white flex justify-center items-center">
       <View className="relative h-full w-full">
-        <MapView style={{ flex: 1 }} onMapIdle={handleMapIdle}>
+        <MapView style={{ flex: 1 }} onMapIdle={handleMapIdle} styleURL="mapbox://styles/jules-p/cm6x7n50k00ey01rea01x67s3">
+          <Camera pitch={30} zoomLevel={zoom} centerCoordinate={[userLocation.coords.longitude, userLocation.coords.latitude]} />
+          <Marker coordinates={markerCoordinates} facilityName="UNO-R" facilityContactInfo="09951022578" />
+
+          {/* Landslide */}
+          <VectorSource id="NegrosOccidental_Landslides" url="mapbox://jules-p.NegrosOccidental_Landslides">
+            <FillLayer
+              id="NegrosOccidental_Landslides"
+              sourceLayerID="NegrosOccidental_Landslides"
+              style={{
+                fillColor: ["interpolate", ["linear"], ["get", "LH"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"],
+                fillOpacity: 0.8,
+              }}
+            />
+          </VectorSource>
+
+          {/* Flood Layers */}
+          <VectorSource id="NegrosOccidental_Flood_100yrs" url="mapbox://jules-p.NegrosOccidental_Flood_100yrs">
+            <FillLayer
+              id="NegrosOccidental_Flood_100yrs"
+              sourceLayerID="NegrosOccidental_Flood_100yrs"
+              style={{
+                fillColor: ["interpolate", ["linear"], ["get", "Var"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"],
+                fillOpacity: 0.8,
+              }}
+            />
+          </VectorSource>
+
+          {/* Storm Surge Layers */}
+          <VectorSource id="NegrosOccidental_StormSurge4" url="mapbox://jules-p.NegrosOccidental_StormSurge4">
+            <FillLayer
+              id="NegrosOccidental_StormSurge4"
+              sourceLayerID="NegrosOccidental_StormSurge4"
+              style={{
+                fillColor: ["interpolate", ["linear"], ["get", "HAZ"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"],
+                fillOpacity: 0.8,
+              }}
+            />
+          </VectorSource>
+
           <VectorSource id="buildingSource" url="mapbox://mapbox.mapbox-streets-v8">
             <FillExtrusionLayer
               id="3d-buildings"
@@ -166,9 +205,8 @@ const HazardFacilitiesWidget = () => {
               }}
             />
           </VectorSource>
-          <UserLocation/>
-          <Camera pitch={30} zoomLevel={zoom} centerCoordinate={[userLocation.coords.longitude, userLocation.coords.latitude]} />
-          <Marker coordinates={markerCoordinates} facilityName="UNO-R" facilityContactInfo="09951022578" />
+
+          <UserLocation visible animated />
         </MapView>
 
         {/* SIDE BUTTONS */}

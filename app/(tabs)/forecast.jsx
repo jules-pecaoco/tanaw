@@ -1,7 +1,7 @@
 import { View, Text, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { React, useEffect, useState } from "react";
+import { React, useState } from "react";
 
 import { testicons } from "@/constants/index";
 import { AnalyticsData, ForecastData, CurrentLocation } from "@/data/sampleData";

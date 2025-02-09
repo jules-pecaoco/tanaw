@@ -7,7 +7,7 @@ import HazardFacilitiesWidget from "./widgets/HazardFacilitiesWidget";
 const RadarScreen = () => {
   return (
     <>
-      <HazardFacilitiesWidget />
+      <HazardFacilitiesWidget></HazardFacilitiesWidget>
       <StatusBar hidden />
     </>
   );
