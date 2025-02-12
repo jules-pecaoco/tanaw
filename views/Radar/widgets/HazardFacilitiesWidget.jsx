@@ -1,107 +1,20 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { SafeAreaView, View, Text, TouchableOpacity, Image } from "react-native";
-import Mapbox, { MapView, Camera, UserLocation, MarkerView, VectorSource, FillExtrusionLayer, LineLayer, FillLayer } from "@rnmapbox/maps";
-import Feather from "@expo/vector-icons/Feather";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import React, { useState, useCallback, useMemo } from "react";
+import { SafeAreaView, View, TouchableOpacity, Image } from "react-native";
+import Mapbox, { MapView, Camera, UserLocation, MarkerView } from "@rnmapbox/maps";
 
 import { icons } from "@/constants/index";
+import { MAPBOX_PUBLIC_TOKEN } from "@/tokens/tokens";
+import { EmergencyBottomSheet, HazardBottomSheet } from "@/views/Radar/widgets/BottomSheet";
 import userPermissionStore from "@/context/userPermissionStore";
-// import tokens from "@/tokens/tokens";
+import HazardLayers from "./HazardLayers";
 
-Mapbox.setAccessToken("pk.eyJ1IjoianVsZXMtcCIsImEiOiJjbTZkc3ZsYXgwbXNzMmpwbjhsb3U2YmJyIn0.QpoW_6OWYJwpRkkjP7VDkg");
+Mapbox.setAccessToken(MAPBOX_PUBLIC_TOKEN);
 
-const SheetButton = ({ title, onPress, child }) => {
-  return (
-    <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
-      <View className="p-5 bg-white rounded-lg shadow-lg h-fit flex justify-center items-center">
-        {child}
-        {title && <Text className="text-xs">{title}</Text>}
-      </View>
-    </TouchableOpacity>
-  );
-};
-
-const HazardBottomSheet = ({ setShowButtomSheet }) => {
-  const hazardButtons = ["Fire", "Flood", "Wind", "Rain"];
-  const hazardButtonsIcons = ["fire", "water", "wind", "cloud-showers-heavy"];
-
-  const heatIndexSources = ["PAGASA", "OpenWeather", "Other"];
-  const heatIndexIcons = ["thermometer-half", "thermometer-half", "thermometer-half"];
-
-  return (
-    <View className={`absolute bottom-0 w-full bg-white p-5`}>
-      <View className="flex justify-between items-center flex-row">
-        <Text className="text-lg font-rregular">Hazard Type</Text>
-        <TouchableOpacity activeOpacity={0.5} onPress={() => setShowButtomSheet(false)}>
-          <Feather name="x" size={24} color="black" />
-        </TouchableOpacity>
-      </View>
-
-      <View className="flex flex-row justify-around items-center mt-5 gap-2">
-        {hazardButtons.map((button, index) => (
-          <SheetButton
-            key={index}
-            title={button}
-            child={<FontAwesome5 name={hazardButtonsIcons[index]} size={25} color="black" />}
-            onPress={() => console.log(button)}
-          />
-        ))}
-      </View>
-      <View className="bg-black h-[1px] my-5"></View>
-      <View>
-        <Text className="text-lg font-rregular">Heat Index Source</Text>
-      </View>
-      <View className="flex flex-row justify-around items-center mt-5 gap-2">
-        {heatIndexSources.map((source, index) => (
-          <SheetButton
-            key={index}
-            title={source}
-            child={<FontAwesome5 name={heatIndexIcons[index]} size={25} color="black" />}
-            onPress={() => console.log(source)}
-          />
-        ))}
-      </View>
-    </View>
-  );
-};
-
-const EmergencyBottomSheet = ({ setShowButtomSheet }) => {
-  const emergencyButtons = ["Hospitals", "Fire Stations", "Evac Sites"];
-  const emergencyButtonsIcons = ["hospital", "fire-extinguisher", "house-damage"];
-
-  return (
-    <View className={`absolute bottom-0 w-full bg-white p-5`}>
-      <View className="flex justify-between items-center flex-row">
-        <Text className="text-lg font-rregular">Emergency Facilities</Text>
-        <TouchableOpacity activeOpacity={0.5} onPress={() => setShowButtomSheet(false)}>
-          <Feather name="x" size={24} color="black" />
-        </TouchableOpacity>
-      </View>
-
-      <View className="flex flex-row justify-around items-center mt-5 gap-5">
-        {emergencyButtons.map((button, index) => (
-          <SheetButton
-            key={index}
-            title={button}
-            child={<FontAwesome5 name={emergencyButtonsIcons[index]} size={25} color="black" />}
-            onPress={() => console.log(button)}
-          />
-        ))}
-      </View>
-    </View>
-  );
-};
-
-const Marker = ({ coordinates, facilityName, facilityContactInfo }) => {
+const Marker = React.memo(({ coordinates, facilityName, facilityContactInfo }) => {
   const [showInfo, setShowInfo] = useState(false);
   return (
     <MarkerView coordinate={coordinates}>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => {
-          setShowInfo(showInfo ? false : true);
-        }}
-      >
+      <TouchableOpacity activeOpacity={0.7} onPress={() => setShowInfo(!showInfo)}>
         <View className="flex flex-col items-center gap-2">
           {!showInfo && <View className="bg-primary size-10 rounded-full" />}
           {showInfo && (
@@ -114,124 +27,109 @@ const Marker = ({ coordinates, facilityName, facilityContactInfo }) => {
       </TouchableOpacity>
     </MarkerView>
   );
-};
+});
 
-const RadarButtons = ({ onPress, icon, active, label }) => {
+const RadarButtons = React.memo(({ onPress, icon, isActive }) => {
   return (
     <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
       <View className="p-5 bg-white rounded-full shadow-lg h-fit flex justify-center items-center">
-        <Image source={icon} className="size-6" tintColor={`${active === label ? "#F47C25" : "#94a3b8"}`} />
+        <Image source={icon} className="size-6" tintColor={`${isActive ? "#F47C25" : "#94a3b8"}`} />
       </View>
     </TouchableOpacity>
   );
-};
-
-// MEMOIZED AND CALLBACKS
+});
 
 const HazardFacilitiesWidget = () => {
-  const userLocation = JSON.parse(userPermissionStore.getItem("location"))
-    ? JSON.parse(userPermissionStore.getItem("location"))
-    : { coords: { latitude: 10.65709, longitude: 122.948 } };
-  const [zoom, setZoom] = useState(10);
-  const [active, setActive] = useState(false);
+  const userLocation = JSON.parse(userPermissionStore.getItem("location")) || { coords: { latitude: 10.65709, longitude: 122.948 } };
 
-  const label = ["hazard", "facilities"];
+  const [state, setState] = useState({
+    sideButtons: "none",
+    facilities: "",
+    hazards: "",
+    bottomSheetButtons: "",
+    zoom: 14,
+  });
+
+  const label = ["hazards", "facilities"];
   const icon = [icons.weatherbuttons, icons.search];
 
-  useEffect(() => {
-    Mapbox.setTelemetryEnabled(false);
-  }, []);
+  Mapbox.setTelemetryEnabled(false);
 
-  const handleMapIdle = useCallback((event) => {
-    setZoom(event.zoomLevel);
-  }, []);
+  const handleMapIdle = useCallback((e) => setState((prevState) => ({ ...prevState, zoom: e.zoomLevel })), []);
+  const handleButtonPress = useCallback((item) => setState((prevState) => ({ ...prevState, sideButtons: item })), []);
+  const handleZoomPress = useCallback(() => setState((prevState) => ({ ...prevState, sideButtons: "zoom" })), []);
 
-  const EmergencySheet = useMemo(() => <EmergencyBottomSheet setShowButtomSheet={setActive} />, []);
-  const HazardSheet = useMemo(() => <HazardBottomSheet setShowButtomSheet={setActive} />, []);
+  const EmergencySheet = useMemo(() => <EmergencyBottomSheet state={state} setState={setState} />, [state]);
+  const HazardSheet = useMemo(() => <HazardBottomSheet state={state} setState={setState} />, [state]);
   const markerCoordinates = useMemo(() => [122.948, 10.65709], []);
 
   return (
     <SafeAreaView className="flex-1 bg-white flex justify-center items-center">
       <View className="relative h-full w-full">
-        <MapView style={{ flex: 1 }} onMapIdle={handleMapIdle} styleURL="mapbox://styles/jules-p/cm6x7n50k00ey01rea01x67s3">
-          <Camera pitch={30} zoomLevel={zoom} centerCoordinate={[userLocation.coords.longitude, userLocation.coords.latitude]} />
+        <MapView style={{ flex: 1 }} onMapIdle={handleMapIdle} styleURL="mapbox://styles/mapbox/light-v10">
+          <Camera pitch={30} zoomLevel={state.zoom} centerCoordinate={[userLocation.coords.longitude, userLocation.coords.latitude]} />
           <Marker coordinates={markerCoordinates} facilityName="UNO-R" facilityContactInfo="09951022578" />
+          <UserLocation visible animated />
 
           {/* Landslide */}
-          <VectorSource id="NegrosOccidental_Landslides" url="mapbox://jules-p.NegrosOccidental_Landslides">
-            <FillLayer
-              id="NegrosOccidental_Landslides"
-              sourceLayerID="NegrosOccidental_Landslides"
+          {state.hazards === "Landslide" && (
+            <HazardLayers
+              vectorID="NegrosOccidental_LandslideHazards"
+              vectorURL="mapbox://jules-devs.7ruzm16q"
+              fillLayerID="NegrosOccidental_LandslideHazards"
+              fillLayerSourceID="NegrosOccidental_LandslideHazards"
               style={{
                 fillColor: ["interpolate", ["linear"], ["get", "LH"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"],
                 fillOpacity: 0.8,
               }}
             />
-          </VectorSource>
+          )}
 
           {/* Flood Layers */}
-          <VectorSource id="NegrosOccidental_Flood_100yrs" url="mapbox://jules-p.NegrosOccidental_Flood_100yrs">
-            <FillLayer
-              id="NegrosOccidental_Flood_100yrs"
-              sourceLayerID="NegrosOccidental_Flood_100yrs"
+          {state.hazards === "Flood" && (
+            <HazardLayers
+              vectorID="NegrosOccidental_Flood_100yrs"
+              vectorURL="mapbox://jules-devs.cqobnk0d"
+              fillLayerID="NegrosOccidental_Flood_100yrs"
+              fillLayerSourceID="NegrosOccidental_Flood_100yrs"
               style={{
                 fillColor: ["interpolate", ["linear"], ["get", "Var"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"],
                 fillOpacity: 0.8,
               }}
             />
-          </VectorSource>
+          )}
 
           {/* Storm Surge Layers */}
-          <VectorSource id="NegrosOccidental_StormSurge4" url="mapbox://jules-p.NegrosOccidental_StormSurge4">
-            <FillLayer
-              id="NegrosOccidental_StormSurge4"
-              sourceLayerID="NegrosOccidental_StormSurge4"
+          {state.hazards === "Storm Surge" && (
+            <HazardLayers
+              vectorID="NegrosOccidental_StormSurge4"
+              vectorURL="mapbox://jules-devs.7bvixhp8"
+              fillLayerID="NegrosOccidental_StormSurge4"
+              fillLayerSourceID="NegrosOccidental_StormSurge4"
               style={{
                 fillColor: ["interpolate", ["linear"], ["get", "HAZ"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"],
                 fillOpacity: 0.8,
               }}
             />
-          </VectorSource>
-
-          <VectorSource id="buildingSource" url="mapbox://mapbox.mapbox-streets-v8">
-            <FillExtrusionLayer
-              id="3d-buildings"
-              sourceLayerID="building"
-              style={{
-                fillExtrusionColor: "#aaa",
-                fillExtrusionOpacity: 0.6,
-                fillExtrusionHeight: ["get", "height"],
-                fillExtrusionBase: ["get", "min_height"],
-              }}
-            />
-          </VectorSource>
-
-          <UserLocation visible animated />
+          )}
         </MapView>
 
         {/* SIDE BUTTONS */}
         <View className="absolute bottom-20 right-10 flex justify-between flex-col gap-6">
           {label.map((item, index) => (
-            <RadarButtons key={index} onPress={() => setActive(item)} icon={icon[index]} active={active} label={item} />
+            <RadarButtons key={index} onPress={() => handleButtonPress(item)} icon={icon[index]} isActive={state.sideButtons === item} />
           ))}
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => {
-              setZoom(14);
-              setActive("zoom");
-            }}
-          >
+          <TouchableOpacity activeOpacity={0.7} onPress={handleZoomPress}>
             <View className="p-5 bg-white rounded-full shadow-lg h-fit flex justify-center items-center">
-              <Image source={icons.locationpinning} className="size-6" tintColor={`${active === "zoom" ? "#F47C25" : "#94a3b8"}`} />
+              <Image source={icons.locationpinning} className="size-6" tintColor={`${state.sideButtons === "zoom" ? "#F47C25" : "#94a3b8"}`} />
             </View>
           </TouchableOpacity>
         </View>
 
         {/*FACILITY BOTTOM SHEET */}
-        {active === "facilities" && EmergencySheet}
-
+        {state.sideButtons === "facilities" && EmergencySheet}
         {/*HAZARD BOTTOM SHEET */}
-        {active === "hazard" && HazardSheet}
+        {state.sideButtons === "hazards" && HazardSheet}
       </View>
     </SafeAreaView>
   );

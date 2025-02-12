@@ -2,7 +2,7 @@ import { Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 
-import tokens from "@/tokens/tokens";
+import { PROJECT_ID } from "@/tokens/tokens";
 
 function handleRegistrationError(errorMessage) {
   alert(errorMessage);
@@ -38,7 +38,7 @@ const accessNotification = async () => {
       return null;
     }
 
-    const projectId = tokens.PROJECT_ID;
+    const projectId = PROJECT_ID;
 
     if (!projectId) {
       handleRegistrationError("Project ID not found");
