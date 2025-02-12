@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useFonts } from "expo-font";
 import { Stack, SplashScreen } from "expo-router";
 import * as Notifications from "expo-notifications";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import "@/global.css";
 // import { useNotificationSetup } from "../hooks/useNotificationSetup";
@@ -32,7 +33,6 @@ Notifications.setNotificationHandler({
 });
 
 const RootLayout = () => {
-
   const [fontsLoaded, error] = useFonts({
     "RobotoCondensed-Black": require("../assets/fonts/RobotoCondensed-Black.ttf"),
     "RobotoCondensed-Bold": require("../assets/fonts/RobotoCondensed-Bold.ttf"),
@@ -61,26 +61,28 @@ const RootLayout = () => {
   }
 
   return (
-    <Stack>
-      <Stack.Screen
-        name="index"
-        options={{
-          headerShown: false,
-        }}
-      ></Stack.Screen>
-      <Stack.Screen
-        name="(permissions)"
-        options={{
-          headerShown: false,
-        }}
-      ></Stack.Screen>
-      <Stack.Screen
-        name="(tabs)"
-        options={{
-          headerShown: false,
-        }}
-      ></Stack.Screen>
-    </Stack>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Stack>
+        <Stack.Screen
+          name="index"
+          options={{
+            headerShown: false,
+          }}
+        ></Stack.Screen>
+        <Stack.Screen
+          name="(permissions)"
+          options={{
+            headerShown: false,
+          }}
+        ></Stack.Screen>
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            headerShown: false,
+          }}
+        ></Stack.Screen>
+      </Stack>
+    </GestureHandlerRootView>
   );
 };
 

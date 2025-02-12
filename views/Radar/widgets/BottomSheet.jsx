@@ -1,5 +1,6 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Linking } from "react-native";
 import React from "react";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -30,7 +31,7 @@ const SheetButton = ({ title, onPress, child, isactive, customStyle }) => {
   );
 };
 
-const HazardBottomSheet = ({ state, setState }) => {
+const HazardSelectionBottomSheet = ({ state, setState }) => {
   return (
     <View className="absolute bottom-0 w-full bg-white p-5">
       <View className="flex justify-between items-center flex-row">
@@ -58,7 +59,7 @@ const HazardBottomSheet = ({ state, setState }) => {
   );
 };
 
-const EmergencyBottomSheet = ({ state, setState }) => {
+const FacilitiesSelectionBottomSheet = ({ state, setState }) => {
   return (
     <View className={`absolute bottom-0 w-full bg-white p-5`}>
       <View className="flex justify-between items-center flex-row">
@@ -84,4 +85,40 @@ const EmergencyBottomSheet = ({ state, setState }) => {
   );
 };
 
-export { HazardBottomSheet, EmergencyBottomSheet };
+const FacilitiesMarkerBottomSheet = React.forwardRef(({ data, handleSheetChanges }, ref) => {
+  // SNAP POINTS = HEIGHT OF BOTTOM SHEET
+
+  // Function to open the dialer with the contact number
+  const handleCallPress = (phoneNumber) => {
+    const phoneUrl = `tel:${phoneNumber}`;
+    Linking.openURL(phoneUrl).catch((err) => {
+      console.error("Error opening dialer:", err);
+    });
+  };
+  return (
+    <BottomSheet
+      ref={ref}
+      index={-1}
+      onChange={handleSheetChanges}
+      snapPoints={["28%"]}
+      enablePanDownToClose={true}
+      enableOverDrag={false}
+      animateOnMount={true}
+    >
+      <BottomSheetView className="flex-1 p-5">
+        <Text className="text-2xl font-bold mb-5 text-[#F47C25]">Facilities Information</Text>
+        <View className="bg-white p-2 rounded-lg">
+          <Text className="text-black font-bold">UNO-R</Text>
+          <Text className="text-black mb-2">09951022578</Text>
+
+          <TouchableOpacity className="bg-blue-500 p-2 rounded-md" onPress={() => handleCallPress("09951022578")}>
+            <Text className="text-white text-center">Call Now</Text>
+          </TouchableOpacity>
+        </View>
+        ;
+      </BottomSheetView>
+    </BottomSheet>
+  );
+});
+
+export { HazardSelectionBottomSheet, FacilitiesSelectionBottomSheet, FacilitiesMarkerBottomSheet };

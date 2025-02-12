@@ -1,33 +1,15 @@
-import React, { useState, useCallback, useMemo } from "react";
-import { SafeAreaView, View, TouchableOpacity, Image } from "react-native";
+import React, { useState, useCallback, useMemo, useRef } from "react";
+import { SafeAreaView, View, TouchableOpacity, Image, Text } from "react-native";
 import Mapbox, { MapView, Camera, UserLocation, MarkerView } from "@rnmapbox/maps";
 
 import { icons } from "@/constants/index";
 import { MAPBOX_PUBLIC_TOKEN } from "@/tokens/tokens";
-import { EmergencyBottomSheet, HazardBottomSheet } from "@/views/Radar/widgets/BottomSheet";
 import userPermissionStore from "@/context/userPermissionStore";
 import HazardLayers from "./HazardLayers";
+import Marker from "./FacilitiesMarker";
+import { FacilitiesSelectionBottomSheet, HazardSelectionBottomSheet, FacilitiesMarkerBottomSheet } from "./BottomSheet";
 
 Mapbox.setAccessToken(MAPBOX_PUBLIC_TOKEN);
-
-const Marker = React.memo(({ coordinates, facilityName, facilityContactInfo }) => {
-  const [showInfo, setShowInfo] = useState(false);
-  return (
-    <MarkerView coordinate={coordinates}>
-      <TouchableOpacity activeOpacity={0.7} onPress={() => setShowInfo(!showInfo)}>
-        <View className="flex flex-col items-center gap-2">
-          {!showInfo && <View className="bg-primary size-10 rounded-full" />}
-          {showInfo && (
-            <View className="bg-white p-2 rounded-lg">
-              <Text className="text-black">{facilityName}</Text>
-              <Text className="text-black">{facilityContactInfo}</Text>
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
-    </MarkerView>
-  );
-});
 
 const RadarButtons = React.memo(({ onPress, icon, isActive }) => {
   return (
@@ -39,8 +21,13 @@ const RadarButtons = React.memo(({ onPress, icon, isActive }) => {
   );
 });
 
+const label = ["hazards", "facilities"];
+const icon = [icons.weatherbuttons, icons.search];
+
 const HazardFacilitiesWidget = () => {
   const userLocation = JSON.parse(userPermissionStore.getItem("location")) || { coords: { latitude: 10.65709, longitude: 122.948 } };
+
+  const bottomSheetRef = useRef(null);
 
   const [state, setState] = useState({
     sideButtons: "none",
@@ -50,68 +37,69 @@ const HazardFacilitiesWidget = () => {
     zoom: 14,
   });
 
-  const label = ["hazards", "facilities"];
-  const icon = [icons.weatherbuttons, icons.search];
-
   Mapbox.setTelemetryEnabled(false);
 
+
+  // USECALLBACK TO AVOID RE-RENDERING OF THE COMPONENT IF THE FUNCTION IS THE SAME
   const handleMapIdle = useCallback((e) => setState((prevState) => ({ ...prevState, zoom: e.zoomLevel })), []);
   const handleButtonPress = useCallback((item) => setState((prevState) => ({ ...prevState, sideButtons: item })), []);
-  const handleZoomPress = useCallback(() => setState((prevState) => ({ ...prevState, sideButtons: "zoom" })), []);
+  const handleZoomPress = useCallback(() => setState((prevState) => ({ ...prevState, sideButtons: "zoom", zoom: 14 })), []);
 
-  const EmergencySheet = useMemo(() => <EmergencyBottomSheet state={state} setState={setState} />, [state]);
-  const HazardSheet = useMemo(() => <HazardBottomSheet state={state} setState={setState} />, [state]);
+  const handleSheetChanges = useCallback((index) => {
+    if (index > 0) {
+      bottomSheetRef.current?.close();
+    }
+  }, []);
+
+  const openBottomSheet = useCallback(() => {
+    bottomSheetRef.current?.snapToIndex(0);
+  }, []);
+
+
+  // MEMOIZ THE COMPONENT // NOT RE-RENDERING THE COMPONENT IF THE STATE([state.hazard]) IS THE SAME
   const markerCoordinates = useMemo(() => [122.948, 10.65709], []);
+
+  const hazardLayerProps = useMemo(() => {
+    if (state.hazards === "Landslide") {
+      return {
+        vectorID: "NegrosOccidental_LandslideHazards",
+        vectorURL: "mapbox://jules-devs.7ruzm16q",
+        fillLayerID: "NegrosOccidental_LandslideHazards",
+        fillLayerSourceID: "NegrosOccidental_LandslideHazards",
+        style: { fillColor: ["interpolate", ["linear"], ["get", "LH"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"], fillOpacity: 0.8 },
+      };
+    }
+    if (state.hazards === "Flood") {
+      return {
+        vectorID: "NegrosOccidental_Flood_100yrs",
+        vectorURL: "mapbox://jules-devs.cqobnk0d",
+        fillLayerID: "NegrosOccidental_Flood_100yrs",
+        fillLayerSourceID: "NegrosOccidental_Flood_100yrs",
+        style: { fillColor: ["interpolate", ["linear"], ["get", "Var"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"], fillOpacity: 0.8 },
+      };
+    }
+    if (state.hazards === "Storm Surge") {
+      return {
+        vectorID: "NegrosOccidental_StormSurge4",
+        vectorURL: "mapbox://jules-devs.7bvixhp8",
+        fillLayerID: "NegrosOccidental_Flood_100yrs",
+        fillLayerSourceID: "NegrosOccidental_Flood_100yrs",
+        style: { fillColor: ["interpolate", ["linear"], ["get", "HAZ"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"], fillOpacity: 0.8 },
+      };
+    }
+    return null;
+  }, [state.hazards]);
 
   return (
     <SafeAreaView className="flex-1 bg-white flex justify-center items-center">
       <View className="relative h-full w-full">
         <MapView style={{ flex: 1 }} onMapIdle={handleMapIdle} styleURL="mapbox://styles/mapbox/light-v10">
           <Camera pitch={30} zoomLevel={state.zoom} centerCoordinate={[userLocation.coords.longitude, userLocation.coords.latitude]} />
-          <Marker coordinates={markerCoordinates} facilityName="UNO-R" facilityContactInfo="09951022578" />
           <UserLocation visible animated />
+          <Marker coordinates={markerCoordinates} onPress={openBottomSheet} facilityName="UNO-R" facilityContactInfo="09951022578" />
 
-          {/* Landslide */}
-          {state.hazards === "Landslide" && (
-            <HazardLayers
-              vectorID="NegrosOccidental_LandslideHazards"
-              vectorURL="mapbox://jules-devs.7ruzm16q"
-              fillLayerID="NegrosOccidental_LandslideHazards"
-              fillLayerSourceID="NegrosOccidental_LandslideHazards"
-              style={{
-                fillColor: ["interpolate", ["linear"], ["get", "LH"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"],
-                fillOpacity: 0.8,
-              }}
-            />
-          )}
-
-          {/* Flood Layers */}
-          {state.hazards === "Flood" && (
-            <HazardLayers
-              vectorID="NegrosOccidental_Flood_100yrs"
-              vectorURL="mapbox://jules-devs.cqobnk0d"
-              fillLayerID="NegrosOccidental_Flood_100yrs"
-              fillLayerSourceID="NegrosOccidental_Flood_100yrs"
-              style={{
-                fillColor: ["interpolate", ["linear"], ["get", "Var"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"],
-                fillOpacity: 0.8,
-              }}
-            />
-          )}
-
-          {/* Storm Surge Layers */}
-          {state.hazards === "Storm Surge" && (
-            <HazardLayers
-              vectorID="NegrosOccidental_StormSurge4"
-              vectorURL="mapbox://jules-devs.7bvixhp8"
-              fillLayerID="NegrosOccidental_StormSurge4"
-              fillLayerSourceID="NegrosOccidental_StormSurge4"
-              style={{
-                fillColor: ["interpolate", ["linear"], ["get", "HAZ"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"],
-                fillOpacity: 0.8,
-              }}
-            />
-          )}
+          {/* Hazard Layers */}
+          {hazardLayerProps && <HazardLayers {...hazardLayerProps} />}
         </MapView>
 
         {/* SIDE BUTTONS */}
@@ -126,10 +114,12 @@ const HazardFacilitiesWidget = () => {
           </TouchableOpacity>
         </View>
 
-        {/*FACILITY BOTTOM SHEET */}
-        {state.sideButtons === "facilities" && EmergencySheet}
-        {/*HAZARD BOTTOM SHEET */}
-        {state.sideButtons === "hazards" && HazardSheet}
+        {/* BOTTOM SHEET */}
+        <FacilitiesMarkerBottomSheet ref={bottomSheetRef} index={0} onChange={handleSheetChanges} state={state} setState />
+
+        {state.sideButtons === "hazards" && <HazardSelectionBottomSheet state={state} setState={setState} />}
+
+        {state.sideButtons === "facilities" && <FacilitiesSelectionBottomSheet state={state} setState={setState} />}
       </View>
     </SafeAreaView>
   );
