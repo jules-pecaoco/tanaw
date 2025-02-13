@@ -1,6 +1,4 @@
 import { View, Text, Image } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
 import { React, useState } from "react";
 
 import { testicons } from "@/constants/index";
@@ -19,7 +17,7 @@ const Forecast = () => {
   };
 
   return (
-    <SafeAreaView className="h-full bg-white">
+    <View className="flex-1 bg-white">
       <View className="h-full bg-gray-200 gap-5 flex justify-start items-center">
         {/* TOP */}
         <View className="flex flex-col items-center justify-between bg-white w-full p-4 gap-3">
@@ -69,9 +67,7 @@ const Forecast = () => {
           <TrendsWidget data="Bacolod City" />
         )}
       </View>
-
-      <StatusBar hidden />
-    </SafeAreaView>
+    </View>
   );
 };
 

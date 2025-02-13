@@ -1,12 +1,10 @@
 import { Image, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import CustomButton from "@/views/components/CustomButton";
 
 const IndexScreen = ({ title, titleDescription, description, textGuide ,logo, handlePress }) => {
   return (
-    <SafeAreaView className="h-full">
       <LinearGradient locations={[0.05, 0.1, 0.4, 0.6]} className="h-full" colors={["#E84E4C", "#f47c25", "#FFFFFF", "#3c454c"]}>
         <View className="h-full">
           <View className="h-2/5"></View>
@@ -27,9 +25,8 @@ const IndexScreen = ({ title, titleDescription, description, textGuide ,logo, ha
             ></CustomButton>
           </View>
         </View>
+        <StatusBar backgroundColor="#E84E4C" style="light"></StatusBar>
       </LinearGradient>
-      <StatusBar backgroundColor="#E84E4C" style="light"></StatusBar>
-    </SafeAreaView>
   );
 };
 

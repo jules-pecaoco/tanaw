@@ -115,7 +115,7 @@ const FacilitiesMarkerBottomSheet = React.forwardRef(({ data, handleSheetChanges
             <Text className="text-white text-center">Call Now</Text>
           </TouchableOpacity>
         </View>
-        ;
+        
       </BottomSheetView>
     </BottomSheet>
   );

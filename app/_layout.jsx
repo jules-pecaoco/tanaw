@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
 import { Stack, SplashScreen } from "expo-router";
 import * as Notifications from "expo-notifications";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import "@/global.css";
 // import { useNotificationSetup } from "../hooks/useNotificationSetup";
@@ -61,28 +62,30 @@ const RootLayout = () => {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack>
-        <Stack.Screen
-          name="index"
-          options={{
-            headerShown: false,
-          }}
-        ></Stack.Screen>
-        <Stack.Screen
-          name="(permissions)"
-          options={{
-            headerShown: false,
-          }}
-        ></Stack.Screen>
-        <Stack.Screen
-          name="(tabs)"
-          options={{
-            headerShown: false,
-          }}
-        ></Stack.Screen>
-      </Stack>
-    </GestureHandlerRootView>
+    <SafeAreaProvider className="flex-1">
+      <GestureHandlerRootView className="flex-1">
+        <Stack>
+          <Stack.Screen
+            name="index"
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="(permissions)"
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="(tabs)"
+            options={{
+              headerShown: false,
+            }}
+          />
+        </Stack>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 };
 

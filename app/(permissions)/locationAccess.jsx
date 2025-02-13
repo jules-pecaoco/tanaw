@@ -11,7 +11,7 @@ const Geolocation = () => {
   const getLocation = async () => {
     const location = await accessLocation();
     if (location) {
-      userPermissionStore.setItem("location", JSON.stringify(location));
+      userPermissionStore.setItem("userLocation", JSON.stringify(location));
     }
 
     router.push("/notificationAccess");
