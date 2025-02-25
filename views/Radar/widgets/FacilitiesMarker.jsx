@@ -2,7 +2,9 @@ import React from "react";
 import { MarkerView } from "@rnmapbox/maps";
 import { View, TouchableOpacity } from "react-native";
 
-const Marker = React.memo(({ coordinates,  onPress }) => {
+// MarketView is a component used to render a marker on the map, it a component MapView from the @rnmapbox/maps library
+
+const FacilitiesMarker = React.memo(({ coordinates,  onPress }) => {
 
   return (
     <MarkerView coordinate={coordinates}>
@@ -17,4 +19,4 @@ const Marker = React.memo(({ coordinates,  onPress }) => {
 
 
 
-export default Marker;
+export default FacilitiesMarker;

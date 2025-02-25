@@ -111,11 +111,10 @@ const FacilitiesMarkerBottomSheet = React.forwardRef(({ data, handleSheetChanges
           <Text className="text-black font-bold">UNO-R</Text>
           <Text className="text-black mb-2">09951022578</Text>
 
-          <TouchableOpacity className="bg-blue-500 p-2 rounded-md" onPress={() => handleCallPress("09951022578")}>
+          <TouchableOpacity className="bg-white p-2 rounded-md" onPress={() => handleCallPress("09951022578")}>
             <Text className="text-white text-center">Call Now</Text>
           </TouchableOpacity>
         </View>
-        
       </BottomSheetView>
     </BottomSheet>
   );
