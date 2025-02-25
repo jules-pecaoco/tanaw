@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 
-const MAPBOX_PUBLIC_TOKEN = "pk.eyJ1IjoianVsZXMtZGV2cyIsImEiOiJjbTZ6NGZnazIwMHhoMmtwenNvNXM5NXVxIn0.6opwvhdZlE5UZvjrrElbYQ";
+const MAPBOX_PUBLIC_TOKEN = Constants?.expoConfig?.extra?.MAPBOX_PUBLIC_KEY ?? process.env.MAPBOX_PUBLIC_KEY; ;
 const PROJECT_ID = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
 
 

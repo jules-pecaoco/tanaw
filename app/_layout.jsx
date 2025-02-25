@@ -4,24 +4,9 @@ import { Stack, SplashScreen } from "expo-router";
 import * as Notifications from "expo-notifications";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import "@/global.css";
-// import { useNotificationSetup } from "../hooks/useNotificationSetup";
-// import { TaskManager } from "expo-task-manager";
-
-// const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
-
-// TaskManager.defineTask(
-//   BACKGROUND_NOTIFICATION_TASK,
-//   ({ data, error, executionInfo }) => {
-//     console.log("✅ Received a notification in the background!", {
-//       data,
-//       error,
-//       executionInfo,
-//     });
-//   }
-// );
-// Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
 
 SplashScreen.preventAutoHideAsync();
 
@@ -61,31 +46,35 @@ const RootLayout = () => {
     return null;
   }
 
+  const queryClient = new QueryClient();
+
   return (
-    <SafeAreaProvider className="flex-1">
-      <GestureHandlerRootView className="flex-1">
-        <Stack>
-          <Stack.Screen
-            name="index"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="(permissions)"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="(tabs)"
-            options={{
-              headerShown: false,
-            }}
-          />
-        </Stack>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider className="flex-1">
+        <GestureHandlerRootView className="flex-1">
+          <Stack>
+            <Stack.Screen
+              name="index"
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="(permissions)"
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="(tabs)"
+              options={{
+                headerShown: false,
+              }}
+            />
+          </Stack>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 };
 

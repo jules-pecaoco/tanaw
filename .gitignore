@@ -45,3 +45,4 @@ google-services.json
 #build
 /ios
 /android
+.env
