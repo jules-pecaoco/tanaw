@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { icons } from "@/constants/index";
 import { PermissionData } from "@/data/textContent";
 import accessNotification from "@/utilities/accessNotification";
-import userPermissionStore from "@/context/userPermissionStore";
+import userPermissionStore from "@/storage/userPermissionStore";
 import PermissionScreen from "@/views/Permissions/PermissionScreen";
 
 const Notification = () => {

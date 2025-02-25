@@ -1,50 +1,118 @@
-# Welcome to your Expo app 👋
+# Tanaw - Hazard Mapping and Emergency Response Application
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Overview
 
-## Get started
+Tanaw is a mobile application built with React Native and Expo that provides real-time hazard mapping, heat index monitoring, and emergency facility locations. The app helps users stay informed about potential hazards and access emergency services when needed.
 
-1. Install dependencies
+## Features
+
+- 🌡️ Real-time heat index monitoring
+- 🗺️ Interactive hazard mapping
+- 🏥 Emergency facilities locator
+- 📊 Hazard analytics and visualization
+- 🔔 Alert and notification system
+
+## Prerequisites
+
+- Node.js (v16 or higher)
+- npm or yarn
+- Expo CLI
+- Android Studio (for Android development) (optional)
+- Xcode (for iOS development, macOS only) (optional)
+- Mapbox Account and Access Token
+
+## Installation and Setup
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone https://github.com/jules-pecaoco/tanaw.git
+   cd tanaw
+   ```
+
+2. **Install dependencies:**
 
    ```bash
    npm install
+   # or
+   yarn install
    ```
 
-2. Start the app
+3. **Environment Setup:**
+   Create a `.env` file in the root directory:
+
+   ```env
+   MAPBOX_ACCESS_TOKEN=your_mapbox_token_here
+   ```
+
+4. **Run the development server:**
 
    ```bash
-    npx expo start
+   npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+5. **Platform-specific commands:**
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   ```bash
+   # Run on Android
+   npx expo run:android
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+   # Run on iOS
+   npx expo run:ios
+   ```
 
-## Get a fresh project
+## Project Structure
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+tanaw/
+├── app/                    # Application navigation and screens
+│   ├── (tabs)/            # Tab-based navigation
+│   ├── (permissions)/     # Permission-related screens
+│   └── _layout.jsx        # Root layout configuration
+├── assets/                # Static assets
+│   ├── fonts/            # Custom fonts
+│   ├── icons/            # Application icons
+│   └── images/           # Images and graphics
+├── constants/            # Application constants
+│   ├── assets.js        # Asset references
+│   ├── fonts.js         # Font configurations
+│   └── theme.js         # Theme constants
+├── data/                # Application data
+│   ├── hazards/        # Hazard-related data
+│   └── facilities/     # Facility information
+├── hooks/              # Custom React hooks
+│   ├── useLocation.js  # Location handling
+│   └── useNotifications.js # Notification management
+├── services/           # API and external services
+│   ├── mapbox/        # Mapbox integration
+│   └── weather/       # Weather API integration
+├── storage/           # Local storage handling
+├── tokens/            # API tokens and auth
+├── utilities/         # Helper functions
+│   ├── permissions.js # Permission handlers
+│   └── validators.js  # Data validators
+└── views/             # UI components
+    ├── components/    # Reusable components
+    ├── screens/       # Main screens
+    └── widgets/       # Feature-specific widgets
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Key Technologies
 
-## Learn more
+- React Native
+- Expo
+- Mapbox GL
+- React Navigation
+- Expo Location
+- Expo Notifications
+- TailwindCSS (NativeWind)
 
-To learn more about developing your project with Expo, look at the following resources:
+## Contributing
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## Join the community
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.

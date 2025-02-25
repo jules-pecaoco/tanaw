@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { icons } from "@/constants/index";
 import { PermissionData } from "@/data/textContent";
 import PermissionScreen from "@/views/Permissions/PermissionScreen";
-import userPermissionStore from "@/context/userPermissionStore";
+import userPermissionStore from "@/storage/userPermissionStore";
 import accessLocation from "@/utilities/accessLocation";
 
 const Geolocation = () => {

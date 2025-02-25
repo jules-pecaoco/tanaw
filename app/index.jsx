@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { images } from "@/constants/index";
 import { IndexData } from "@/data/textContent";
-import userPermissionStore from "@/context/userPermissionStore";
+import userPermissionStore from "@/storage/userPermissionStore";
 import IndexScreen from "@/views/IndexScreen";
 
 const Index = () => {

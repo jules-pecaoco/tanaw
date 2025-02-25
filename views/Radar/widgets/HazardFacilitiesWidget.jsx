@@ -4,11 +4,8 @@ import Mapbox, { MapView, Camera, UserLocation } from "@rnmapbox/maps";
 
 import { icons } from "@/constants/index";
 import { FacilitiesSelectionBottomSheet, HazardSelectionBottomSheet, FacilitiesMarkerBottomSheet } from "./BottomSheets";
-import userPermissionStore from "@/context/userPermissionStore";
+import userPermissionStore from "@/storage/userPermissionStore";
 import accessLocation from "@/utilities/accessLocation";
-
-
-
 
 const label = ["hazards", "facilities"];
 const icon = [icons.weatherbuttons, icons.search];
@@ -25,7 +22,6 @@ const HazardFacilitiesWidget = () => {
   //   }
   // });
 
-
   const bottomSheetRef = useRef(null);
 
   const [state, setState] = useState({
@@ -35,7 +31,6 @@ const HazardFacilitiesWidget = () => {
     bottomSheetButtons: "",
     zoom: 14,
   });
-
 
   // USECALLBACK TO AVOID RE-RENDERING OF THE COMPONENT IF THE FUNCTION IS THE SAME
   const handleMapIdle = useCallback((e) => setState((prevState) => ({ ...prevState, zoom: e.zoomLevel })), []);
@@ -57,10 +52,8 @@ const HazardFacilitiesWidget = () => {
   // MEMOIZ THE COMPONENT // NOT RE-RENDERING THE COMPONENT IF THE STATE([state.hazard]) IS THE SAME
   const markerCoordinates = useMemo(() => [122.948, 10.65709], []);
 
-
   return (
     <View className="relative flex-1">
-
       {/* SIDE BUTTONS */}
       <View className="absolute bottom-20 right-10 flex justify-between flex-col gap-6">
         {label.map((item, index) => (
@@ -76,7 +69,7 @@ const HazardFacilitiesWidget = () => {
       {/* BOTTOM SHEET */}
       <FacilitiesMarkerBottomSheet ref={bottomSheetRef} index={0} onChange={handleSheetChanges} state={state} setState />
 
-      {state.sideButtons === "hazards" && <HazardSelectionBottomSheet  setState={setState} />}
+      {state.sideButtons === "hazards" && <HazardSelectionBottomSheet setState={setState} />}
 
       {state.sideButtons === "facilities" && <FacilitiesSelectionBottomSheet setState={setState} />}
     </View>

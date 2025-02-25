@@ -3,7 +3,7 @@ import { View } from "react-native";
 
 import { icons } from "@/constants/index";
 import { FacilitiesSelectionBottomSheet, HazardSelectionBottomSheet, FacilitiesMarkerBottomSheet } from "./widgets/BottomSheets";
-import userPermissionStore from "@/context/userPermissionStore";
+import userPermissionStore from "@/storage/userPermissionStore";
 import accessLocation from "@/utilities/accessLocation";
 import SideButtons from "./widgets/SideButtons";
 import BaseMap from "./widgets/BaseMap";
