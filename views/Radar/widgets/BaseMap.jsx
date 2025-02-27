@@ -1,27 +1,24 @@
-import Mapbox, { MapView, Camera, UserLocation } from "@rnmapbox/maps";
-import React, { useMemo } from "react";
+import Mapbox, { MapView, Camera, UserLocation, MarkerView } from "@rnmapbox/maps";
+import React, { useMemo, useEffect } from "react";
+import { View, Text } from "react-native";
+import { useQuery } from "@tanstack/react-query";
 
-import { MAPBOX_PUBLIC_TOKEN } from "@/tokens/tokens";
 import HazardLayers from "./HazardLayers";
 import FacilitiesMarker from "./FacilitiesMarker";
-
+import { MAPBOX_PUBLIC_TOKEN } from "@/tokens/tokens";
+import { RainViewerLayer, OpenWeatherLayer } from "./WeatherLayers";
+import { fetchNearbyCities } from "@/services/citiesAPI";
+import { fetchRainViewerData, fetchOpenWeatherData } from "@/services/weatherAPI";
 
 // MAPBOX IS A LIBRARY USED FOR RENDERING MAPS
 // ACCESS TOKEN REFERS TO PUBLIC TOKEN GIVEN BY MAPBOX API
 // TELEMETRY REFERS TO THE COLLECTION OF DATA
-
-// rn-mapbox is a library used for rendering maps in React Native
-// MapView is the main component for rendering maps
-// Camera is used to control the position of the camera
-// UserLocation is used to display the user's location on the map
-
-// Refer to the FacilitiesMarker component for the rendering of facilities markers
-// Refer to the HazardLayers component for the rendering of hazard layers
-
 Mapbox.setAccessToken(MAPBOX_PUBLIC_TOKEN);
 
 const BaseMap = ({ state, handleMapIdle, currentLocation, markerCoordinates, openBottomSheet }) => {
-  Mapbox.setTelemetryEnabled(false);
+  useEffect(() => {
+    Mapbox.setTelemetryEnabled(false);
+  }, []);
 
   const hazardLayerProps = useMemo(() => {
     if (state.hazards === "Landslide") {
@@ -49,20 +46,67 @@ const BaseMap = ({ state, handleMapIdle, currentLocation, markerCoordinates, ope
         style: { fillColor: ["interpolate", ["linear"], ["get", "HAZ"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"], fillOpacity: 0.8 },
       };
     }
-    return null;
   }, [state.hazards]);
 
-  return (
-    <MapView style={{ flex: 1 }} onMapIdle={handleMapIdle} styleURL="mapbox://styles/mapbox/light-v10">
-      <Camera pitch={30} zoomLevel={state.zoom} centerCoordinate={[currentLocation.longitude, currentLocation.latitude]} />
-      <UserLocation visible animated />
-      <FacilitiesMarker coordinates={markerCoordinates} onPress={openBottomSheet} facilityName="UNO-R" facilityContactInfo="09951022578" />
+  const {
+    data: nearbyCities,
+    isLoading: isLoadingNearbyCities,
+    error: isErrorNearbyCities,
+  } = useQuery({
+    queryKey: ["nearbyCities", currentLocation.latitude, currentLocation.longitude],
+    queryFn: () => fetchNearbyCities(currentLocation.latitude, currentLocation.longitude),
+    enabled: !!currentLocation.latitude && !!currentLocation.longitude,
+  });
 
-      {/* Hazard Layers */}
-      {state.hazards === "Flood" && <HazardLayers {...hazardLayerProps} />}
-      {state.hazards === "Landslide" && <HazardLayers {...hazardLayerProps} />}
-      {state.hazards === "Storm Surge" && <HazardLayers {...hazardLayerProps} />}
-    </MapView>
+  const {
+    data: openWeatherTile,
+    isLoading: isLoadingOpenWeatherTile,
+    error: isErroropenWeatherTile,
+  } = useQuery({
+    queryKey: ["openWeatherTile", "temp_new"],
+    queryFn: () => fetchOpenWeatherData("temp_new"),
+  });
+
+  const {
+    data: rainViewerData,
+    error: isErrorRainViewerData,
+    isLoading: isLoadingRainViewerData,
+  } = useQuery({
+    queryKey: ["rainViewerData"],
+    queryFn: fetchRainViewerData,
+  });
+
+  return (
+    <View className="flex-1">
+      <MapView style={{ flex: 1 }} onMapIdle={handleMapIdle} styleURL="mapbox://styles/mapbox/light-v10">
+        <Camera pitch={30} zoomLevel={state.zoom} centerCoordinate={[currentLocation.longitude, currentLocation.latitude]} />
+        <UserLocation visible animated />
+        <FacilitiesMarker coordinates={markerCoordinates} onPress={openBottomSheet} facilityName="UNO-R" facilityContactInfo="09951022578" />
+
+        {/* Cities Marker */}
+        {/* 
+        ))} */}
+
+        {/* Weather Layers */}
+        {state.weather === "Rain" && <RainViewerLayer rainViewerData={rainViewerData} />}
+        {state.weather === "Heat Index" && <OpenWeatherLayer openWeatherTile={openWeatherTile} />}
+        {state.weather === "Heat Index" &&
+          nearbyCities.map((city) => (
+            <MarkerView key={city.id} id={city.name} coordinate={[city.coord.lon, city.coord.lat]}>
+              <View className="p-1 bg-primary">
+                <Text className="font-rthin text-xs text-white">
+                  {city.name}: {Math.round(city.main.temp)}°C
+                </Text>
+              </View>
+            </MarkerView>
+          ))}
+
+        {/* Hazard Layers */}
+        {state.hazards === "Flood" && <HazardLayers {...hazardLayerProps} />}
+        {state.hazards === "Landslide" && <HazardLayers {...hazardLayerProps} />}
+        {state.hazards === "Storm Surge" && <HazardLayers {...hazardLayerProps} />}
+      </MapView>
+    </View>
   );
 };
 

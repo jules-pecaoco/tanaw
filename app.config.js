@@ -58,6 +58,7 @@ export default ({ config }) => ({
       projectId: "d9de4701-66fb-4402-88b5-18644a256c8e",
     },
     MAPBOX_PUBLIC_KEY: process.env.MAPBOX_PUBLIC_KEY,
+    OPEN_WEATHER_API_KEY: process.env.OPEN_WEATHER_API_KEY,
   },
   owner: "jules-pecaoco",
 });

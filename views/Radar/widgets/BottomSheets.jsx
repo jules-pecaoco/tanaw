@@ -2,13 +2,16 @@ import { View, Text, TouchableOpacity, Linking } from "react-native";
 import React from "react";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
-import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 const buttonConfig = {
+  weather: {
+    buttons: ["Rain", "Heat Index"],
+    icons: ["cloudy-snowing", "thermostat"],
+  },
   hazard: {
-    buttons: ["Heat Index", "Flood", "Landslide", "Storm Surge"],
-    icons: ["thermostat", "flood", "landslide", "tsunami"],
+    buttons: ["Flood", "Landslide", "Storm Surge"],
+    icons: ["flood", "landslide", "tsunami"],
   },
   emergency: {
     buttons: ["Hospitals", "Fire Stations", "Evac Sites"],
@@ -26,7 +29,7 @@ const SheetButton = ({ title, onPress, child, isactive, customStyle }) => {
       } ${customStyle} p-5 bg-white rounded-lg shadow-lg flex justify-center items-center border-[1px]`}
     >
       {child}
-      {title && <Text className="text-sm">{title}</Text>}
+      {title && <Text className="text-xs">{title}</Text>}
     </TouchableOpacity>
   );
 };
@@ -35,13 +38,33 @@ const HazardSelectionBottomSheet = ({ state, setState }) => {
   return (
     <View className="absolute bottom-0 w-full bg-white p-5">
       <View className="flex justify-between items-center flex-row">
-        <Text className="text-lg font-rregular">Hazard Type</Text>
+        <Text className="text-lg font-rregular">Weather Type</Text>
         <TouchableOpacity activeOpacity={0.5} onPress={() => setState({ ...state, sideButtons: "none" })}>
-          <Feather name="x" size={24} color="black" />
+          <MaterialIcons name="close" size={24} color="black" />
         </TouchableOpacity>
       </View>
 
-      <View className="flex flex-row justify-around items-center mt-5 gap-3 flex-wrap w-full">
+      <View className="flex flex-row justify-around items-center mt-5 gap-2 flex-wrap w-full">
+        {buttonConfig.weather.buttons.map((button, index) => (
+          <SheetButton
+            key={index}
+            title={button}
+            isactive={state.weather === button}
+            child={<MaterialIcons name={buttonConfig.weather.icons[index]} size={24} color="black" />}
+            onPress={() => {
+              setState({ ...state, weather: button });
+            }}
+            customStyle={`flex-1`}
+          />
+        ))}
+      </View>
+
+      <View className="w-full bg-black h-[2px] my-5"></View>
+
+      <View className="flex justify-between items-center flex-row">
+        <Text className="text-lg font-rregular">Hazard Type</Text>
+      </View>
+      <View className="flex flex-row justify-around items-center mt-5 gap-2 flex-wrap w-full">
         {buttonConfig.hazard.buttons.map((button, index) => (
           <SheetButton
             key={index}
@@ -51,7 +74,7 @@ const HazardSelectionBottomSheet = ({ state, setState }) => {
             onPress={() => {
               setState({ ...state, hazards: button });
             }}
-            customStyle={`w-[48%]`}
+            customStyle={`flex-1`}
           />
         ))}
       </View>
@@ -65,7 +88,7 @@ const FacilitiesSelectionBottomSheet = ({ state, setState }) => {
       <View className="flex justify-between items-center flex-row">
         <Text className="text-lg font-rregular">Emergency Facilities</Text>
         <TouchableOpacity activeOpacity={0.5} onPress={() => setState({ ...state, sideButtons: "none" })}>
-          <Feather name="x" size={24} color="black" />
+          <MaterialIcons name="close" size={24} color="black" />
         </TouchableOpacity>
       </View>
 

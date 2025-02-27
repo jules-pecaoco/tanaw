@@ -36,6 +36,7 @@ const RadarScreen = () => {
 
   const [state, setState] = useState({
     sideButtons: "none",
+    weather: "",
     facilities: "",
     hazards: "",
     bottomSheetButtons: "",
@@ -62,6 +63,7 @@ const RadarScreen = () => {
 
   const markerCoordinates = useMemo(() => [122.948, 10.65709], []);
 
+
   return (
     <View className="relative flex-1">
       {/* BASE MAP */}
@@ -79,6 +81,7 @@ const RadarScreen = () => {
         <SideButtons onPress={() => handleSideButtonPress("facilities")} icon={icons.search} isActive={state.sideButtons === "facilities"} />
         <SideButtons onPress={handleZoomPress} icon={icons.locationpinning} isActive={state.sideButtons === "zoom"} />
       </View>
+
 
       {/* BOTTOM SHEET */}
       <FacilitiesMarkerBottomSheet ref={bottomSheetRef} index={0} onChange={handleSheetChanges} state={state} setState />
