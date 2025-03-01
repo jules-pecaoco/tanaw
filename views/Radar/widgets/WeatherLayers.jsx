@@ -1,5 +1,3 @@
-// components/RainViewerLayer.js
-import React, { useMemo } from "react";
 import { RasterLayer, RasterSource } from "@rnmapbox/maps";
 
 const RainViewerLayer = ({ rainViewerTile }) => {

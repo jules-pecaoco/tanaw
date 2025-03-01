@@ -1,10 +1,16 @@
 import React, { useState, useCallback, useMemo, useRef } from "react";
 import { View } from "react-native";
+import { useQuery } from "@tanstack/react-query";
 
+import { fetchNegrosWeather } from "@/services/citiesAPI";
+import { fetchRainViewerData, fetchOpenWeatherData } from "@/services/weatherAPI";
 import { icons } from "@/constants/index";
 import { FacilitiesSelectionBottomSheet, HazardSelectionBottomSheet, FacilitiesMarkerBottomSheet } from "./widgets/BottomSheets";
+import { RainViewerLayer, OpenWeatherLayer } from "./widgets/WeatherLayers";
 import userPermissionStore from "@/storage/userPermissionStore";
 import accessLocation from "@/utilities/accessLocation";
+import HazardLayers from "./widgets/HazardLayers";
+import CitiesWeatherMarker from "./widgets/CitiesWeatherMarker";
 import SideButtons from "./widgets/SideButtons";
 import BaseMap from "./widgets/BaseMap";
 
@@ -39,7 +45,6 @@ const RadarScreen = () => {
     weather: "",
     facilities: "",
     hazards: "",
-    bottomSheetButtons: "",
     zoom: 14,
   });
 
@@ -61,19 +66,77 @@ const RadarScreen = () => {
     bottomSheetRef.current?.snapToIndex(0);
   }, []);
 
-  const markerCoordinates = useMemo(() => [122.948, 10.65709], []);
+  const hazardLayerProps = useMemo(() => {
+    if (state.hazards === "Landslide") {
+      return {
+        vectorID: "NegrosIsland_LandslideHazards",
+        vectorURL: "mapbox://jules-devs.9zcm6cw2",
+        fillLayerID: "NegrosIsland_LandslideHazards",
+        fillLayerSourceID: "landslide_hazards",
+        style: { fillColor: ["interpolate", ["linear"], ["get", "LH"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"], fillOpacity: 0.8 },
+      };
+    } else if (state.hazards === "Flood") {
+      return {
+        vectorID: "NegrosIsland_Flood_100yrs",
+        vectorURL: "mapbox://jules-devs.d2mxk33n",
+        fillLayerID: "NegrosIsland_Flood_100yrs",
+        fillLayerSourceID: "flood_100year",
+        style: { fillColor: ["interpolate", ["linear"], ["get", "Var"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"], fillOpacity: 0.8 },
+      };
+    } else if (state.hazards === "Storm Surge") {
+      return {
+        vectorID: "NegrosIsland_StormSurge4",
+        vectorURL: "mapbox://jules-devs.98uih7xf",
+        fillLayerID: "NegrosIsland_StormSurge4",
+        fillLayerSourceID: "storm_surge_ssa4",
+        style: { fillColor: ["interpolate", ["linear"], ["get", "HAZ"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"], fillOpacity: 0.8 },
+      };
+    }
 
+    return null;
+  }, [state.hazards]);
+
+  const {
+    data: negrosWeather,
+    isLoading: isLoadingNegrosWeather,
+    error: isErrorNegrosWeather,
+  } = useQuery({
+    queryKey: ["negrosWeatherData"],
+    queryFn: fetchNegrosWeather,
+  });
+
+  const {
+    data: openWeatherTile,
+    isLoading: isLoadingOpenWeatherTile,
+    error: isErroropenWeatherTile,
+  } = useQuery({
+    queryKey: ["openWeatherTile", "temp_new"],
+    queryFn: () => fetchOpenWeatherData("temp_new"),
+  });
+
+  const {
+    data: rainViewerTile,
+    error: isErrorrainViewerTile,
+    isLoading: isLoadingrainViewerTile,
+  } = useQuery({
+    queryKey: ["rainViewerData"],
+    queryFn: fetchRainViewerData,
+  });
 
   return (
     <View className="relative flex-1">
       {/* BASE MAP */}
-      <BaseMap
-        state={state}
-        openBottomSheet={openBottomSheet}
-        markerCoordinates={markerCoordinates}
-        handleMapIdle={handleMapIdle}
-        currentLocation={currentLocation}
-      />
+      <BaseMap state={state} openBottomSheet={openBottomSheet} handleMapIdle={handleMapIdle} currentLocation={currentLocation}>
+        {/* Hazard Layers */}
+        {state.hazards === "Flood" && <HazardLayers {...hazardLayerProps} />}
+        {state.hazards === "Landslide" && <HazardLayers {...hazardLayerProps} />}
+        {state.hazards === "Storm Surge" && <HazardLayers {...hazardLayerProps} />}
+
+        {/* Weather Layers */}
+        {state.weather === "Rain" && <RainViewerLayer rainViewerTile={rainViewerTile} />}
+        {state.weather === "Heat Index" && <OpenWeatherLayer openWeatherTile={openWeatherTile} />}
+        {state.weather === "Heat Index" && <CitiesWeatherMarker negrosWeather={negrosWeather} />}
+      </BaseMap>
 
       {/* SIDE BUTTONS */}
       <View className="absolute bottom-20 right-10 flex justify-between flex-col gap-6">
@@ -81,7 +144,6 @@ const RadarScreen = () => {
         <SideButtons onPress={() => handleSideButtonPress("facilities")} icon={icons.search} isActive={state.sideButtons === "facilities"} />
         <SideButtons onPress={handleZoomPress} icon={icons.locationpinning} isActive={state.sideButtons === "zoom"} />
       </View>
-
 
       {/* BOTTOM SHEET */}
       <FacilitiesMarkerBottomSheet ref={bottomSheetRef} index={0} onChange={handleSheetChanges} state={state} setState />
