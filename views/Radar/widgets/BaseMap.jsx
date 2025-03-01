@@ -46,6 +46,8 @@ const BaseMap = ({ state, handleMapIdle, currentLocation, markerCoordinates, ope
         style: { fillColor: ["interpolate", ["linear"], ["get", "HAZ"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"], fillOpacity: 0.8 },
       };
     }
+
+    return null;
   }, [state.hazards]);
 
   const {
@@ -68,13 +70,14 @@ const BaseMap = ({ state, handleMapIdle, currentLocation, markerCoordinates, ope
   });
 
   const {
-    data: rainViewerData,
-    error: isErrorRainViewerData,
-    isLoading: isLoadingRainViewerData,
+    data: rainViewerTile,
+    error: isErrorrainViewerTile,
+    isLoading: isLoadingrainViewerTile,
   } = useQuery({
     queryKey: ["rainViewerData"],
     queryFn: fetchRainViewerData,
   });
+
 
   return (
     <View className="flex-1">
@@ -83,12 +86,8 @@ const BaseMap = ({ state, handleMapIdle, currentLocation, markerCoordinates, ope
         <UserLocation visible animated />
         <FacilitiesMarker coordinates={markerCoordinates} onPress={openBottomSheet} facilityName="UNO-R" facilityContactInfo="09951022578" />
 
-        {/* Cities Marker */}
-        {/* 
-        ))} */}
-
         {/* Weather Layers */}
-        {state.weather === "Rain" && <RainViewerLayer rainViewerData={rainViewerData} />}
+        {state.weather === "Rain" && <RainViewerLayer rainViewerTile={rainViewerTile} />}
         {state.weather === "Heat Index" && <OpenWeatherLayer openWeatherTile={openWeatherTile} />}
         {state.weather === "Heat Index" &&
           nearbyCities.map((city) => (
