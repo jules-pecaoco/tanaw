@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { icons } from "@/constants/index";
 import { PermissionData } from "@/data/textContent";
 import accessNotification from "@/utilities/accessNotification";
-import userPermissionStore from "@/storage/userPermissionStore";
+import userStorage from "@/storage/userStorage";
 import PermissionScreen from "@/views/Permissions/PermissionScreen";
 
 const Notification = () => {
@@ -11,11 +11,11 @@ const Notification = () => {
   const getNotificationPermission = async () => {
     const token = await accessNotification();
     if (token) {
-      userPermissionStore.setItem("expoPushToken", token);
+      userStorage.setItem("expoPushToken", token);
       
     }
 
-    userPermissionStore.setItem("hasVisitedPermissionScreen", "true");
+    userStorage.setItem("hasVisitedPermissionScreen", "true");
     router.replace("/radar");
   };
 

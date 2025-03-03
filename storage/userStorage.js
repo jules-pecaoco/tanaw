@@ -4,7 +4,7 @@ import { MMKV } from "react-native-mmkv";
 
 const storage = new MMKV();
 
-const userPermissionStore = {
+const userStorage = {
   setItem: (name, value) => {
     return storage.set(name, value);
   },
@@ -17,4 +17,4 @@ const userPermissionStore = {
   },
 };
 
-export default userPermissionStore;
+export default userStorage;

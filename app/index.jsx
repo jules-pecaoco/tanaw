@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { images } from "@/constants/index";
 import { IndexData } from "@/data/textContent";
-import userPermissionStore from "@/storage/userPermissionStore";
+import userStorage from "@/storage/userStorage";
 import IndexScreen from "@/views/IndexScreen";
 
 const Index = () => {
@@ -11,7 +11,7 @@ const Index = () => {
 
   useEffect(() => {
     const checkVisitedStatus = () => {
-      const hasVisitedPermissionScreen = userPermissionStore.getItem("hasVisitedPermissionScreen");
+      const hasVisitedPermissionScreen = userStorage.getItem("hasVisitedPermissionScreen");
 
       if (hasVisitedPermissionScreen) {
         setTimeout(() => {
@@ -25,7 +25,7 @@ const Index = () => {
   }, []);
 
   // If the user has visited the permission screen, then we don't need to show the index screen
-  if (!isReady && userPermissionStore.getItem("hasVisitedPermissionScreen")) {
+  if (!isReady && userStorage.getItem("hasVisitedPermissionScreen")) {
     return null;
   }
 

@@ -6,11 +6,11 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 const buttonConfig = {
   weather: {
-    buttons: ["Rain", "Heat Index"],
+    buttons: ["Rain", "HeatIndex"],
     icons: ["cloudy-snowing", "thermostat"],
   },
   hazard: {
-    buttons: ["Flood", "Landslide", "Storm Surge"],
+    buttons: ["Flood", "Landslide", "StormSurge"],
     icons: ["flood", "landslide", "tsunami"],
   },
   emergency: {
@@ -39,7 +39,7 @@ const HazardSelectionBottomSheet = ({ state, setState }) => {
     <View className="absolute bottom-0 w-full bg-white p-5">
       <View className="flex justify-between items-center flex-row">
         <Text className="text-lg font-rregular">Weather Type</Text>
-        <TouchableOpacity activeOpacity={0.5} onPress={() => setState({ ...state, sideButtons: "none" })}>
+        <TouchableOpacity activeOpacity={0.5} onPress={() => setState({ ...state, activeBottomSheet: "none" })}>
           <MaterialIcons name="close" size={24} color="black" />
         </TouchableOpacity>
       </View>
@@ -49,10 +49,15 @@ const HazardSelectionBottomSheet = ({ state, setState }) => {
           <SheetButton
             key={index}
             title={button}
-            isactive={state.weather === button}
+            isactive={state.weatherLayer.type === button}
             child={<MaterialIcons name={buttonConfig.weather.icons[index]} size={24} color="black" />}
             onPress={() => {
-              setState({ ...state, weather: button });
+              setState({
+                ...state,
+                weatherLayer: {
+                  type: state.weatherLayer.type === button ? "none" : button,
+                },
+              });
             }}
             customStyle={`flex-1`}
           />
@@ -69,10 +74,16 @@ const HazardSelectionBottomSheet = ({ state, setState }) => {
           <SheetButton
             key={index}
             title={button}
-            isactive={state.hazards === button}
+            isactive={state.isHazardLayerActive[button]}
             child={<MaterialIcons name={buttonConfig.hazard.icons[index]} size={24} color="black" />}
             onPress={() => {
-              setState({ ...state, hazards: button });
+              setState({
+                ...state,
+                isHazardLayerActive: {
+                  ...state.isHazardLayerActive,
+                  [button]: !state.isHazardLayerActive[button], // Toggle current value
+                },
+              });
             }}
             customStyle={`flex-1`}
           />
@@ -87,7 +98,7 @@ const FacilitiesSelectionBottomSheet = ({ state, setState }) => {
     <View className={`absolute bottom-0 w-full bg-white p-5`}>
       <View className="flex justify-between items-center flex-row">
         <Text className="text-lg font-rregular">Emergency Facilities</Text>
-        <TouchableOpacity activeOpacity={0.5} onPress={() => setState({ ...state, sideButtons: "none" })}>
+        <TouchableOpacity activeOpacity={0.5} onPress={() => setState({ ...state, activeBottomSheet: "none" })}>
           <MaterialIcons name="close" size={24} color="black" />
         </TouchableOpacity>
       </View>
@@ -97,9 +108,17 @@ const FacilitiesSelectionBottomSheet = ({ state, setState }) => {
           <SheetButton
             key={index}
             title={button}
-            isactive={state.facilities === button}
+            isactive={state.isFacilitiesLayerActive[button]}
             child={<MaterialIcons name={buttonConfig.emergency.icons[index]} size={25} color="black" />}
-            onPress={() => setState({ ...state, facilities: button })}
+            onPress={() =>
+              setState({
+                ...state,
+                isFacilitiesLayerActive: {
+                  ...state.isFacilitiesLayerActive,
+                  [button]: !state.isFacilitiesLayerActive[button], // Toggle current value
+                },
+              })
+            }
             customStyle={``}
           />
         ))}

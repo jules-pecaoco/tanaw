@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { icons } from "@/constants/index";
 import { PermissionData } from "@/data/textContent";
 import PermissionScreen from "@/views/Permissions/PermissionScreen";
-import userPermissionStore from "@/storage/userPermissionStore";
+import userStorage from "@/storage/userStorage";
 import accessLocation from "@/utilities/accessLocation";
 
 const Geolocation = () => {
@@ -11,7 +11,7 @@ const Geolocation = () => {
   const getLocation = async () => {
     const location = await accessLocation();
     if (location) {
-      userPermissionStore.setItem("userLocation", JSON.stringify(location));
+      userStorage.setItem("userLocation", JSON.stringify(location));
     }
 
     router.push("/notificationAccess");

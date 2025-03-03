@@ -7,10 +7,12 @@ import { VectorSource, FillLayer } from "@rnmapbox/maps";
 // url is the source of the vector data
 // sourceLayerID is the layer name of the source
 
-const HazardLayers = React.memo(({ vectorID, vectorURL, fillLayerID, fillLayerSourceID, style }) => {
+const HazardLayers = React.memo(({ props }) => {
+  const { id, vectorURL, fillLayerSourceID, style } = props;
+  console.log("HazardLayers", id);
   return (
-    <VectorSource id={vectorID} url={vectorURL}>
-      <FillLayer id={fillLayerID} sourceLayerID={fillLayerSourceID} style={style} />
+    <VectorSource id={id} url={vectorURL}>
+      <FillLayer id={id} sourceLayerID={fillLayerSourceID} style={style} />
     </VectorSource>
   );
 });

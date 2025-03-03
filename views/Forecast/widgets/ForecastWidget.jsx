@@ -3,14 +3,14 @@ import React from "react";
 
 const Daycast = ({ time, caution, temp, icon }) => {
   return (
-    <View className="bg-white w-[95%] p-4 justify-between rounded-xl flex flex-row items-center self-center justify-self-center mb-3">
+    <View className="bg-white w-[95%] p-4 rounded-xl flex flex-row items-center justify-between self-center mb-3">
       <View>
-        <Text className="text-2xl font-rsemibold">{time}</Text>
-        <Text className="text-md font-rregular">{caution}</Text>
+        <Text className="text-2xl font-semibold">{time}</Text>
+        <Text className="text-md font-regular">{caution}</Text>
       </View>
-      <View className="flex flex-row items-center justify-center gap-4">
-        <Text className="font-rmedium text-3xl">{temp}</Text>
-        <Image source={icon}></Image>
+      <View className="flex flex-row items-center gap-4">
+        <Text className="text-3xl font-medium">{temp}°C</Text>
+        {icon && <Image source={{ uri: icon }} style={{ width: 40, height: 40 }} />}
       </View>
     </View>
   );
@@ -31,25 +31,34 @@ const ForecastWidget = ({ data }) => {
     <>
       {/* HOURLY FORECAST */}
       <View className="flex flex-col items-center justify-around bg-white w-[95%] p-4 gap-3 rounded-xl">
-        <View className="flex flex-row items-center w-full gap-3">
+        {/* <View className="flex flex-row items-center w-full gap-3">
           <Image source={data.icons.hour}></Image>
           <Text className="font-rregular text-md">Hourly Forecast</Text>
-        </View>
+        </View> */}
         {/* TIMESTAMP */}
-        <View className="flex flex-row items-center justify-around w-full">
+        {/* <View className="flex flex-row items-center justify-around w-full">
           {data.hourCast.map((item) => (
             <Hourcast key={item.id} time={item.time} temp={item.temp} icon={data.icons.heat} />
           ))}
-        </View>
+        </View> */}
       </View>
+
+      {console.log(data)}
 
       {/* DAY FORECAST */}
       <FlatList
         showsVerticalScrollIndicator={false}
         className="w-full flex"
-        data={data.dayCast}
-        renderItem={({ item }) => <Daycast time={item.time} caution={item.caution} temp={item.temp} icon={data.icons.heatindex} />}
-        keyExtractor={(item) => item.id}
+        data={data?.forecast} 
+        renderItem={({ item }) => (
+          <Daycast
+            time={new Date(item.dt * 1000).toLocaleDateString()} 
+            caution={item.weather[0]?.description || "No data"}
+            temp={Math.round(item.temp.day)}
+            icon={`https://openweathermap.org/img/wn/${item.weather[0]?.icon}.png`}
+          />
+        )}
+        keyExtractor={(item) => item.dt.toString()} 
       />
     </>
   );

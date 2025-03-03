@@ -59,6 +59,7 @@ export default ({ config }) => ({
     },
     MAPBOX_PUBLIC_KEY: process.env.MAPBOX_PUBLIC_KEY,
     OPEN_WEATHER_API_KEY: process.env.OPEN_WEATHER_API_KEY,
+    TOMORROWIO_API_KEY: process.env.TOMORROWIO_API_KEY,
   },
   owner: "jules-pecaoco",
 });
