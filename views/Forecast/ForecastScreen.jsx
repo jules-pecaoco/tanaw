@@ -2,7 +2,6 @@ import { View, Text, Image, ActivityIndicator } from "react-native";
 import { React, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { AnalyticsData } from "@/data/sampleData";
 import { fetchUserWeather } from "@/services/userWeatherAPI";
 import CustomButton from "@/views/components/CustomButton";
 import ForecastWidget from "@/views/Forecast/widgets/ForecastWidget";
@@ -39,6 +38,7 @@ const ForecastScreen = () => {
     error: isErrorNegrosWeather,
   } = useQuery({
     queryKey: ["negrosWeatherData"],
+    queryFn: fetchUserWeather,
   });
 
   let closestHour = null;

@@ -1,23 +1,35 @@
 import { router } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 import { icons } from "@/constants/index";
 import { PermissionData } from "@/data/textContent";
 import accessNotification from "@/utilities/accessNotification";
-import userStorage from "@/storage/userStorage";
 import PermissionScreen from "@/views/Permissions/PermissionScreen";
+import userStorage from "@/storage/userStorage";
 
 const Notification = () => {
   // NOTIFICATION PERMISSION
-  const getNotificationPermission = async () => {
-    const token = await accessNotification();
-    if (token) {
-      userStorage.setItem("expoPushToken", token);
-      
-    }
+  const {
+    data: expoToken,
+    refetch,
+    isLoading,
+  } = useQuery({
+    queryKey: ["expoToken"],
+    queryFn: accessNotification,
+    enabled: false,
+  });
 
-    userStorage.setItem("hasVisitedPermissionScreen", "true");
-    router.replace("/radar");
+  const nextScreen = () => {
+    refetch();
   };
+
+  useEffect(() => {
+    if (expoToken) {
+      userStorage.setItem("expoToken", expoToken);
+      router.push("/radar");
+    }
+  }, [isLoading, expoToken]);
 
   // STYLES
   const gradient = {
@@ -33,11 +45,12 @@ const Notification = () => {
       permissionTitle={PermissionData.notification.title}
       permissionTitleDescription={PermissionData.notification.titleDescription}
       permissionDescription={PermissionData.notification.description}
-      handlePress={() => getNotificationPermission()}
+      handlePress={() => nextScreen()}
       gradient={gradient}
       statusBarColor={statusBarColor}
       permissionType="notification"
       buttonText="Start"
+      disabled={isLoading}
     />
   );
 };

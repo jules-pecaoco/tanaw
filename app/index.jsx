@@ -1,35 +1,37 @@
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { images } from "@/constants/index";
 import { IndexData } from "@/data/textContent";
-import userStorage from "@/storage/userStorage";
+import { useQuery } from "@tanstack/react-query";
 import IndexScreen from "@/views/IndexScreen";
+import userStorage from "@/storage/userStorage";
 
 const Index = () => {
-  const [isReady, setIsReady] = useState(false);
+  const { data: hasVisited, isLoading } = useQuery({
+    queryKey: ["hasVisited"],
+    queryFn: () => {
+      const visited = userStorage.getItem("hasVisited");
+      return visited === "true";
+    },
+  });
+
+  const nextScreen = () => {
+    router.push("/locationAccess");
+    // userStorage.setItem("hasVisited", "true");
+  };
 
   useEffect(() => {
-    const checkVisitedStatus = () => {
-      const hasVisitedPermissionScreen = userStorage.getItem("hasVisitedPermissionScreen");
-
-      if (hasVisitedPermissionScreen) {
-        setTimeout(() => {
-          setIsReady(true);
-          router.replace("/radar");
-        }, 0);
-      }
-    };
-
-    checkVisitedStatus();
-  }, []);
-
-  // If the user has visited the permission screen, then we don't need to show the index screen
-  if (!isReady && userStorage.getItem("hasVisitedPermissionScreen")) {
-    return null;
-  }
+    if (hasVisited) {
+      router.push("/radar");
+    }
+  }, [hasVisited]);
 
   const icon = images.tanawLogoWhite;
+
+  if (hasVisited) {
+    return null;
+  }
 
   return (
     <IndexScreen
@@ -38,7 +40,7 @@ const Index = () => {
       description={IndexData.description}
       textGuide={IndexData.textGuide}
       logo={icon}
-      handlePress={() => router.push("/locationAccess")}
+      handlePress={() => nextScreen()}
     />
   );
 };

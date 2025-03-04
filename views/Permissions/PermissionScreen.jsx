@@ -1,4 +1,4 @@
-import { Image, Text, View } from "react-native";
+import { Image, Text, View, ActivityIndicator } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -14,6 +14,7 @@ const PermissionScreen = ({
   statusBarColor,
   permissionType,
   buttonText,
+  disabled,
 }) => {
   return (
     <LinearGradient locations={[0, 0.4]} className="flex-1" colors={[gradient.first, gradient.second]}>
@@ -40,15 +41,16 @@ const PermissionScreen = ({
           </View>
 
           <CustomButton
+            disabled={disabled}
             handlePress={handlePress}
             title={buttonText}
             containerStyles="h-fit w-10/12"
-            textStyles="bg-white text-center py-3 rounded-xl font-semibold bg"
+            textStyles="bg-white text-center py-3 rounded-xl font-semibold"
           />
         </View>
       </View>
       <StatusBar style="auto" translucent={false} backgroundColor={statusBarColor} />
-      </LinearGradient>
+    </LinearGradient>
   );
 };
 

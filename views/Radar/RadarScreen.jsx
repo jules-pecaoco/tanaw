@@ -7,11 +7,12 @@ import { fetchRainViewerData, fetchOpenWeatherData } from "@/services/weatherLay
 import { icons } from "@/constants/index";
 import { FacilitiesSelectionBottomSheet, HazardSelectionBottomSheet, FacilitiesMarkerBottomSheet } from "./widgets/BottomSheets";
 import { RainViewerLayer, OpenWeatherLayer } from "./widgets/WeatherLayers";
-import userStorage from "@/storage/userStorage";
 import HazardLayers from "./widgets/HazardLayers";
 import CitiesWeatherMarker from "./widgets/CitiesWeatherMarker";
 import SideButtons from "./widgets/SideButtons";
 import BaseMap from "./widgets/BaseMap";
+import accessLocation from "@/utilities/accessLocation";
+import userStorage from "@/storage/userStorage";
 
 // REFER TO BaseMap for Map Rendering
 // BottomSheets includes a BottomSheet Library by Gorhom
@@ -28,15 +29,21 @@ import BaseMap from "./widgets/BaseMap";
 // - If React 19 in Expo is stable, remove callbacks and memoization
 
 const RadarScreen = () => {
+  console.log("RadarScreen");
+  const {
+    data: userLocation,
+    refetch,
+    isLoading,
+  } = useQuery({
+    queryKey: ["userLocation"],
+    queryFn: accessLocation,
+    enabled: false,
+  });
+
   const [currentLocation, setCurrentLocation] = useState(() => {
-    try {
-      const location = JSON.parse(userStorage.getItem("userLocation"));
-      if (location && location.coords) {
-        return { latitude: location.coords.latitude, longitude: location.coords.longitude };
-      }
-    } catch (error) {
-      return { latitude: 10.65709, longitude: 122.948 };
-    }
+    if (userLocation && userLocation.coords) {
+      return { latitude: userLocation.coords.latitude, longitude: userLocation.coords.longitude };
+    } else return { latitude: 10.65709, longitude: 122.948 };
   });
 
   // GLOBAL STATE FOR RADAR
@@ -75,7 +82,7 @@ const RadarScreen = () => {
         centerCoordinate: [currentLocation.longitude, currentLocation.latitude],
         animationDuration: 1000,
         pitch: 30,
-        heading: 0, 
+        heading: 0,
       });
 
       setState({ ...state, activeBottomSheet: item });
@@ -128,6 +135,7 @@ const RadarScreen = () => {
   } = useQuery({
     queryKey: ["negrosWeatherData"],
     queryFn: fetchNegrosWeather,
+    persist: true,
   });
 
   const {
