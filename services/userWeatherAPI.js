@@ -1,10 +1,10 @@
 import axios from "axios";
 import { OPEN_WEATHER_API_KEY } from "@/tokens/tokens";
 
-const OPENWEATHER_FORECAST_API_URL = "https://api.openweathermap.org/data/2.5/forecast";
+const OPENWEATHER_FORECAST_API_URL = "https://api.openweathermap.org/data/2.5/forecast/daily";
 const OPENWEATHER_HOURLY_API_URL = "https://pro.openweathermap.org/data/2.5/forecast/hourly";
 
-const fetchForecastData = async ({ currentLocation }) => {
+const fetchDailytData = async ({ currentLocation }) => {
   console.log(currentLocation);
   console.log("Fetching foreast data.....");
 
@@ -33,6 +33,7 @@ const fetchHourlyData = async ({ currentLocation }) => {
         lat: currentLocation.latitude,
         lon: currentLocation.longitude,
         units: "metric",
+        cnt: 12,
         appid: OPEN_WEATHER_API_KEY,
       },
     });
@@ -45,7 +46,7 @@ const fetchHourlyData = async ({ currentLocation }) => {
 };
 
 const fetchUserWeather = async ({ currentLocation }) => {
-  const forecastData = await fetchForecastData({ currentLocation });
+  const forecastData = await fetchDailytData({ currentLocation });
   const hourlyData = await fetchHourlyData({ currentLocation });
 
   return {

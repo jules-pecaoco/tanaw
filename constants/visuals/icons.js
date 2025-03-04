@@ -9,5 +9,7 @@ import notifications from '@/assets/icons/notifications.png';
 import radar from '@/assets/icons/radar.png';
 import search from '@/assets/icons/search.png';
 import weatherbuttons from '@/assets/icons/weatherbuttons.png';
+import hour from '@/assets/testicons/forecast-hour.png';
 
-export default { bell, evacuationsite, firestation, hospital, gps, forecast, locationpinning, notifications, radar, search, weatherbuttons };
+
+export default { bell, evacuationsite, firestation, hospital, gps, forecast, locationpinning, notifications, radar, search, weatherbuttons, hour };

@@ -1,16 +1,18 @@
 import { View, Text, Image, FlatList } from "react-native";
 import React from "react";
 
+import { icons } from "@/constants/index";
+
 const Daycast = ({ time, caution, temp, icon }) => {
   return (
     <View className="bg-white w-[95%] p-4 rounded-xl flex flex-row items-center justify-between self-center mb-3">
       <View>
-        <Text className="text-2xl font-semibold">{time}</Text>
-        <Text className="text-md font-regular">{caution}</Text>
+        <Text className="text-2xl font-rmedium">{time}</Text>
+        <Text className="text-md font-rregular">{caution}</Text>
       </View>
       <View className="flex flex-row items-center gap-4">
-        <Text className="text-3xl font-medium">{temp}°C</Text>
-        {icon && <Image source={{ uri: icon }} style={{ width: 40, height: 40 }} />}
+        <Text className="text-4xl font-rregular">{temp}°C</Text>
+        {icon && <Image className="size-16" source={{ uri: icon }} />}
       </View>
     </View>
   );
@@ -18,10 +20,10 @@ const Daycast = ({ time, caution, temp, icon }) => {
 
 const Hourcast = ({ time, temp, icon }) => {
   return (
-    <View className="flex flex-col items-center justify-center gap-2">
+    <View className="flex flex-col items-center justify-center gap-2 mr-8">
       <Text className="text-md font-rregular">{time}</Text>
-      <Image source={icon}></Image>
-      <Text className="text-md font-rregular">{temp}</Text>
+      {icon && <Image className="size-10" source={{ uri: icon }} />}
+      <Text className="text-md font-rregular">{temp}°C</Text>
     </View>
   );
 };
@@ -31,34 +33,69 @@ const ForecastWidget = ({ data }) => {
     <>
       {/* HOURLY FORECAST */}
       <View className="flex flex-col items-center justify-around bg-white w-[95%] p-4 gap-3 rounded-xl">
-        {/* <View className="flex flex-row items-center w-full gap-3">
-          <Image source={data.icons.hour}></Image>
+        <View className="flex flex-row items-center w-full gap-3">
+          <Image source={icons.hour} className="size-4"></Image>
           <Text className="font-rregular text-md">Hourly Forecast</Text>
-        </View> */}
+        </View>
         {/* TIMESTAMP */}
-        {/* <View className="flex flex-row items-center justify-around w-full">
-          {data.hourCast.map((item) => (
-            <Hourcast key={item.id} time={item.time} temp={item.temp} icon={data.icons.heat} />
-          ))}
-        </View> */}
+        <View className="flex flex-row items-center justify-around w-full">
+          <FlatList
+            showsHorizontalScrollIndicator={false}
+            horizontal
+            className="w-full flex"
+            data={data?.userWeather?.hourly.list}
+            renderItem={({ item }) => {
+              const forecastDate = new Date(item.dt * 1000);
+              const formattedTime = forecastDate.toLocaleTimeString("en-US", {
+                hour: "numeric",
+              });
+
+              return (
+                <Hourcast
+                  time={formattedTime}
+                  temp={Math.round(item.main.feels_like)}
+                  icon={`https://openweathermap.org/img/wn/${item.weather[0]?.icon}.png`}
+                ></Hourcast>
+              );
+            }}
+            keyExtractor={(item) => item.dt.toString()}
+          />
+        </View>
       </View>
 
-      {console.log(data)}
-
-      {/* DAY FORECAST */}
+      {/* /* DAY FORECAST */}
       <FlatList
         showsVerticalScrollIndicator={false}
         className="w-full flex"
-        data={data?.forecast} 
-        renderItem={({ item }) => (
-          <Daycast
-            time={new Date(item.dt * 1000).toLocaleDateString()} 
-            caution={item.weather[0]?.description || "No data"}
-            temp={Math.round(item.temp.day)}
-            icon={`https://openweathermap.org/img/wn/${item.weather[0]?.icon}.png`}
-          />
-        )}
-        keyExtractor={(item) => item.dt.toString()} 
+        data={data?.userWeather?.forecast.list}
+        renderItem={({ item }) => {
+          const forecastDate = new Date(item.dt * 1000);
+
+          const today = new Date();
+          const tomorrow = new Date();
+          tomorrow.setDate(today.getDate() + 1);
+
+          const options = { month: "short", day: "numeric" };
+          let formattedDate = forecastDate.toLocaleDateString("en-US", options);
+
+          let label = "";
+          if (forecastDate.toDateString() === today.toDateString()) {
+            label = "Today";
+          } else if (forecastDate.toDateString() === tomorrow.toDateString()) {
+            label = "Tomorrow";
+          } else {
+            label = formattedDate;
+          }
+          return (
+            <Daycast
+              time={label}
+              caution={item.weather[0]?.description || "No data"}
+              temp={Math.round(item.feels_like.day)}
+              icon={`https://openweathermap.org/img/wn/${item.weather[0]?.icon}.png`}
+            />
+          );
+        }}
+        keyExtractor={(item) => item.dt.toString()}
       />
     </>
   );

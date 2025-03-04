@@ -1,9 +1,8 @@
-import { View, Text, Image } from "react-native";
+import { View, Text, Image, ActivityIndicator } from "react-native";
 import { React, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { testicons } from "@/constants/index";
-import { AnalyticsData, ForecastData, CurrentLocation } from "@/data/sampleData";
+import { AnalyticsData } from "@/data/sampleData";
 import { fetchUserWeather } from "@/services/userWeatherAPI";
 import CustomButton from "@/views/components/CustomButton";
 import ForecastWidget from "@/views/Forecast/widgets/ForecastWidget";
@@ -24,11 +23,6 @@ const ForecastScreen = () => {
   });
 
   const [active, setActive] = useState("forecast");
-  ForecastData.icons = {
-    heat: testicons.heat,
-    heatindex: testicons.heatindex,
-    hour: testicons.hour,
-  };
 
   const {
     data: userWeather,
@@ -39,7 +33,26 @@ const ForecastScreen = () => {
     queryFn: () => fetchUserWeather({ currentLocation }),
   });
 
-  
+  const {
+    data: negrosWeather,
+    isLoading: isLoadingNegrosWeather,
+    error: isErrorNegrosWeather,
+  } = useQuery({
+    queryKey: ["negrosWeatherData"],
+  });
+
+  let closestHour = null;
+
+  if (!isLoadingUserWeather && userWeather) {
+    const userCurrentHour = new Date().getHours();
+
+    closestHour = userWeather.hourly.list.reduce((prev, curr) => {
+      const currHour = new Date(curr.dt * 1000).getHours();
+      return Math.abs(currHour - userCurrentHour) < Math.abs(new Date(prev.dt * 1000).getHours() - userCurrentHour) ? curr : prev;
+    });
+  }
+
+  if (isLoadingUserWeather || isLoadingNegrosWeather) return <ActivityIndicator size="large" color="#000" className="flex-1" />;
 
   return (
     <View className="flex-1 bg-white">
@@ -49,12 +62,19 @@ const ForecastScreen = () => {
           {/* DATA */}
           <View className="flex flex-row items-center justify-between w-full px-4">
             <View className="flex flex-col items-start justify-center gap-1 w-1/2">
-              <Text className="text-4xl font-rregular">{CurrentLocation.location}</Text>
+              <Text className="text-4xl font-rregular">{userWeather?.hourly.city.name}</Text>
               <Text className="text-sm font-rlight">Heat Index</Text>
-              <Text className="text-8xl font-rregular">{CurrentLocation.weather}</Text>
+              <Text className="text-7xl font-rregular">
+                {Math.round(closestHour?.main?.feels_like ?? userWeather?.hourly?.list[0]?.main?.feels_like)}°C
+              </Text>
             </View>
             <View className="flex flex-col items-end gap-1 w-1/2">
-              <Image source={testicons.sun} className="w-24 h-24"></Image>
+              <Image
+                source={{
+                  uri: `https://openweathermap.org/img/wn/${closestHour?.weather[0].icon ?? userWeather?.hourly.list[0]?.weather[0].icon}.png`,
+                }}
+                className="size-32"
+              ></Image>
             </View>
           </View>
 
@@ -85,11 +105,11 @@ const ForecastScreen = () => {
 
         {/* FILTERS */}
         {active == "forecast" ? (
-          <ForecastWidget data={{userWeather}} />
+          <ForecastWidget data={{ userWeather }} />
         ) : active == "analytics" ? (
-          <AnalyticsWidget data={AnalyticsData} />
+          <AnalyticsWidget data={{}} />
         ) : (
-          <TrendsWidget data="Bacolod City" />
+          <TrendsWidget data={{ negrosWeather }} />
         )}
       </View>
     </View>
