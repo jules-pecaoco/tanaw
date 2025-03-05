@@ -18,6 +18,11 @@ const Notification = () => {
     queryKey: ["expoToken"],
     queryFn: accessNotification,
     enabled: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
   });
 
   const nextScreen = () => {

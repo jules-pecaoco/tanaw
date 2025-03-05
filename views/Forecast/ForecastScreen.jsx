@@ -2,6 +2,7 @@ import { View, Text, Image, ActivityIndicator } from "react-native";
 import { React, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
+import { fetchNegrosWeather } from "@/services/citiesWeatherAPI";
 import { fetchUserWeather } from "@/services/userWeatherAPI";
 import CustomButton from "@/views/components/CustomButton";
 import ForecastWidget from "@/views/Forecast/widgets/ForecastWidget";
@@ -10,6 +11,7 @@ import TrendsWidget from "@/views/Forecast/widgets/TrendsWidget";
 import userStorage from "@/storage/userStorage";
 
 const ForecastScreen = () => {
+  console.log("ForecastScreen");
   const [currentLocation, setCurrentLocation] = useState(() => {
     try {
       const location = JSON.parse(userStorage.getItem("userLocation"));
@@ -38,7 +40,10 @@ const ForecastScreen = () => {
     error: isErrorNegrosWeather,
   } = useQuery({
     queryKey: ["negrosWeatherData"],
-    queryFn: fetchUserWeather,
+    queryFn: fetchNegrosWeather,
+    gcTime: 1000 * 60 * 60 * 6,
+    staleTime: 1000 * 60 * 60 * 3,
+    refetchInterval: 1000 * 60 * 60 * 6,
   });
 
   let closestHour = null;

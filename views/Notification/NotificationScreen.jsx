@@ -4,6 +4,7 @@ import React from "react";
 import NotificationWidget from "./widgets/NotificationWidget";
 
 const NotificationScreen = ({ notificationData }) => {
+  console.log("NotificationScreen");
   return (
       <View className="h-full bg-white">
         <View className="h-full bg-gray-200 gap-5 flex justify-start items-center">

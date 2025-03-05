@@ -6,10 +6,9 @@ import { Stack, SplashScreen } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-
 import { userStorage } from "@/storage/userStorage";
 
 import "@/global.css";
@@ -56,22 +55,23 @@ const RootLayout = () => {
     defaultOptions: {
       queries: {
         staleTime: 1000 * 60 * 10,
-        gcTime: 1000 * 60 * 60 * 24, // 24 hours
+        gcTime: 1000 * 60 * 60 * 24,
         retry: 3,
         persist: true,
-        networkMode: "offlineFirst",
+        networkMode: "online",
         refetchOnReconnect: true,
       },
     },
   });
 
-  const userStorage = createSyncStoragePersister({
+  const userPersistStorage = createSyncStoragePersister({
     storage: userStorage,
-    key: "react-query-cache",
+    key: "react-query-full-cache",
+    retry: 3,
   });
 
   return (
-    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: userStorage }}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: userPersistStorage }}>
       <SafeAreaProvider className="flex-1">
         <GestureHandlerRootView className="flex-1">
           <Stack>

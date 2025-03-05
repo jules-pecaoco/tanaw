@@ -14,7 +14,7 @@ const buttonConfig = {
     icons: ["flood", "landslide", "tsunami"],
   },
   emergency: {
-    buttons: ["Hospitals", "Fire Stations", "Evac Sites"],
+    buttons: ["Hospitals", "FireStations", "EvacSites"],
     icons: ["local-hospital", "fire-truck", "night-shelter"],
   },
 };

@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useMemo, useRef } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 
+import { fetchAllFacilities, fetchCriticalFacilitiesInformmation } from "@/services/criticalFacilitiesAPI";
 import { fetchNegrosWeather } from "@/services/citiesWeatherAPI";
 import { fetchRainViewerData, fetchOpenWeatherData } from "@/services/weatherLayerAPI";
 import { icons } from "@/constants/index";
@@ -13,6 +14,7 @@ import SideButtons from "./widgets/SideButtons";
 import BaseMap from "./widgets/BaseMap";
 import accessLocation from "@/utilities/accessLocation";
 import userStorage from "@/storage/userStorage";
+import CriticalFacilitiesMarker from "./widgets/CriticalFacilitiesMarker";
 
 // REFER TO BaseMap for Map Rendering
 // BottomSheets includes a BottomSheet Library by Gorhom
@@ -32,7 +34,7 @@ const RadarScreen = () => {
   console.log("RadarScreen");
   const {
     data: userLocation,
-    refetch,
+    refetch: getUserLocation,
     isLoading,
   } = useQuery({
     queryKey: ["userLocation"],
@@ -44,7 +46,7 @@ const RadarScreen = () => {
     if (userLocation && userLocation.coords) {
       return { latitude: userLocation.coords.latitude, longitude: userLocation.coords.longitude };
     } else return { latitude: 10.65709, longitude: 122.948 };
-  });
+  }, [userLocation]);
 
   // GLOBAL STATE FOR RADAR
   const [state, setState] = useState({
@@ -60,17 +62,14 @@ const RadarScreen = () => {
     },
     isFacilitiesLayerActive: {
       Hospitals: false,
-      "Fire Stations": false,
-      "Evac Sites": false,
+      FireStations: false,
+      EvacSites: false,
     },
   });
 
-  const handleActiveBottomSheet = useCallback(
-    (item) => {
-      setState({ ...state, activeBottomSheet: item });
-    },
-    [state]
-  );
+  const handleActiveBottomSheet = useCallback((item) => {
+    setState((prevState) => ({ ...prevState, activeBottomSheet: item }));
+  }, []);
 
   // REFERENCE TO MABOX CAMERA
   const cameraRef = useRef(null);
@@ -85,9 +84,13 @@ const RadarScreen = () => {
         heading: 0,
       });
 
-      setState({ ...state, activeBottomSheet: item });
+      setState((prevState) => ({
+        ...prevState,
+        activeBottomSheet: item,
+      }));
+      getUserLocation();
     },
-    [state, currentLocation]
+    [currentLocation]
   );
 
   // REFERENCE TO BOTTOM SHEET
@@ -135,7 +138,8 @@ const RadarScreen = () => {
   } = useQuery({
     queryKey: ["negrosWeatherData"],
     queryFn: fetchNegrosWeather,
-    persist: true,
+    gcTime: 1000 * 60 * 60 * 6,
+    staleTime: 1000 * 60 * 60 * 3,
   });
 
   const {
@@ -145,6 +149,9 @@ const RadarScreen = () => {
   } = useQuery({
     queryKey: ["openWeatherTile"],
     queryFn: () => fetchOpenWeatherData("temp_new"),
+    gcTime: 1000 * 60 * 60 * 6,
+    staleTime: 1000 * 60 * 60 * 3,
+    persist: false,
   });
 
   const {
@@ -154,7 +161,23 @@ const RadarScreen = () => {
   } = useQuery({
     queryKey: ["rainViewerData"],
     queryFn: fetchRainViewerData,
+    gcTime: 1000 * 60 * 60,
+    staleTime: 1000 * 60 * 20,
+    refetchInterval: 1000 * 60 * 20,
+    persist: false,
   });
+
+  const {
+    data: criticalFacilities,
+    isLoading: isLoadingCriticalFacilities,
+    error: isErrorCriticalFacilities,
+  } = useQuery({
+    queryKey: ["criticalFacilities"],
+    queryFn: () => fetchAllFacilities({ currentLocation }),
+    persist: false,
+  });
+
+  console.log("Critical Facilities", criticalFacilities);
 
   const rainViewerMemoized = useMemo(() => {
     return <RainViewerLayer rainViewerTile={rainViewerTile} />;
@@ -168,19 +191,23 @@ const RadarScreen = () => {
     return <CitiesWeatherMarker negrosWeather={negrosWeather} />;
   }, [negrosWeather]);
 
+
   return (
     <View className="relative flex-1">
       {/* BASE MAP */}
-      <BaseMap state={state} openBottomSheet={openBottomSheet} currentLocation={currentLocation} ref={cameraRef}>
+      <BaseMap openBottomSheet={openBottomSheet} currentLocation={currentLocation} ref={cameraRef}>
         {/* Hazard Layers */}
         {state.isHazardLayerActive["Flood"] && <HazardLayers props={hazardLayerProps.Flood} />}
         {state.isHazardLayerActive["Landslide"] && <HazardLayers props={hazardLayerProps.Landslide} />}
         {state.isHazardLayerActive["StormSurge"] && <HazardLayers props={hazardLayerProps.StormSurge} />}
-
         {/* Weather Layers */}
         {state.weatherLayer.type === "Rain" && rainViewerMemoized}
         {state.weatherLayer.type === "HeatIndex" && openWeatherMemoized}
         {state.weatherLayer.type === "HeatIndex" && negrosWeatherMemoized}
+
+        {state.isFacilitiesLayerActive["Hospitals"] && <CriticalFacilitiesMarker data={criticalFacilities} type={"Hospitals"} />}
+        {state.isFacilitiesLayerActive["FireStations"] && <CriticalFacilitiesMarker data={criticalFacilities} type={"FireStations"} />}
+        {state.isFacilitiesLayerActive["EvacSites"] && <CriticalFacilitiesMarker data={criticalFacilities} type={"EvacSites"} />}
 
         {/* <FacilitiesMarker coordinates={markerCoordinates} onPress={openBottomSheet} facilityName="UNO-R" facilityContactInfo="09951022578" /> */}
       </BaseMap>

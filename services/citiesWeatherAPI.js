@@ -1,4 +1,5 @@
 import axios from "axios";
+
 import { OPEN_WEATHER_API_KEY } from "@/tokens/tokens";
 
 const WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/box/city";
