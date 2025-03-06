@@ -4,7 +4,8 @@ import { GOOGLE_PLACES_API_KEY } from "@/tokens/tokens";
 const GOOGLE_PLACES_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
 const GOOGLE_PLACES_DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json?";
 
-const facilityTypes = ["hospital", "fire_station", "evacuation_center"];
+const facilityTypes = ["hospital", "fire_station", "primary_school", "secondary_school"];
+const facilityKeyWord = ["", "", "public school", "public school"];
 const filterFacilities = ["Hospitals", "FireStations", "EvacSites"];
 
 const fetchAllFacilities = async ({ currentLocation }) => {
@@ -18,17 +19,22 @@ const fetchAllFacilities = async ({ currentLocation }) => {
             location: `${currentLocation.latitude},${currentLocation.longitude}`,
             radius: 5000,
             type: type,
+            keyword: facilityKeyWord[index],
             key: GOOGLE_PLACES_API_KEY,
           },
         });
 
-        return { key: filterFacilities[index], results: response.data.results };
+        return { type, results: response.data.results };
       })
     );
 
-    // Convert array of objects into a single object
     const facilitiesObject = allResults.reduce((acc, item) => {
-      acc[item.key] = item.results;
+      if (item.type === "primary_school" || item.type === "secondary_school") {
+        acc["EvacSites"] = [...(acc["EvacSites"] || []), ...item.results];
+      } else {
+        const categoryIndex = facilityTypes.indexOf(item.type);
+        acc[filterFacilities[categoryIndex]] = item.results;
+      }
       return acc;
     }, {});
 

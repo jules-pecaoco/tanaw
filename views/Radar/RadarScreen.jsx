@@ -13,7 +13,6 @@ import CitiesWeatherMarker from "./widgets/CitiesWeatherMarker";
 import SideButtons from "./widgets/SideButtons";
 import BaseMap from "./widgets/BaseMap";
 import accessLocation from "@/utilities/accessLocation";
-import userStorage from "@/storage/userStorage";
 import CriticalFacilitiesMarker from "./widgets/CriticalFacilitiesMarker";
 
 // REFER TO BaseMap for Map Rendering
@@ -163,7 +162,7 @@ const RadarScreen = () => {
     queryFn: fetchRainViewerData,
     gcTime: 1000 * 60 * 60,
     staleTime: 1000 * 60 * 20,
-    refetchInterval: 1000 * 60 * 20,
+    refetchInterval: 1000 * 30,
     persist: false,
   });
 
@@ -172,12 +171,11 @@ const RadarScreen = () => {
     isLoading: isLoadingCriticalFacilities,
     error: isErrorCriticalFacilities,
   } = useQuery({
-    queryKey: ["criticalFacilities"],
+    queryKey: ["criticalFacilities", currentLocation],
     queryFn: () => fetchAllFacilities({ currentLocation }),
-    persist: false,
+    gcTime: 1000 * 60 * 60 * 24,
+    staleTime: 1000 * 60 * 60 * 24,
   });
-
-  console.log("Critical Facilities", criticalFacilities);
 
   const rainViewerMemoized = useMemo(() => {
     return <RainViewerLayer rainViewerTile={rainViewerTile} />;
@@ -190,7 +188,6 @@ const RadarScreen = () => {
   const negrosWeatherMemoized = useMemo(() => {
     return <CitiesWeatherMarker negrosWeather={negrosWeather} />;
   }, [negrosWeather]);
-
 
   return (
     <View className="relative flex-1">
@@ -205,10 +202,15 @@ const RadarScreen = () => {
         {state.weatherLayer.type === "HeatIndex" && openWeatherMemoized}
         {state.weatherLayer.type === "HeatIndex" && negrosWeatherMemoized}
 
-        {state.isFacilitiesLayerActive["Hospitals"] && <CriticalFacilitiesMarker data={criticalFacilities} type={"Hospitals"} />}
-        {state.isFacilitiesLayerActive["FireStations"] && <CriticalFacilitiesMarker data={criticalFacilities} type={"FireStations"} />}
-        {state.isFacilitiesLayerActive["EvacSites"] && <CriticalFacilitiesMarker data={criticalFacilities} type={"EvacSites"} />}
-
+        {state.isFacilitiesLayerActive["Hospitals"] && (
+          <CriticalFacilitiesMarker data={criticalFacilities} type={"Hospitals"} onPress={openBottomSheet} />
+        )}
+        {state.isFacilitiesLayerActive["FireStations"] && (
+          <CriticalFacilitiesMarker data={criticalFacilities} type={"FireStations"} onPress={openBottomSheet} />
+        )}
+        {state.isFacilitiesLayerActive["EvacSites"] && (
+          <CriticalFacilitiesMarker data={criticalFacilities} type={"EvacSites"} onPress={openBottomSheet} />
+        )}
         {/* <FacilitiesMarker coordinates={markerCoordinates} onPress={openBottomSheet} facilityName="UNO-R" facilityContactInfo="09951022578" /> */}
       </BaseMap>
 
