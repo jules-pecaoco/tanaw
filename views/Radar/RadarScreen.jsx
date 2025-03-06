@@ -66,6 +66,11 @@ const RadarScreen = () => {
     },
   });
 
+  const [facilitiesInformation, setFacilitiesInformation] = useState({
+    facilityName: "",
+    facilityContact: "",
+  });
+
   const handleActiveBottomSheet = useCallback((item) => {
     setState((prevState) => ({ ...prevState, activeBottomSheet: item }));
   }, []);
@@ -189,6 +194,7 @@ const RadarScreen = () => {
     return <CitiesWeatherMarker negrosWeather={negrosWeather} />;
   }, [negrosWeather]);
 
+
   return (
     <View className="relative flex-1">
       {/* BASE MAP */}
@@ -203,13 +209,28 @@ const RadarScreen = () => {
         {state.weatherLayer.type === "HeatIndex" && negrosWeatherMemoized}
 
         {state.isFacilitiesLayerActive["Hospitals"] && (
-          <CriticalFacilitiesMarker data={criticalFacilities} type={"Hospitals"} onPress={openBottomSheet} />
+          <CriticalFacilitiesMarker
+            data={criticalFacilities}
+            type={"Hospitals"}
+            onPress={openBottomSheet}
+            setFacilitiesInformation={setFacilitiesInformation}
+          />
         )}
         {state.isFacilitiesLayerActive["FireStations"] && (
-          <CriticalFacilitiesMarker data={criticalFacilities} type={"FireStations"} onPress={openBottomSheet} />
+          <CriticalFacilitiesMarker
+            data={criticalFacilities}
+            type={"FireStations"}
+            onPress={openBottomSheet}
+            setFacilitiesInformation={setFacilitiesInformation}
+          />
         )}
         {state.isFacilitiesLayerActive["EvacSites"] && (
-          <CriticalFacilitiesMarker data={criticalFacilities} type={"EvacSites"} onPress={openBottomSheet} />
+          <CriticalFacilitiesMarker
+            data={criticalFacilities}
+            type={"EvacSites"}
+            onPress={openBottomSheet}
+            setFacilitiesInformation={setFacilitiesInformation}
+          />
         )}
         {/* <FacilitiesMarker coordinates={markerCoordinates} onPress={openBottomSheet} facilityName="UNO-R" facilityContactInfo="09951022578" /> */}
       </BaseMap>
@@ -226,7 +247,7 @@ const RadarScreen = () => {
       </View>
 
       {/* BOTTOM SHEET */}
-      <FacilitiesMarkerBottomSheet ref={bottomSheetRef} index={0} onChange={handleSheetChanges} state={state} setState />
+      <FacilitiesMarkerBottomSheet ref={bottomSheetRef} handleSheetChanges={handleSheetChanges} openBottomSheet={openBottomSheet} data={facilitiesInformation} />
 
       {state.activeBottomSheet === "hazards" && <HazardSelectionBottomSheet state={state} setState={setState} />}
       {state.activeBottomSheet === "facilities" && <FacilitiesSelectionBottomSheet state={state} setState={setState} />}

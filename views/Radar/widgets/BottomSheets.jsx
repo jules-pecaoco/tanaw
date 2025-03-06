@@ -128,8 +128,10 @@ const FacilitiesSelectionBottomSheet = ({ state, setState }) => {
 };
 
 const FacilitiesMarkerBottomSheet = React.forwardRef(({ data, handleSheetChanges }, ref) => {
+  if (!data.facilityName) return null;
   // SNAP POINTS = HEIGHT OF BOTTOM SHEET
 
+  console.log(data)
   // Function to open the dialer with the contact number
   const handleCallPress = (phoneNumber) => {
     const phoneUrl = `tel:${phoneNumber}`;
@@ -137,6 +139,7 @@ const FacilitiesMarkerBottomSheet = React.forwardRef(({ data, handleSheetChanges
       console.error("Error opening dialer:", err);
     });
   };
+
   return (
     <BottomSheet
       ref={ref}
@@ -150,11 +153,11 @@ const FacilitiesMarkerBottomSheet = React.forwardRef(({ data, handleSheetChanges
       <BottomSheetView className="flex-1 p-5">
         <Text className="text-2xl font-bold mb-5 text-[#F47C25]">Facilities Information</Text>
         <View className="bg-white p-2 rounded-lg">
-          <Text className="text-black font-bold">UNO-R</Text>
-          <Text className="text-black mb-2">09951022578</Text>
+          <Text className="text-black font-bold">{data.facilityName}</Text>
+          <Text className="text-black mb-2">{data.facilityContact}</Text>
 
           <View>
-            <TouchableOpacity className="bg-primary p-2 rounded-md" onPress={() => handleCallPress("09951022578")}>
+            <TouchableOpacity className="bg-primary p-2 rounded-md" onPress={() => handleCallPress(data.facilityContact)}>
               <Text className="text-white text-center">Call Now</Text>
             </TouchableOpacity>
           </View>

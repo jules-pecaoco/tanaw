@@ -24,7 +24,28 @@ const fetchAllFacilities = async ({ currentLocation }) => {
           },
         });
 
-        return { type, results: response.data.results };
+        const facilitiesWithDetails = await Promise.all(
+          response.data.results.map(async (facility) => {
+            try {
+              const detailsResponse = await axios.get(GOOGLE_PLACES_DETAILS_URL, {
+                params: {
+                  place_id: facility.place_id,
+                  key: GOOGLE_PLACES_API_KEY,
+                },
+              });
+
+              return {
+                ...facility,
+                details: detailsResponse.data.result, // Merging facility details
+              };
+            } catch (error) {
+              console.error(`Error fetching details for ${facility.name}:`, error);
+              return facility; // Return facility without details if API fails
+            }
+          })
+        );
+
+        return { type, results: facilitiesWithDetails };
       })
     );
 
@@ -45,22 +66,4 @@ const fetchAllFacilities = async ({ currentLocation }) => {
   }
 };
 
-const fetchCriticalFacilitiesInformmation = async ({ placeId }) => {
-  console.log("Fetching critical facilities information...");
-
-  try {
-    const response = await axios.get(GOOGLE_PLACES_DETAILS_URL, {
-      params: {
-        place_id: placeId,
-        key: GOOGLE_PLACES_API_KEY,
-      },
-    });
-
-    return response.data.results;
-  } catch (error) {
-    console.error("Error fetching critical facilities information:", error);
-    return [];
-  }
-};
-
-export { fetchAllFacilities, fetchCriticalFacilitiesInformmation };
+export { fetchAllFacilities };
