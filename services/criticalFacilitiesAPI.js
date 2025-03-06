@@ -8,8 +8,13 @@ const facilityTypes = ["hospital", "fire_station", "primary_school", "secondary_
 const facilityKeyWord = ["", "", "public school", "public school"];
 const filterFacilities = ["Hospitals", "FireStations", "EvacSites"];
 
-const fetchAllFacilities = async ({ currentLocation }) => {
-  console.log("Fetching all facilities...");
+/**
+ * Fetches facilities based on type and location.
+ * @param {Object} currentLocation - The user's latitude and longitude.
+ * @returns {Object} Facilities grouped by category.
+ */
+const fetchFacilitiesByType = async ({ currentLocation }) => {
+  console.log("Fetching facilities by type...");
 
   try {
     const allResults = await Promise.all(
@@ -24,28 +29,7 @@ const fetchAllFacilities = async ({ currentLocation }) => {
           },
         });
 
-        const facilitiesWithDetails = await Promise.all(
-          response.data.results.map(async (facility) => {
-            try {
-              const detailsResponse = await axios.get(GOOGLE_PLACES_DETAILS_URL, {
-                params: {
-                  place_id: facility.place_id,
-                  key: GOOGLE_PLACES_API_KEY,
-                },
-              });
-
-              return {
-                ...facility,
-                details: detailsResponse.data.result, // Merging facility details
-              };
-            } catch (error) {
-              console.error(`Error fetching details for ${facility.name}:`, error);
-              return facility; // Return facility without details if API fails
-            }
-          })
-        );
-
-        return { type, results: facilitiesWithDetails };
+        return { type, results: response.data.results };
       })
     );
 
@@ -61,9 +45,32 @@ const fetchAllFacilities = async ({ currentLocation }) => {
 
     return facilitiesObject;
   } catch (error) {
-    console.error("Error fetching facilities:", error);
+    console.error("Error fetching facilities by type:", error);
     return null;
   }
 };
 
-export { fetchAllFacilities };
+/**
+ * Fetches facility details based on place ID.
+ * @param {string} placeId - The Place ID of the facility.
+ * @returns {Object|null} Facility details.
+ */
+const fetchFacilityById = async (placeId) => {
+  console.log(`Fetching details for Place ID: ${placeId}...`);
+
+  try {
+    const response = await axios.get(GOOGLE_PLACES_DETAILS_URL, {
+      params: {
+        place_id: placeId,
+        key: GOOGLE_PLACES_API_KEY,
+      },
+    });
+
+    return response.data.result;
+  } catch (error) {
+    console.error(`Error fetching details for Place ID ${placeId}:`, error);
+    return null;
+  }
+};
+
+export { fetchFacilitiesByType, fetchFacilityById };

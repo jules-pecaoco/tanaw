@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from "react"
 import { View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchAllFacilities, fetchCriticalFacilitiesInformmation } from "@/services/criticalFacilitiesAPI";
+import { fetchFacilitiesByType, fetchFacilityById } from "@/services/criticalFacilitiesAPI";
 import { fetchNegrosWeather } from "@/services/citiesWeatherAPI";
 import { fetchRainViewerData, fetchOpenWeatherData } from "@/services/weatherLayerAPI";
 import { icons } from "@/constants/index";
@@ -143,7 +143,7 @@ const RadarScreen = () => {
     queryKey: ["negrosWeatherData"],
     queryFn: fetchNegrosWeather,
     gcTime: 1000 * 60 * 60 * 6,
-    staleTime: 1000 * 60 * 60 * 3,
+    staleTime: 1000 * 60 * 60 * 2,
   });
 
   const {
@@ -167,20 +167,20 @@ const RadarScreen = () => {
     queryFn: fetchRainViewerData,
     gcTime: 1000 * 60 * 60,
     staleTime: 1000 * 60 * 20,
-    refetchInterval: 1000 * 30,
+    refetchInterval: 1000 * 60,
     persist: false,
   });
 
   const {
-    data: criticalFacilities,
-    isLoading: isLoadingCriticalFacilities,
-    error: isErrorCriticalFacilities,
+    data: facilitiesByType,
+    isLoading: isLoadingFacilitiesByType,
+    error: isErrorFacilitiesByType,
   } = useQuery({
-    queryKey: ["criticalFacilities", currentLocation],
-    queryFn: () => fetchAllFacilities({ currentLocation }),
-    gcTime: 1000 * 60 * 60 * 24,
-    staleTime: 1000 * 60 * 60 * 24,
+    queryKey: ["FacilitiesByType"],
+    queryFn: () => fetchFacilitiesByType({ currentLocation }),
   });
+
+  console.log(facilitiesByType);
 
   const rainViewerMemoized = useMemo(() => {
     return <RainViewerLayer rainViewerTile={rainViewerTile} />;
@@ -194,7 +194,6 @@ const RadarScreen = () => {
     return <CitiesWeatherMarker negrosWeather={negrosWeather} />;
   }, [negrosWeather]);
 
-
   return (
     <View className="relative flex-1">
       {/* BASE MAP */}
@@ -203,14 +202,16 @@ const RadarScreen = () => {
         {state.isHazardLayerActive["Flood"] && <HazardLayers props={hazardLayerProps.Flood} />}
         {state.isHazardLayerActive["Landslide"] && <HazardLayers props={hazardLayerProps.Landslide} />}
         {state.isHazardLayerActive["StormSurge"] && <HazardLayers props={hazardLayerProps.StormSurge} />}
+
         {/* Weather Layers */}
         {state.weatherLayer.type === "Rain" && rainViewerMemoized}
         {state.weatherLayer.type === "HeatIndex" && openWeatherMemoized}
         {state.weatherLayer.type === "HeatIndex" && negrosWeatherMemoized}
 
+        {/* critical facilities */}
         {state.isFacilitiesLayerActive["Hospitals"] && (
           <CriticalFacilitiesMarker
-            data={criticalFacilities}
+            data={facilitiesByType}
             type={"Hospitals"}
             onPress={openBottomSheet}
             setFacilitiesInformation={setFacilitiesInformation}
@@ -218,7 +219,7 @@ const RadarScreen = () => {
         )}
         {state.isFacilitiesLayerActive["FireStations"] && (
           <CriticalFacilitiesMarker
-            data={criticalFacilities}
+            data={facilitiesByType}
             type={"FireStations"}
             onPress={openBottomSheet}
             setFacilitiesInformation={setFacilitiesInformation}
@@ -226,7 +227,7 @@ const RadarScreen = () => {
         )}
         {state.isFacilitiesLayerActive["EvacSites"] && (
           <CriticalFacilitiesMarker
-            data={criticalFacilities}
+            data={facilitiesByType}
             type={"EvacSites"}
             onPress={openBottomSheet}
             setFacilitiesInformation={setFacilitiesInformation}
@@ -247,7 +248,12 @@ const RadarScreen = () => {
       </View>
 
       {/* BOTTOM SHEET */}
-      <FacilitiesMarkerBottomSheet ref={bottomSheetRef} handleSheetChanges={handleSheetChanges} openBottomSheet={openBottomSheet} data={facilitiesInformation} />
+      <FacilitiesMarkerBottomSheet
+        ref={bottomSheetRef}
+        handleSheetChanges={handleSheetChanges}
+        openBottomSheet={openBottomSheet}
+        data={facilitiesInformation}
+      />
 
       {state.activeBottomSheet === "hazards" && <HazardSelectionBottomSheet state={state} setState={setState} />}
       {state.activeBottomSheet === "facilities" && <FacilitiesSelectionBottomSheet state={state} setState={setState} />}

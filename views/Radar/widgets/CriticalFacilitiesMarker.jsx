@@ -1,14 +1,18 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import React from "react";
 import { MarkerView } from "@rnmapbox/maps";
+import { useQuery } from "@tanstack/react-query";
+
+import { fetchFacilityById } from "@/services/criticalFacilitiesAPI";
 
 const facilityColors = {
-  Hospitals: "red",
-  FireStations: "orange",
-  EvacSites: "purple",
+  Hospitals: "pink",
+  FireStations: "red",
+  EvacSites: "brown",
 };
 
 const CriticalFacilitiesMarker = ({ data, type, setFacilitiesInformation, onPress }) => {
+  console.log(data)
   if (!data || !type || !data[type]) return null;
 
   const facilities = data[type];
@@ -16,8 +20,11 @@ const CriticalFacilitiesMarker = ({ data, type, setFacilitiesInformation, onPres
   if (!Array.isArray(facilities) || facilities.length === 0) return null;
 
   return facilities.map((facility, index) => {
-    const onPressed = () => {
-      setFacilitiesInformation({ facilityName: facility.name, facilityContact: facility.details.formatted_phone_number });
+    console.log(facility);
+    const onPressed = async () => {
+      const facilityData = await fetchFacilityById(facility.place_id);
+      const contact = facilityData.formatted_phone_number ?? "None";
+      setFacilitiesInformation({ facilityName: facilityData.name, facilityContact: contact });
       onPress();
     };
     return (
