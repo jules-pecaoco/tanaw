@@ -180,7 +180,6 @@ const RadarScreen = () => {
     queryFn: () => fetchFacilitiesByType({ currentLocation }),
   });
 
-  console.log(facilitiesByType);
 
   const rainViewerMemoized = useMemo(() => {
     return <RainViewerLayer rainViewerTile={rainViewerTile} />;
