@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from "react"
 import { View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchFacilitiesByType, fetchFacilityById } from "@/services/criticalFacilitiesAPI";
+import { fetchGoogleFacilitiesByType, fetchOpenStreetFacilitiesByType } from "@/services/criticalFacilitiesAPI";
 import { fetchNegrosWeather } from "@/services/citiesWeatherAPI";
 import { fetchRainViewerData, fetchOpenWeatherData } from "@/services/weatherLayerAPI";
 import { icons } from "@/constants/index";
@@ -60,6 +60,7 @@ const RadarScreen = () => {
       type: "none",
     },
     isFacilitiesLayerActive: {
+      source: "OpenStreet",
       Hospitals: false,
       FireStations: false,
       EvacSites: false,
@@ -171,23 +172,29 @@ const RadarScreen = () => {
     persist: false,
   });
 
+  // const {
+  //   data: googleFacilitiesByType,
+  //   isLoading: isLoadingFacilitiesGoogleByType,
+  //   error: isErrorFacilitiesGoogleByType,
+  // } = useQuery({
+  //   queryKey: ["GoogleFacilitiesByType"],
+  //   queryFn: () => fetchGoogleFacilitiesByType({ currentLocation }),
+  //   gcTime: 0,
+  //   staleTime: 0,
+  //   gcTime: 1000 * 60 * 60 * 24,
+  //   staleTime: 1000 * 60 * 60 * 24,
+  // });
+
   const {
-    data: facilitiesByType,
-    isLoading: isLoadingFacilitiesByType,
-    error: isErrorFacilitiesByType,
+    data: openStreetFacilitiesByType,
+    isLoading: isLoadingOpenStreetFacilitiesByType,
+    error: isErrorOpenStreetFacilitiesByType,
   } = useQuery({
-    queryKey: ["FacilitiesByType"],
-    queryFn: () => fetchFacilitiesByType({ currentLocation }),
+    queryKey: ["OpenStreetFacilitiesByType"],
+    queryFn: () => fetchOpenStreetFacilitiesByType({ currentLocation }),
+    gcTime: 1000 * 60 * 60 * 24,
+    staleTime: 1000 * 60 * 60 * 24,
   });
-
-
-  const rainViewerMemoized = useMemo(() => {
-    return <RainViewerLayer rainViewerTile={rainViewerTile} />;
-  }, [rainViewerTile]);
-
-  const openWeatherMemoized = useMemo(() => {
-    return <OpenWeatherLayer openWeatherTile={openWeatherTile} />;
-  }, [openWeatherTile]);
 
   const negrosWeatherMemoized = useMemo(() => {
     return <CitiesWeatherMarker negrosWeather={negrosWeather} />;
@@ -198,41 +205,43 @@ const RadarScreen = () => {
       {/* BASE MAP */}
       <BaseMap openBottomSheet={openBottomSheet} currentLocation={currentLocation} ref={cameraRef}>
         {/* Hazard Layers */}
-        {state.isHazardLayerActive["Flood"] && <HazardLayers props={hazardLayerProps.Flood} />}
-        {state.isHazardLayerActive["Landslide"] && <HazardLayers props={hazardLayerProps.Landslide} />}
-        {state.isHazardLayerActive["StormSurge"] && <HazardLayers props={hazardLayerProps.StormSurge} />}
+        {state.isHazardLayerActive.Flood && <HazardLayers props={hazardLayerProps.Flood} />}
+        {state.isHazardLayerActive.Landslide && <HazardLayers props={hazardLayerProps.Landslide} />}
+        {state.isHazardLayerActive.StormSurge && <HazardLayers props={hazardLayerProps.StormSurge} />}
 
         {/* Weather Layers */}
-        {state.weatherLayer.type === "Rain" && rainViewerMemoized}
-        {state.weatherLayer.type === "HeatIndex" && openWeatherMemoized}
+        {state.weatherLayer.type === "Rain" && <RainViewerLayer rainViewerTile={rainViewerTile} />}
+        {state.weatherLayer.type === "HeatIndex" && <OpenWeatherLayer openWeatherTile={openWeatherTile} />}
         {state.weatherLayer.type === "HeatIndex" && negrosWeatherMemoized}
 
         {/* critical facilities */}
         {state.isFacilitiesLayerActive["Hospitals"] && (
           <CriticalFacilitiesMarker
-            data={facilitiesByType}
+            data={openStreetFacilitiesByType}
             type={"Hospitals"}
             onPress={openBottomSheet}
             setFacilitiesInformation={setFacilitiesInformation}
+            source={state.isFacilitiesLayerActive.source}
           />
         )}
         {state.isFacilitiesLayerActive["FireStations"] && (
           <CriticalFacilitiesMarker
-            data={facilitiesByType}
+            data={openStreetFacilitiesByType}
             type={"FireStations"}
             onPress={openBottomSheet}
             setFacilitiesInformation={setFacilitiesInformation}
+            source={state.isFacilitiesLayerActive.source}
           />
         )}
         {state.isFacilitiesLayerActive["EvacSites"] && (
           <CriticalFacilitiesMarker
-            data={facilitiesByType}
+            data={openStreetFacilitiesByType}
             type={"EvacSites"}
             onPress={openBottomSheet}
             setFacilitiesInformation={setFacilitiesInformation}
+            source={state.isFacilitiesLayerActive.source}
           />
         )}
-        {/* <FacilitiesMarker coordinates={markerCoordinates} onPress={openBottomSheet} facilityName="UNO-R" facilityContactInfo="09951022578" /> */}
       </BaseMap>
 
       {/* SIDE BUTTONS */}

@@ -32,6 +32,8 @@ const ForecastScreen = () => {
   } = useQuery({
     queryKey: ["userWeather"],
     queryFn: () => fetchUserWeather({ currentLocation }),
+    staleTime: 1000 * 60 * 60 * 3,
+    refetchInterval: 1000 * 60 * 60 * 6,
   });
 
   const {

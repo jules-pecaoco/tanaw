@@ -1,9 +1,9 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import React from "react";
 import { MarkerView } from "@rnmapbox/maps";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { fetchFacilityById } from "@/services/criticalFacilitiesAPI";
+import { fetchGoogleFacilityById } from "@/services/criticalFacilitiesAPI";
 
 const facilityColors = {
   Hospitals: "pink",
@@ -11,43 +11,52 @@ const facilityColors = {
   EvacSites: "brown",
 };
 
-const FacilityMarker = ({ facility, type, setFacilitiesInformation, onPress }) => {
-  const queryClient = useQueryClient();
-  const { data: facilityData, isLoading } = useQuery({
-    queryKey: [type, facility.place_id],
-    queryFn: () => fetchFacilityById(facility.place_id),
-    gcTime: 1000 * 60 * 60 * 24,
-    staleTime: 1000 * 60 * 60 * 24,
-    refetchOnMount: false,
-  });
+const FacilityMarker = ({ facility, type, setFacilitiesInformation, onPress, source }) => {
+  console.log(facility);
+  console.log(source);
+  if (!facility.id) return null;
 
-  const handlePress = () => {
-    if (facilityData) {
-      const contact = facilityData.formatted_phone_number ?? "None";
+  const handlePress = async () => {
+    onPress();
+
+    if (source === "OpenStreet") {
       setFacilitiesInformation({
-        facilityName: facilityData.name,
-        facilityContact: contact,
+        facilityName: facility.name,
+        facilityContact: facility.phone,
       });
-      onPress();
+      return;
     } else {
-      queryClient
-        .fetchQuery({
-          queryKey: [type, facility.place_id],
-          queryFn: () => fetchFacilityById(facility.place_id),
-        })
-        .then((facilityData) => {
-          const contact = facilityData.formatted_phone_number ?? "None";
+      const queryClient = useQueryClient();
+
+      const cachedData = queryClient.getQueryData([type, facility.id]);
+
+      if (cachedData) {
+        setFacilitiesInformation({
+          facilityName: cachedData.name,
+          facilityContact: cachedData.phone,
+        });
+      } else {
+        try {
+          const facilityData = await queryClient.fetchQuery({
+            queryKey: [type, facility.id],
+            queryFn: () => fetchGoogleFacilityById(facility.id),
+            gcTime: 0,
+            staleTime: 0,
+          });
+
           setFacilitiesInformation({
             facilityName: facilityData.name,
-            facilityContact: contact,
+            facilityContact: facilityData.phone ?? "None",
           });
-          onPress();
-        });
+        } catch (error) {
+          console.error("Error fetching facility details:", error);
+        }
+      }
     }
   };
 
   return (
-    <MarkerView id={`${type}-${facility.place_id}`} coordinate={[facility.geometry.location.lng, facility.geometry.location.lat]}>
+    <MarkerView id={`${type}-${facility.id}`} coordinate={[facility.location.longitude, facility.location.latitude]}>
       <TouchableOpacity onPress={handlePress}>
         <View
           className="rounded-lg p-1"
@@ -62,7 +71,7 @@ const FacilityMarker = ({ facility, type, setFacilitiesInformation, onPress }) =
   );
 };
 
-const CriticalFacilitiesMarker = ({ data, type, setFacilitiesInformation, onPress }) => {
+const CriticalFacilitiesMarker = ({ data, type, setFacilitiesInformation, onPress, source }) => {
   if (!data || !type || !data[type]) return null;
 
   const facilities = data[type];
@@ -71,11 +80,12 @@ const CriticalFacilitiesMarker = ({ data, type, setFacilitiesInformation, onPres
 
   return facilities.map((facility) => (
     <FacilityMarker
-      key={`${type}-${facility.place_id || facility.id || Math.random().toString()}`}
+      key={`${type}-${Math.random().toString()}`}
       facility={facility}
       type={type}
       setFacilitiesInformation={setFacilitiesInformation}
       onPress={onPress}
+      source={source}
     />
   ));
 };
