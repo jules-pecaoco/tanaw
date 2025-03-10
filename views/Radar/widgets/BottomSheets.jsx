@@ -97,7 +97,7 @@ const HazardSelectionBottomSheet = ({ state, setState }) => {
   );
 };
 
-const FacilitiesSelectionBottomSheet = ({ state, setState }) => {
+const FacilitiesSelectionBottomSheet = ({ state, setState, onSourceChange }) => {
   return (
     <View className={`absolute bottom-0 w-full bg-white p-5`}>
       <View className="flex justify-between items-center flex-row">
@@ -139,15 +139,7 @@ const FacilitiesSelectionBottomSheet = ({ state, setState }) => {
               key={index}
               title={button}
               isactive={state.isFacilitiesLayerActive.source === button}
-              onPress={() =>
-                setState({
-                  ...state,
-                  isFacilitiesLayerActive: {
-                    ...state.isFacilitiesLayerActive,
-                    source: button,
-                  },
-                })
-              }
+              onPress={() => onSourceChange(button)}
               customStyle={`flex-1`}
             >
               {<MaterialIcons name={buttonConfig.emergency.sourcesIcons[index]} size={25} color="black" />}
@@ -160,7 +152,6 @@ const FacilitiesSelectionBottomSheet = ({ state, setState }) => {
 };
 
 const FacilitiesMarkerBottomSheet = React.forwardRef(({ data, handleSheetChanges }, ref) => {
-
   console.log(data);
   // Function to open the dialer with the contact number
   const handleCallPress = (phoneNumber) => {
