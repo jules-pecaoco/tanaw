@@ -16,10 +16,12 @@ const buttonConfig = {
   emergency: {
     buttons: ["Hospitals", "FireStations", "EvacSites"],
     icons: ["local-hospital", "fire-truck", "night-shelter"],
+    source: ["OpenStreet", "Google Places"],
+    sourcesIcons: ["fire-truck", "fire-truck"],
   },
 };
 
-const SheetButton = ({ title, onPress, child, isactive, customStyle }) => {
+const SheetButton = ({ title, onPress, isactive, customStyle, children }) => {
   return (
     <TouchableOpacity
       activeOpacity={0.7}
@@ -28,7 +30,7 @@ const SheetButton = ({ title, onPress, child, isactive, customStyle }) => {
         isactive ? "border border-primary border-solid" : ""
       } ${customStyle} p-5 bg-white rounded-lg shadow-lg flex justify-center items-center border-[1px]`}
     >
-      {child}
+      {children}
       {title && <Text className="text-xs">{title}</Text>}
     </TouchableOpacity>
   );
@@ -50,7 +52,6 @@ const HazardSelectionBottomSheet = ({ state, setState }) => {
             key={index}
             title={button}
             isactive={state.weatherLayer.type === button}
-            child={<MaterialIcons name={buttonConfig.weather.icons[index]} size={24} color="black" />}
             onPress={() => {
               setState({
                 ...state,
@@ -60,7 +61,9 @@ const HazardSelectionBottomSheet = ({ state, setState }) => {
               });
             }}
             customStyle={`flex-1`}
-          />
+          >
+            {<MaterialIcons name={buttonConfig.weather.icons[index]} size={24} color="black" />}
+          </SheetButton>
         ))}
       </View>
 
@@ -75,7 +78,6 @@ const HazardSelectionBottomSheet = ({ state, setState }) => {
             key={index}
             title={button}
             isactive={state.isHazardLayerActive[button]}
-            child={<MaterialIcons name={buttonConfig.hazard.icons[index]} size={24} color="black" />}
             onPress={() => {
               setState({
                 ...state,
@@ -86,7 +88,9 @@ const HazardSelectionBottomSheet = ({ state, setState }) => {
               });
             }}
             customStyle={`flex-1`}
-          />
+          >
+            {<MaterialIcons name={buttonConfig.hazard.icons[index]} size={24} color="black" />}
+          </SheetButton>
         ))}
       </View>
     </View>
@@ -109,7 +113,6 @@ const FacilitiesSelectionBottomSheet = ({ state, setState }) => {
             key={index}
             title={button}
             isactive={state.isFacilitiesLayerActive[button]}
-            child={<MaterialIcons name={buttonConfig.emergency.icons[index]} size={25} color="black" />}
             onPress={() =>
               setState({
                 ...state,
@@ -120,18 +123,45 @@ const FacilitiesSelectionBottomSheet = ({ state, setState }) => {
               })
             }
             customStyle={``}
-          />
+          >
+            {<MaterialIcons name={buttonConfig.emergency.icons[index]} size={25} color="black" />}
+          </SheetButton>
         ))}
+      </View>
+      <View className="w-full bg-black h-[2px] my-5"></View>
+      <View className="flex justify-between items-center flex-row">
+        <Text className="text-lg font-rregular">Source Type</Text>
+      </View>
+      <View className="flex flex-row justify-around items-center mt-5 gap-5 w-full">
+        {buttonConfig.emergency.source.map((button, index) => {
+          return (
+            <SheetButton
+              key={index}
+              title={button}
+              isactive={state.isFacilitiesLayerActive.source === button}
+              onPress={() =>
+                setState({
+                  ...state,
+                  isFacilitiesLayerActive: {
+                    ...state.isFacilitiesLayerActive,
+                    source: button,
+                  },
+                })
+              }
+              customStyle={`flex-1`}
+            >
+              {<MaterialIcons name={buttonConfig.emergency.sourcesIcons[index]} size={25} color="black" />}
+            </SheetButton>
+          );
+        })}
       </View>
     </View>
   );
 };
 
 const FacilitiesMarkerBottomSheet = React.forwardRef(({ data, handleSheetChanges }, ref) => {
-  if (!data.facilityName) return null;
-  // SNAP POINTS = HEIGHT OF BOTTOM SHEET
 
-  console.log(data)
+  console.log(data);
   // Function to open the dialer with the contact number
   const handleCallPress = (phoneNumber) => {
     const phoneUrl = `tel:${phoneNumber}`;

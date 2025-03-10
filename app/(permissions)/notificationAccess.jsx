@@ -32,7 +32,7 @@ const Notification = () => {
   useEffect(() => {
     if (expoToken) {
       userStorage.setItem("expoToken", expoToken);
-      router.push("/radar");
+      router.replace("/radar");
     }
   }, [isLoading, expoToken]);
 

@@ -172,18 +172,18 @@ const RadarScreen = () => {
     persist: false,
   });
 
-  // const {
-  //   data: googleFacilitiesByType,
-  //   isLoading: isLoadingFacilitiesGoogleByType,
-  //   error: isErrorFacilitiesGoogleByType,
-  // } = useQuery({
-  //   queryKey: ["GoogleFacilitiesByType"],
-  //   queryFn: () => fetchGoogleFacilitiesByType({ currentLocation }),
-  //   gcTime: 0,
-  //   staleTime: 0,
-  //   gcTime: 1000 * 60 * 60 * 24,
-  //   staleTime: 1000 * 60 * 60 * 24,
-  // });
+  const {
+    data: googleFacilitiesByType,
+    isLoading: isLoadingFacilitiesGoogleByType,
+    error: isErrorFacilitiesGoogleByType,
+  } = useQuery({
+    queryKey: ["GoogleFacilitiesByType"],
+    queryFn: () => fetchGoogleFacilitiesByType({ currentLocation }),
+    gcTime: 0,
+    staleTime: 0,
+    gcTime: 1000 * 60 * 60 * 24,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
 
   const {
     data: openStreetFacilitiesByType,
@@ -217,7 +217,7 @@ const RadarScreen = () => {
         {/* critical facilities */}
         {state.isFacilitiesLayerActive["Hospitals"] && (
           <CriticalFacilitiesMarker
-            data={openStreetFacilitiesByType}
+            data={state.isFacilitiesLayerActive.source === "OpenStreet" ? openStreetFacilitiesByType : googleFacilitiesByType}
             type={"Hospitals"}
             onPress={openBottomSheet}
             setFacilitiesInformation={setFacilitiesInformation}
@@ -226,7 +226,7 @@ const RadarScreen = () => {
         )}
         {state.isFacilitiesLayerActive["FireStations"] && (
           <CriticalFacilitiesMarker
-            data={openStreetFacilitiesByType}
+            data={state.isFacilitiesLayerActive.source === "OpenStreet" ? openStreetFacilitiesByType : googleFacilitiesByType}
             type={"FireStations"}
             onPress={openBottomSheet}
             setFacilitiesInformation={setFacilitiesInformation}
@@ -235,7 +235,7 @@ const RadarScreen = () => {
         )}
         {state.isFacilitiesLayerActive["EvacSites"] && (
           <CriticalFacilitiesMarker
-            data={openStreetFacilitiesByType}
+            data={state.isFacilitiesLayerActive.source === "OpenStreet" ? openStreetFacilitiesByType : googleFacilitiesByType}
             type={"EvacSites"}
             onPress={openBottomSheet}
             setFacilitiesInformation={setFacilitiesInformation}
@@ -246,20 +246,20 @@ const RadarScreen = () => {
 
       {/* SIDE BUTTONS */}
       <View className="absolute bottom-20 right-10 flex justify-between flex-col gap-6">
+        <SideButtons onPress={() => handleActiveBottomSheet("hazards")} iconName={"layers"} isActive={state.activeBottomSheet === "hazards"} />
         <SideButtons
-          onPress={() => handleActiveBottomSheet("hazards")}
-          icon={icons.weatherbuttons}
-          isActive={state.activeBottomSheet === "hazards"}
+          onPress={() => handleActiveBottomSheet("facilities")}
+          iconName={"office-building-marker"}
+          isActive={state.activeBottomSheet === "facilities"}
         />
-        <SideButtons onPress={() => handleActiveBottomSheet("facilities")} icon={icons.search} isActive={state.activeBottomSheet === "facilities"} />
-        <SideButtons onPress={() => handleZoomButton("zoom")} icon={icons.locationpinning} isActive={state.activeBottomSheet === "zoom"} />
+        <SideButtons onPress={() => handleActiveBottomSheet("search")} iconName={"magnify"} isActive={state.activeBottomSheet === "search"} />
+        <SideButtons onPress={() => handleZoomButton("zoom")} iconName={"target"} isActive={state.activeBottomSheet === "zoom"} />
       </View>
 
       {/* BOTTOM SHEET */}
       <FacilitiesMarkerBottomSheet
         ref={bottomSheetRef}
         handleSheetChanges={handleSheetChanges}
-        openBottomSheet={openBottomSheet}
         data={facilitiesInformation}
       />
 

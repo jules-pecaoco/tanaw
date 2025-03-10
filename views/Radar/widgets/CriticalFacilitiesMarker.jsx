@@ -12,9 +12,9 @@ const facilityColors = {
 };
 
 const FacilityMarker = ({ facility, type, setFacilitiesInformation, onPress, source }) => {
-  console.log(facility);
   console.log(source);
   if (!facility.id) return null;
+  const queryClient = useQueryClient();
 
   const handlePress = async () => {
     onPress();
@@ -26,8 +26,6 @@ const FacilityMarker = ({ facility, type, setFacilitiesInformation, onPress, sou
       });
       return;
     } else {
-      const queryClient = useQueryClient();
-
       const cachedData = queryClient.getQueryData([type, facility.id]);
 
       if (cachedData) {

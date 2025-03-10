@@ -1,14 +1,13 @@
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Text, View, Image } from "react-native";
-import { icons } from "@/constants/index";
+import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-const TabIcon = (props) => {
-  const { icon, color, focused, name } = props;
+const TabIcon = ({ iconName, iconFilled, color, focused, name }) => {
   return (
-    <View className="items-center justify-center w-16 mt-6">
-      <Image source={icon} resizeMode="contain" tintColor={color}></Image>
+    <View style={{ transform: [{ scale: focused ? 1.1 : 1 }] }} className="items-center w-16 mt-4">
+      <MaterialCommunityIcons name={focused ? iconFilled : iconName} size={24} color={color} />
       <Text className={`${focused ? "font-rsemibold" : "font-rregular"} text-xs`} style={{ color: color }}>
         {name}
       </Text>
@@ -30,7 +29,7 @@ export default function Layout() {
             backgroundColor: "#ffffff",
             borderTopWidth: 0.5,
             borderTopColor: "#232533",
-            height: 65,
+            height: 70,
           },
         }}
       >
@@ -38,21 +37,27 @@ export default function Layout() {
           name="radar"
           options={{
             title: "Radar",
-            tabBarIcon: ({ color, focused }) => <TabIcon icon={icons.radar} color={color} name="Radar" focused={focused}></TabIcon>,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon iconName="compass-outline" iconFilled="compass" color={color} name="Radar" focused={focused} />
+            ),
           }}
         />
         <Tabs.Screen
           name="forecast"
           options={{
             title: "Forecast",
-            tabBarIcon: ({ color, focused }) => <TabIcon icon={icons.forecast} color={color} name="Forecast" focused={focused}></TabIcon>,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon iconName="chart-bar" iconFilled="chart-bar-stacked" color={color} name="Forecast" focused={focused} />
+            ),
           }}
         />
         <Tabs.Screen
           name="notification"
           options={{
             title: "Notifications",
-            tabBarIcon: ({ color, focused }) => <TabIcon icon={icons.bell} color={color} name="Notifications" focused={focused}></TabIcon>,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon iconName="bell-outline" iconFilled="bell" color={color} name="Notifications" focused={focused} />
+            ),
           }}
         />
       </Tabs>
