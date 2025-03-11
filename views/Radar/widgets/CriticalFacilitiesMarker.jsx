@@ -12,7 +12,6 @@ const facilityColors = {
 };
 
 const FacilityMarker = ({ facility, type, setFacilitiesInformation, onPress, source }) => {
-  console.log(source);
   if (!facility.id) return null;
   const queryClient = useQueryClient();
 

@@ -152,7 +152,7 @@ const FacilitiesSelectionBottomSheet = ({ state, setState, onSourceChange }) => 
 };
 
 const FacilitiesMarkerBottomSheet = React.forwardRef(({ data, handleSheetChanges }, ref) => {
-  console.log(data);
+  console.log("Facilities BottomSheet Render....");
   // Function to open the dialer with the contact number
   const handleCallPress = (phoneNumber) => {
     const phoneUrl = `tel:${phoneNumber}`;

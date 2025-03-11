@@ -172,7 +172,7 @@ const RadarScreen = () => {
 
   // Only fetch Google facilities when Google is selected as the source
   const { data: googleFacilitiesByType } = useQuery({
-    queryKey: ["GoogleFacilitiesByType", currentLocation],
+    queryKey: ["GoogleFacilitiesByType"],
     queryFn: () => fetchGoogleFacilitiesByType({ currentLocation }),
     gcTime: 1000 * 60 * 60 * 24,
     staleTime: 1000 * 60 * 60 * 24,
@@ -180,7 +180,7 @@ const RadarScreen = () => {
   });
 
   const { data: openStreetFacilitiesByType } = useQuery({
-    queryKey: ["OpenStreetFacilitiesByType", currentLocation],
+    queryKey: ["OpenStreetFacilitiesByType"],
     queryFn: () => fetchOpenStreetFacilitiesByType({ currentLocation }),
     gcTime: 1000 * 60 * 60 * 24,
     staleTime: 1000 * 60 * 60 * 24,
@@ -189,24 +189,30 @@ const RadarScreen = () => {
   // Memoized components
   const negrosWeatherMemoized = useMemo(() => <CitiesWeatherMarker negrosWeather={negrosWeather} />, [negrosWeather]);
 
-  // Helper function to render facility markers
-  const renderFacilityMarker = (type) => {
-    if (!state.isFacilitiesLayerActive[type]) return null;
+  const renderFacilityMarker = useMemo(() => {
+    return (type) => {
+      if (!state.isFacilitiesLayerActive[type]) return null;
 
-    const facilityData = state.isFacilitiesLayerActive.source === "OpenStreet" ? openStreetFacilitiesByType : googleFacilitiesByType;
+      const facilityData = state.isFacilitiesLayerActive.source === "OpenStreet" ? openStreetFacilitiesByType : googleFacilitiesByType;
 
-    if (!facilityData) return null;
+      if (!facilityData) return null;
 
-    return (
-      <CriticalFacilitiesMarker
-        data={facilityData}
-        type={type}
-        onPress={openBottomSheet}
-        setFacilitiesInformation={setFacilitiesInformation}
-        source={state.isFacilitiesLayerActive.source}
-      />
-    );
-  };
+      return (
+        <CriticalFacilitiesMarker
+          data={facilityData}
+          type={type}
+          onPress={openBottomSheet}
+          setFacilitiesInformation={setFacilitiesInformation}
+          source={state.isFacilitiesLayerActive.source}
+        />
+      );
+    };
+  }, [state.isFacilitiesLayerActive]);
+
+  const renderFacilitiesBottomSheet = useMemo(
+    () => <FacilitiesMarkerBottomSheet ref={bottomSheetRef} handleSheetChanges={handleSheetChanges} data={facilitiesInformation} />,
+    [facilitiesInformation]
+  );
 
   return (
     <View className="relative flex-1">
@@ -245,7 +251,7 @@ const RadarScreen = () => {
       </View>
 
       {/* BOTTOM SHEETS */}
-      <FacilitiesMarkerBottomSheet ref={bottomSheetRef} handleSheetChanges={handleSheetChanges} data={facilitiesInformation} />
+      {renderFacilitiesBottomSheet}
 
       {state.activeBottomSheet === "hazards" && <HazardSelectionBottomSheet state={state} setState={setState} />}
       {state.activeBottomSheet === "facilities" && (
