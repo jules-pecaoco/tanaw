@@ -47,5 +47,5 @@ google-services.json
 /android
 .env
 
-.idea
-eas.json
+/.idea
+/eas.json

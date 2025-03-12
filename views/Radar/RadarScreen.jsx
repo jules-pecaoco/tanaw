@@ -13,6 +13,8 @@ import SideButtons from "./widgets/SideButtons";
 import BaseMap from "./widgets/BaseMap";
 import accessLocation from "@/utilities/accessLocation";
 import CriticalFacilitiesMarker from "./widgets/CriticalFacilitiesMarker";
+import SearchCity from "./widgets/SearchCity";
+import { PointAnnotation } from "@rnmapbox/maps";
 
 const RadarScreen = () => {
   // User location query
@@ -65,6 +67,11 @@ const RadarScreen = () => {
     facilityContact: "",
   });
 
+  const [searchCityDetails, setSearchCityDetails] = useState({
+    latitude: "",
+    longitude: "",
+  });
+
   // References
   const cameraRef = useRef(null);
   const bottomSheetRef = useRef(null);
@@ -89,6 +96,18 @@ const RadarScreen = () => {
     }));
     getUserLocation();
   }, [currentLocation, getUserLocation]);
+
+  const handleSearchZoom = useCallback(
+    (longitude, latitude) => {
+      cameraRef.current?.setCamera({
+        centerCoordinate: [longitude, latitude],
+        animationDuration: 1000,
+        pitch: 30,
+        heading: 0,
+      });
+    },
+    [searchCityDetails]
+  );
 
   const handleSheetChanges = useCallback((index) => {
     if (index > 0) {
@@ -130,7 +149,7 @@ const RadarScreen = () => {
         vectorURL: "mapbox://jules-devs.d2mxk33n",
         fillLayerSourceID: "flood_100year",
         style: {
-          fillColor: ["interpolate", ["linear"], ["get", "Var"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"],
+          fillColor: ["interpolate", ["linear"], ["get", "Var"], 1, "#b047ff", 2, "#5a00ff", 3, "#002474"],
           fillOpacity: 0.8,
         },
       },
@@ -139,7 +158,7 @@ const RadarScreen = () => {
         vectorURL: "mapbox://jules-devs.98uih7xf",
         fillLayerSourceID: "storm_surge_ssa4",
         style: {
-          fillColor: ["interpolate", ["linear"], ["get", "HAZ"], 1, "#FFFF00", 2, "#FFA500", 3, "#FF4500"],
+          fillColor: ["interpolate", ["linear"], ["get", "HAZ"], 1, "#e3d1ff", 2, "#b047ff", 3, "#5a00ff"],
           fillOpacity: 0.8,
         },
       },
@@ -209,13 +228,22 @@ const RadarScreen = () => {
     };
   }, [state.isFacilitiesLayerActive]);
 
-  const renderFacilitiesBottomSheet = useMemo(
+  const renderFacilitiesMarkerBottomSheet = useMemo(
     () => <FacilitiesMarkerBottomSheet ref={bottomSheetRef} handleSheetChanges={handleSheetChanges} data={facilitiesInformation} />,
-    [facilitiesInformation]
+    [facilitiesInformation, state.isFacilitiesLayerActive]
   );
+
+  console.log(searchCityDetails);
 
   return (
     <View className="relative flex-1">
+      {/* SEARCH */}
+      {state.activeBottomSheet === "search" && (
+        <View className="absolute top-10 left-5 right-0 z-10 w-[90%]">
+          <SearchCity currentLocation={currentLocation} setSearchCityDetails={setSearchCityDetails} handleSearchZoom={handleSearchZoom} />
+        </View>
+      )}
+
       {/* BASE MAP */}
       <BaseMap openBottomSheet={openBottomSheet} currentLocation={currentLocation} ref={cameraRef}>
         {/* Hazard Layers */}
@@ -230,6 +258,12 @@ const RadarScreen = () => {
             <OpenWeatherLayer openWeatherTile={openWeatherTile} />
             {negrosWeatherMemoized}
           </>
+        )}
+
+        {/* Search Result Market */}
+
+        {state.activeBottomSheet === "search" && searchCityDetails.latitude && (
+          <PointAnnotation id="123" coordinate={[searchCityDetails.longitude, searchCityDetails.latitude]}></PointAnnotation>
         )}
 
         {/* Critical Facilities */}
@@ -251,7 +285,7 @@ const RadarScreen = () => {
       </View>
 
       {/* BOTTOM SHEETS */}
-      {renderFacilitiesBottomSheet}
+      {renderFacilitiesMarkerBottomSheet}
 
       {state.activeBottomSheet === "hazards" && <HazardSelectionBottomSheet state={state} setState={setState} />}
       {state.activeBottomSheet === "facilities" && (
