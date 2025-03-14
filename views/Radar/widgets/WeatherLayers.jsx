@@ -18,12 +18,5 @@ const OpenWeatherLayer = ({ openWeatherTile }) => {
   );
 };
 
-// const TomorrowIOLayer = ({ tomorrowIOTile }) => {
-//   return (
-//     <RasterSource id="tomorrowio-tile" tileUrlTemplates={[tomorrowIOTile]} tileSize={256}>
-//       <RasterLayer id="tomorrowio-layer" />
-//     </RasterSource>
-//   );
-// };
 
 export { RainViewerLayer, OpenWeatherLayer };

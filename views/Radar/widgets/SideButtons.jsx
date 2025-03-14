@@ -1,8 +1,8 @@
 import React from "react";
-import { View, TouchableOpacity, Image } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-const SideButtons = React.memo(({ onPress, icon, isActive, iconName }) => {
+const SideButtons = React.memo(({ onPress, isActive, iconName }) => {
   return (
     <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
       <View className="p-4 bg-white rounded-full shadow-lg h-fit flex justify-center items-center">

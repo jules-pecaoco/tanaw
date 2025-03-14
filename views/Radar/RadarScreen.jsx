@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
+import { PointAnnotation } from "@rnmapbox/maps";
 
 import { fetchGoogleFacilitiesByType, fetchOpenStreetFacilitiesByType } from "@/services/criticalFacilitiesAPI";
 import { fetchNegrosWeather } from "@/services/citiesWeatherAPI";
@@ -14,33 +15,19 @@ import BaseMap from "./widgets/BaseMap";
 import accessLocation from "@/utilities/accessLocation";
 import CriticalFacilitiesMarker from "./widgets/CriticalFacilitiesMarker";
 import SearchCity from "./widgets/SearchCity";
-import { PointAnnotation } from "@rnmapbox/maps";
+import userStorage from "@/storage/userStorage";
+
+
 
 const RadarScreen = () => {
-  // User location query
-  const { data: userLocation, refetch: getUserLocation } = useQuery({
-    queryKey: ["userLocation"],
-    queryFn: accessLocation,
-    enabled: false,
-  });
-
   // Default to central Negros coordinates if user location not available
   const [currentLocation, setCurrentLocation] = useState(() => {
+    const userLocation = JSON.parse(userStorage.getItem("userLocation"));
     if (userLocation?.coords) {
       return { latitude: userLocation.coords.latitude, longitude: userLocation.coords.longitude };
     }
     return { latitude: 10.65709, longitude: 122.948 };
   });
-
-  // Update location when user location data changes
-  useEffect(() => {
-    if (userLocation?.coords) {
-      setCurrentLocation({
-        latitude: userLocation.coords.latitude,
-        longitude: userLocation.coords.longitude,
-      });
-    }
-  }, [userLocation]);
 
   // Global state for radar features
   const [state, setState] = useState({
@@ -72,7 +59,7 @@ const RadarScreen = () => {
     longitude: "",
   });
 
-  // References
+  
   const cameraRef = useRef(null);
   const bottomSheetRef = useRef(null);
 
@@ -81,21 +68,54 @@ const RadarScreen = () => {
     setState((prevState) => ({ ...prevState, activeBottomSheet: item }));
   }, []);
 
-  const handleZoomButton = useCallback(() => {
-    cameraRef.current?.setCamera({
-      zoomLevel: 12,
-      centerCoordinate: [currentLocation.longitude, currentLocation.latitude],
-      animationDuration: 1000,
-      pitch: 30,
-      heading: 0,
-    });
+  const handleZoomButton = useCallback(async () => {
+    try {
+      // Get current user location
+      const location = await accessLocation();
+
+      if (location?.coords) {
+        const newLocation = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+
+        setCurrentLocation(newLocation);
+
+        userStorage.setItem("userLocation", JSON.stringify(location));
+
+        cameraRef.current?.setCamera({
+          zoomLevel: 12,
+          centerCoordinate: [newLocation.longitude, newLocation.latitude],
+          animationDuration: 1000,
+          pitch: 30,
+          heading: 0,
+        });
+      } else {
+        // If location access fails, use existing location
+        cameraRef.current?.setCamera({
+          zoomLevel: 12,
+          centerCoordinate: [currentLocation.longitude, currentLocation.latitude],
+          animationDuration: 1000,
+          pitch: 30,
+          heading: 0,
+        });
+      }
+    } catch (error) {
+      console.error("Error getting user location:", error);
+      cameraRef.current?.setCamera({
+        zoomLevel: 12,
+        centerCoordinate: [currentLocation.longitude, currentLocation.latitude],
+        animationDuration: 1000,
+        pitch: 30,
+        heading: 0,
+      });
+    }
 
     setState((prevState) => ({
       ...prevState,
       activeBottomSheet: "zoom",
     }));
-    getUserLocation();
-  }, [currentLocation, getUserLocation]);
+  }, [currentLocation]);
 
   const handleSearchZoom = useCallback(
     (longitude, latitude) => {
@@ -163,7 +183,7 @@ const RadarScreen = () => {
         },
       },
     }),
-    []
+    [state.isHazardLayerActive.renderOnce]
   );
 
   // Data queries
@@ -194,7 +214,7 @@ const RadarScreen = () => {
     queryKey: ["GoogleFacilitiesByType"],
     queryFn: () => fetchGoogleFacilitiesByType({ currentLocation }),
     gcTime: 1000 * 60 * 60 * 24,
-    staleTime: 1000 * 60 * 60 * 24,
+    staleTime: 1000 * 60 * 60 * 12,
     enabled: state.isFacilitiesLayerActive.source === "Google Places",
   });
 
@@ -202,7 +222,7 @@ const RadarScreen = () => {
     queryKey: ["OpenStreetFacilitiesByType"],
     queryFn: () => fetchOpenStreetFacilitiesByType({ currentLocation }),
     gcTime: 1000 * 60 * 60 * 24,
-    staleTime: 1000 * 60 * 60 * 24,
+    staleTime: 1000 * 60 * 60 * 12,
   });
 
   // Memoized components
@@ -228,10 +248,6 @@ const RadarScreen = () => {
     };
   }, [state.isFacilitiesLayerActive]);
 
-  const renderFacilitiesMarkerBottomSheet = useMemo(
-    () => <FacilitiesMarkerBottomSheet ref={bottomSheetRef} handleSheetChanges={handleSheetChanges} data={facilitiesInformation} />,
-    [facilitiesInformation, state.isFacilitiesLayerActive]
-  );
 
   console.log(searchCityDetails);
 
@@ -261,7 +277,6 @@ const RadarScreen = () => {
         )}
 
         {/* Search Result Market */}
-
         {state.activeBottomSheet === "search" && searchCityDetails.latitude && (
           <PointAnnotation id="123" coordinate={[searchCityDetails.longitude, searchCityDetails.latitude]}></PointAnnotation>
         )}
@@ -285,7 +300,7 @@ const RadarScreen = () => {
       </View>
 
       {/* BOTTOM SHEETS */}
-      {renderFacilitiesMarkerBottomSheet}
+      <FacilitiesMarkerBottomSheet ref={bottomSheetRef} handleSheetChanges={handleSheetChanges} data={facilitiesInformation} />
 
       {state.activeBottomSheet === "hazards" && <HazardSelectionBottomSheet state={state} setState={setState} />}
       {state.activeBottomSheet === "facilities" && (

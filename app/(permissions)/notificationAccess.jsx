@@ -1,6 +1,5 @@
 import { router } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { icons } from "@/constants/index";
 import { PermissionData } from "@/data/textContent";
@@ -9,24 +8,20 @@ import PermissionScreen from "@/views/Permissions/PermissionScreen";
 import userStorage from "@/storage/userStorage";
 
 const Notification = () => {
-  // NOTIFICATION PERMISSION
-  const {
-    data: expoToken,
-    refetch,
-    isLoading,
-  } = useQuery({
-    queryKey: ["expoToken"],
-    queryFn: accessNotification,
-    enabled: false,
-    staleTime: Infinity,
-    gcTime: Infinity,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false
-  });
+  // State for notification token & loading state
+  const [expoToken, setExpoToken] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const nextScreen = () => {
-    refetch();
+  const nextScreen = async () => {
+    setIsLoading(true);
+    try {
+      const token = await accessNotification();
+      setExpoToken(token);
+    } catch (error) {
+      console.error("Error getting notification permission:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -34,7 +29,7 @@ const Notification = () => {
       userStorage.setItem("expoToken", expoToken);
       router.replace("/radar");
     }
-  }, [isLoading, expoToken]);
+  }, [expoToken]);
 
   // STYLES
   const gradient = {
@@ -50,11 +45,11 @@ const Notification = () => {
       permissionTitle={PermissionData.notification.title}
       permissionTitleDescription={PermissionData.notification.titleDescription}
       permissionDescription={PermissionData.notification.description}
-      handlePress={() => nextScreen()}
+      handlePress={nextScreen}
       gradient={gradient}
       statusBarColor={statusBarColor}
       permissionType="notification"
-      buttonText="Start"
+      buttonText={isLoading ? "Loading..." : "Start"}
       disabled={isLoading}
     />
   );

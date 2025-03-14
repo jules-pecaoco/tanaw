@@ -1,6 +1,5 @@
 import { router } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { icons } from "@/constants/index";
 import { PermissionData } from "@/data/textContent";
@@ -9,20 +8,20 @@ import accessLocation from "@/utilities/accessLocation";
 import userStorage from "@/storage/userStorage";
 
 const Geolocation = () => {
-  // CURRENT LOCATION
+  // State for loading and user location
+  const [userLocation, setUserLocation] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const {
-    data: userLocation,
-    refetch,
-    isLoading,
-  } = useQuery({
-    queryKey: ["userLocation"],
-    queryFn: accessLocation,
-    enabled: false,
-  });
-
-  const nextScreen = () => {
-    refetch();
+  const nextScreen = async () => {
+    setIsLoading(true);
+    try {
+      const location = await accessLocation();
+      setUserLocation(location);
+    } catch (error) {
+      console.error("Error getting location:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -30,7 +29,7 @@ const Geolocation = () => {
       userStorage.setItem("userLocation", JSON.stringify(userLocation));
       router.push("/notificationAccess");
     }
-  }, [isLoading]);
+  }, [userLocation]);
 
   // STYLES
   const gradient = {
@@ -46,12 +45,12 @@ const Geolocation = () => {
       permissionTitle={PermissionData.location.title}
       permissionTitleDescription={PermissionData.location.titleDescription}
       permissionDescription={PermissionData.location.description}
-      handlePress={() => nextScreen()}
+      handlePress={nextScreen}
       disabled={isLoading}
       gradient={gradient}
       statusBarColor={statusBarColor}
       permissionType="location"
-      buttonText="Next"
+      buttonText={isLoading ? "Loading..." : "Next"}
     />
   );
 };

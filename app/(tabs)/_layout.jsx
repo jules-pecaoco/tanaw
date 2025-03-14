@@ -4,13 +4,15 @@ import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-const TabIcon = ({ iconName, iconFilled, color, focused, name }) => {
+const TabIcon = ({ iconName, iconFilled, color, focused, name, customeStyle }) => {
   return (
-    <View style={{ transform: [{ scale: focused ? 1.1 : 1 }] }} className="items-center w-16 mt-4">
+    <View className={`items-center w-16 mt-4 ${customeStyle}`}>
       <MaterialCommunityIcons name={focused ? iconFilled : iconName} size={24} color={color} />
-      <Text className={`${focused ? "font-rsemibold" : "font-rregular"} text-xs`} style={{ color: color }}>
-        {name}
-      </Text>
+      {name && (
+        <Text className={`${focused ? "font-rsemibold" : "font-rregular"} text-xs`} style={{ color: color }}>
+          {name}
+        </Text>
+      )}
     </View>
   );
 };
@@ -43,6 +45,31 @@ export default function Layout() {
           }}
         />
         <Tabs.Screen
+          name="news"
+          options={{
+            title: "News",
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon iconName="newspaper-variant-multiple-outline" iconFilled="newspaper-variant-multiple" color={color} name="News" focused={focused} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="report"
+          options={{
+            title: "Report",
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                iconName="camera"
+                iconFilled="camera-iris"
+                name="Report"
+                color={color}
+                focused={focused}
+                customeStyle={`absolute bg-white border-[3px] border-primary  w-[5rem] h-[5rem] rounded-full flex justify-center align-center`}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="forecast"
           options={{
             title: "Forecast",
@@ -54,9 +81,9 @@ export default function Layout() {
         <Tabs.Screen
           name="notification"
           options={{
-            title: "Notifications",
+            title: "Notification",
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon iconName="bell-outline" iconFilled="bell" color={color} name="Notifications" focused={focused} />
+              <TabIcon iconName="bell-outline" iconFilled="bell" color={color} name="Notification" focused={focused} />
             ),
           }}
         />

@@ -14,14 +14,14 @@ const Index = () => {
     const checkVisited = () => {
       const visited = userStorage.getItem("hasVisited");
       if (visited) {
-        router.push("/locationAccess");
+        router.push("/radar");
       } else {
         setHasVisited(true);
       }
       setLoading(false);
     };
 
-    setTimeout(checkVisited, 0);
+    setTimeout(checkVisited, 100);
   }, []);
 
   const nextScreen = () => {

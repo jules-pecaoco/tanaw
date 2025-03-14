@@ -1,6 +1,6 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import React from "react";
-import { MarkerView } from "@rnmapbox/maps";
+import { MarkerView, PointAnnotation } from "@rnmapbox/maps";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { fetchGoogleFacilityById } from "@/services/criticalFacilitiesAPI";
@@ -55,14 +55,7 @@ const FacilityMarker = ({ facility, type, setFacilitiesInformation, onPress, sou
   return (
     <MarkerView id={`${type}-${facility.id}`} coordinate={[facility.location.longitude, facility.location.latitude]}>
       <TouchableOpacity onPress={handlePress}>
-        <View
-          className="rounded-lg p-1"
-          style={{
-            backgroundColor: facilityColors[type] || "gray",
-          }}
-        >
-          <Text className="font-rmedium text-white">{facility.name}</Text>
-        </View>
+        <View className={`p-3 rounded-full `} style={{ backgroundColor: facilityColors[type] || "gray" }}></View>
       </TouchableOpacity>
     </MarkerView>
   );
@@ -77,7 +70,7 @@ const CriticalFacilitiesMarker = ({ data, type, setFacilitiesInformation, onPres
 
   return facilities.map((facility) => (
     <FacilityMarker
-      key={`${type}-${Math.random().toString()}`}
+      key={`${type}-${Math.random()}`}
       facility={facility}
       type={type}
       setFacilitiesInformation={setFacilitiesInformation}
