@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import { View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { PointAnnotation } from "@rnmapbox/maps";
@@ -16,8 +16,10 @@ import accessLocation from "@/utilities/accessLocation";
 import CriticalFacilitiesMarker from "./widgets/CriticalFacilitiesMarker";
 import SearchCity from "./widgets/SearchCity";
 import userStorage from "@/storage/userStorage";
-
-
+import HazardMarker from "./widgets/UserReport/UserReportedHazardMarker";
+import HeatMapLayer from "./widgets/UserReport/UserReportedHeatMapLayer";
+import useHazardReports from "@/hooks/useHazardReports";
+import useLocation from "@/hooks/useLocation";
 
 const RadarScreen = () => {
   // Default to central Negros coordinates if user location not available
@@ -59,7 +61,14 @@ const RadarScreen = () => {
     longitude: "",
   });
 
-  
+  const { reports, isLoading, getHeatmapData } = useHazardReports();
+
+  const [showHeatmap, setShowHeatmap] = useState(false);
+
+  const toggleHeatmap = () => {
+    setShowHeatmap(!showHeatmap);
+  };
+
   const cameraRef = useRef(null);
   const bottomSheetRef = useRef(null);
 
@@ -248,7 +257,6 @@ const RadarScreen = () => {
     };
   }, [state.isFacilitiesLayerActive]);
 
-
   console.log(searchCityDetails);
 
   return (
@@ -276,7 +284,7 @@ const RadarScreen = () => {
           </>
         )}
 
-        {/* Search Result Market */}
+        {/* Search Result Marker */}
         {state.activeBottomSheet === "search" && searchCityDetails.latitude && (
           <PointAnnotation id="123" coordinate={[searchCityDetails.longitude, searchCityDetails.latitude]}></PointAnnotation>
         )}
@@ -285,6 +293,17 @@ const RadarScreen = () => {
         {renderFacilityMarker("Hospitals")}
         {renderFacilityMarker("FireStations")}
         {renderFacilityMarker("EvacSites")}
+
+        {/*User Reported Hazard markers */}
+        {!isLoading && reports && reports.map((report) => {
+          console.log(report);
+          return (
+            <HazardMarker key={report.id} report={report} onPress={() => onMarkerPress(report)} />
+          )
+        })}
+
+        {/*User Reported Heatmap layer (conditionally rendered) */}
+        {showHeatmap && <HeatMapLayer data={getHeatmapData()} />}
       </BaseMap>
 
       {/* SIDE BUTTONS */}

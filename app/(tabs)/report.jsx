@@ -1,10 +1,12 @@
 import { View, Text } from "react-native";
 import React from "react";
 
+import ReportScreen from "@/views/Report/ReportScreen";
+
 const report = () => {
   return (
-    <View>
-      <Text>report</Text>
+    <View className="flex-1">
+      <ReportScreen />
     </View>
   );
 };

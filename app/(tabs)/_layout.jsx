@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Text, View } from "react-native";
+import { Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
@@ -49,7 +49,13 @@ export default function Layout() {
           options={{
             title: "News",
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon iconName="newspaper-variant-multiple-outline" iconFilled="newspaper-variant-multiple" color={color} name="News" focused={focused} />
+              <TabIcon
+                iconName="newspaper-variant-multiple-outline"
+                iconFilled="newspaper-variant-multiple"
+                color={color}
+                name="News"
+                focused={focused}
+              />
             ),
           }}
         />
@@ -65,6 +71,12 @@ export default function Layout() {
                 color={color}
                 focused={focused}
                 customeStyle={`absolute bg-white border-[3px] border-primary  w-[5rem] h-[5rem] rounded-full flex justify-center align-center`}
+              />
+            ),
+            tabBarButton: (props) => (
+              <TouchableOpacity
+                {...props}
+                activeOpacity={1} // This prevents the opacity change when pressed
               />
             ),
           }}
