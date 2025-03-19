@@ -25,11 +25,11 @@ const Notification = () => {
     }
   };
 
-  let userId = userStorage.getString("userID");
+  let userId = userStorage.getItem("userID");
 
   if (!userId) {
     userId = uuid.v4();
-    userStorage.set("userID", userId);
+    userStorage.setItem("userID", userId);
   }
 
   useEffect(() => {

@@ -87,7 +87,7 @@ const ReportScreen = () => {
     <View className="flex-1 justify-around p-4">
       <CameraView onImageCaptured={setImage} imageUri={image} />
 
-      {/* <CategorySelector categories={hazardCategories} selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} /> */}
+      <CategorySelector categories={hazardCategories} selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
 
       <TextInput
         className="border border-gray-300 rounded-md p-2.5 my-2.5 h-24 text-base"

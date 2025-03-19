@@ -2,6 +2,7 @@ import { View, Text, Image, Pressable, TouchableOpacity, FlatList } from "react-
 import React, { useState } from "react";
 
 import Entypo from "@expo/vector-icons/Entypo";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 const NotificationInfo = ({ data, icon }) => {
   const [press, setPress] = useState(false);
@@ -11,7 +12,7 @@ const NotificationInfo = ({ data, icon }) => {
       <View className="bg-white flex flex-col items-center justify-between gap-2 rounded-lg p-5 w-[95%] self-end">
         <View className="flex flex-row items-center gap-2 w-full justify-between">
           <View className="flex flex-row items-center gap-2">
-            <Image source={icon} />
+            <MaterialCommunityIcons name="weather-sunny" size={24} color="black" />
             <Text className="font-rlight text-5xl">|</Text>
             <Text className="font-rbold text-2xl">{data.title}</Text>
             <Text className="font-rbold text-2xl">:</Text>

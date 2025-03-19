@@ -1,8 +1,9 @@
-import { View, Text, TouchableOpacity, Linking } from "react-native";
-import React from "react";
+import { View, Text, TouchableOpacity, Linking, Image } from "react-native";
+import React, { useState } from "react";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
+import { sources } from "@/constants/index";
 
 const buttonConfig = {
   weather: {
@@ -17,7 +18,7 @@ const buttonConfig = {
     buttons: ["Hospitals", "FireStations", "EvacSites"],
     icons: ["local-hospital", "fire-truck", "night-shelter"],
     source: ["OpenStreet", "Google Places"],
-    sourcesIcons: ["fire-truck", "fire-truck"],
+    sourcesIcons: ["openstreet", "google"],
   },
 };
 
@@ -33,6 +34,46 @@ const SheetButton = ({ title, onPress, isactive, customStyle, children }) => {
       {children}
       {title && <Text className="text-xs">{title}</Text>}
     </TouchableOpacity>
+  );
+};
+
+const SourcesButton = ({ title, onPress, isactive, customStyle, children, tooltipContent }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  const toggleTooltip = () => {
+    setShowTooltip((prevState) => !prevState);
+  };
+
+  return (
+    <View className="relative">
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onPress}
+        className={`${
+          isactive ? "border border-primary border-solid" : ""
+        } ${customStyle} p-5 bg-white rounded-lg shadow-lg flex justify-center items-center border-[1px]`}
+      >
+        {/* Info icon in top right corner */}
+        {tooltipContent && (
+          <TouchableOpacity onPress={toggleTooltip} className="absolute top-2 right-2 z-10">
+            <MaterialIcons name="info-outline" size={24} color="black" />
+          </TouchableOpacity>
+        )}
+
+        {children}
+        {title && <Text className="text-xs">{title}</Text>}
+      </TouchableOpacity>
+
+      {/* Tooltip box that appears when info icon is clicked */}
+      {showTooltip && tooltipContent && (
+        <View className="absolute top-12 right-0 bg-white p-3 rounded-md shadow-md border border-gray-200 z-20 w-48">
+          <Text className="text-xs text-gray-700">{tooltipContent}</Text>
+          <TouchableOpacity onPress={toggleTooltip} className="absolute top-1 right-1">
+            <Text className="text-xs font-bold text-gray-500">✕</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
   );
 };
 
@@ -135,15 +176,15 @@ const FacilitiesSelectionBottomSheet = ({ state, setState, onSourceChange }) => 
       <View className="flex flex-row justify-around items-center mt-5 gap-5 w-full">
         {buttonConfig.emergency.source.map((button, index) => {
           return (
-            <SheetButton
+            <SourcesButton
               key={index}
               title={button}
               isactive={state.isFacilitiesLayerActive.source === button}
               onPress={() => onSourceChange(button)}
               customStyle={`flex-1`}
             >
-              {<MaterialIcons name={buttonConfig.emergency.sourcesIcons[index]} size={25} color="black" />}
-            </SheetButton>
+              {<Image source={sources[buttonConfig.emergency.sourcesIcons[index]]} className="size-8" resizeMode="contain"></Image>}
+            </SourcesButton>
           );
         })}
       </View>

@@ -1,7 +1,7 @@
 import { View, Text, Image, FlatList } from "react-native";
 import React from "react";
 
-import { icons } from "@/constants/index";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 const Daycast = ({ time, caution, temp, icon }) => {
   return (
@@ -34,7 +34,7 @@ const ForecastWidget = ({ data }) => {
       {/* HOURLY FORECAST */}
       <View className="flex flex-col items-center justify-around bg-white w-[95%] p-4 gap-3 rounded-xl">
         <View className="flex flex-row items-center w-full gap-3">
-          <Image source={icons.hour} className="size-4"></Image>
+          <MaterialCommunityIcons name="clock-time-eight-outline" size={24} color="black" />
           <Text className="font-rregular text-md">Hourly Forecast</Text>
         </View>
         {/* TIMESTAMP */}

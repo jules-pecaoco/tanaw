@@ -5,7 +5,7 @@ import ReportScreen from "@/views/Report/ReportScreen";
 
 const report = () => {
   return (
-    <View className="flex-1">
+    <View className="flex-1 mb-5">
       <ReportScreen />
     </View>
   );

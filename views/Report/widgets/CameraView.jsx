@@ -31,8 +31,11 @@ const CameraWidget = ({ onImageCaptured, imageUri }) => {
     onImageCaptured(null);
   };
 
+  console.log("imageUri", imageUri);
+  console.log("permission", permission);
+
   // If no image is captured and camera is not visible, show button to open camera
-  if (!imageUri && !permission) {
+  if (!imageUri && !permission?.granted) {
     return (
       <TouchableOpacity className="bg-primary w-full h-20 flex-row items-center justify-center rounded-md my-2.5" onPress={requestPermission}>
         <Ionicons name="camera" size={24} color="white" />
@@ -44,7 +47,7 @@ const CameraWidget = ({ onImageCaptured, imageUri }) => {
   // If image is captured, show preview
   if (imageUri) {
     return (
-      <View className="aspect-[4/3] w-full rounded-lg overflow-hidden mb-4 relative">
+      <View className="w-full rounded-lg overflow-hidden mb-4 relative" style={{ height: 400 }}>
         <Image source={{ uri: imageUri }} className="w-full h-full" />
         <TouchableOpacity className="absolute bottom-4 right-4 bg-black/60 p-2.5 rounded" onPress={retakePhoto}>
           <Text className="text-white">Retake</Text>
@@ -55,13 +58,13 @@ const CameraWidget = ({ onImageCaptured, imageUri }) => {
 
   // Show camera view
   return (
-    <View className="flex-1 w-full rounded-lg overflow-hidden mb-4">
+    <View className="flex-1 w-full rounded-lg">
       {permission === null && <Text>Requesting camera permission...</Text>}
 
       {permission === false && <Text>No access to camera</Text>}
 
       {permission && (
-        <CameraView ref={cameraRef} className="flex-1 " style={{height: 500}} facing={cameraType} onCameraReady={() => setIsCameraReady(true)}>
+        <CameraView ref={cameraRef} className="flex-1" style={{ height: 400 }} facing={cameraType} onCameraReady={() => setIsCameraReady(true)}>
           <View className="flex-1 h flex-row items-end justify-around mb-5">
             <TouchableOpacity className="p-4" onPress={flipCamera}>
               <Ionicons name="camera-reverse" size={24} color="#fff" />
