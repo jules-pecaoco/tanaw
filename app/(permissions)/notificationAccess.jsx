@@ -4,19 +4,19 @@ import uuid from "react-native-uuid";
 
 import { icons } from "@/constants/index";
 import { PermissionData } from "@/data/textContent";
-import accessNotification from "@/utilities/accessNotification";
 import PermissionScreen from "@/views/Permissions/PermissionScreen";
 import userStorage from "@/storage/userStorage";
+import { useNotification } from "@/context/NotificationContext";
 
 const Notification = () => {
-  // State for notification token & loading state
+  const { getNotification } = useNotification();
   const [expoToken, setExpoToken] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const nextScreen = async () => {
     setIsLoading(true);
     try {
-      const token = await accessNotification();
+      const token = await getNotification();
       setExpoToken(token);
     } catch (error) {
       console.error("Error getting notification permission:", error);

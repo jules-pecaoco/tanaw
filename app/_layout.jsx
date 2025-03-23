@@ -11,6 +11,8 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { userStorage } from "@/storage/userStorage";
 
+import { PROJECT_ID } from "@/tokens/tokens";
+import { NotificationProvider } from "@/context/NotificationContext";
 import "@/global.css";
 
 SplashScreen.preventAutoHideAsync();
@@ -71,32 +73,34 @@ const RootLayout = () => {
   });
 
   return (
-    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: userPersistStorage }}>
-      <SafeAreaProvider className="flex-1">
-        <GestureHandlerRootView className="flex-1">
-          <Stack>
-            <Stack.Screen
-              name="index"
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="(permissions)"
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="(tabs)"
-              options={{
-                headerShown: false,
-              }}
-            />
-          </Stack>
-        </GestureHandlerRootView>
-      </SafeAreaProvider>
-    </PersistQueryClientProvider>
+    <NotificationProvider projectId={PROJECT_ID}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: userPersistStorage }}>
+        <SafeAreaProvider className="flex-1">
+          <GestureHandlerRootView className="flex-1">
+            <Stack>
+              <Stack.Screen
+                name="index"
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="(permissions)"
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="(tabs)"
+                options={{
+                  headerShown: false,
+                }}
+              />
+            </Stack>
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </PersistQueryClientProvider>
+    </NotificationProvider>
   );
 };
 

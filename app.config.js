@@ -44,6 +44,7 @@ export default ({ config }) => ({
         RNMapboxMapsDownloadToken: process.env.MAPBOX_SECRET_KEY,
       },
     ],
+    "expo-sqlite",
   ],
   experiments: {
     typedRoutes: true,

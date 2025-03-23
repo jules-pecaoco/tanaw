@@ -7,6 +7,7 @@ const CameraWidget = ({ onImageCaptured, imageUri, onClose }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraType, setCameraType] = useState("back");
   const [isCameraReady, setIsCameraReady] = useState(false);
+  const [openCamera, setOpenCamera] = useState(false);
   const cameraRef = useRef(null);
 
   // Take picture
@@ -35,9 +36,16 @@ const CameraWidget = ({ onImageCaptured, imageUri, onClose }) => {
   console.log("permission", permission);
 
   // If no image is captured and camera is not visible, show button to open camera
-  if (!imageUri && !permission?.granted) {
+  if ((!imageUri && !permission?.granted) || !openCamera) {
+    const onClick = () => {
+      if (permission === null) {
+        requestPermission();
+      } else {
+        setOpenCamera(true);
+      }
+    };
     return (
-      <TouchableOpacity className="bg-primary w-full h-20 flex-row items-center justify-center rounded-md my-2.5" onPress={requestPermission}>
+      <TouchableOpacity className="bg-primary w-full h-[400px] flex-row items-center justify-center rounded-md my-2.5" onPress={onClick}>
         <Ionicons name="camera" size={24} color="white" />
         <Text className="text-white ml-2.5">Take Photo</Text>
       </TouchableOpacity>
@@ -61,6 +69,7 @@ const CameraWidget = ({ onImageCaptured, imageUri, onClose }) => {
     );
   }
 
+
   // Show camera view
   return (
     <View className="flex-1 w-full rounded-lg">
@@ -68,8 +77,14 @@ const CameraWidget = ({ onImageCaptured, imageUri, onClose }) => {
 
       {permission === false && <Text>No access to camera</Text>}
 
-      {permission && (
-        <CameraView ref={cameraRef} className="flex-1 rounded-md" style={{ height: 400, borderRadius: 5 }} facing={cameraType} onCameraReady={() => setIsCameraReady(true)}>
+      {openCamera && (
+        <CameraView
+          ref={cameraRef}
+          className="flex-1 rounded-md"
+          style={{ height: 400, borderRadius: 5 }}
+          facing={cameraType}
+          onCameraReady={() => setIsCameraReady(true)}
+        >
           <View className="flex-1 h flex-row items-end justify-around mb-5">
             <TouchableOpacity className="p-4" onPress={flipCamera}>
               <Ionicons name="camera-reverse" size={24} color="#fff" />
@@ -79,7 +94,7 @@ const CameraWidget = ({ onImageCaptured, imageUri, onClose }) => {
               <View className="w-[60px] h-[60px] rounded-full bg-white" />
             </TouchableOpacity>
 
-            <TouchableOpacity className="p-4" onPress={onClose}>
+            <TouchableOpacity className="p-4" onPress={() => setOpenCamera(false)}>
               <Ionicons name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
