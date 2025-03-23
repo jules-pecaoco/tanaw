@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Image } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
-const CameraWidget = ({ onImageCaptured, imageUri }) => {
+const CameraWidget = ({ onImageCaptured, imageUri, onClose }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraType, setCameraType] = useState("back");
   const [isCameraReady, setIsCameraReady] = useState(false);
@@ -49,6 +49,11 @@ const CameraWidget = ({ onImageCaptured, imageUri }) => {
     return (
       <View className="w-full rounded-lg overflow-hidden mb-4 relative" style={{ height: 400 }}>
         <Image source={{ uri: imageUri }} className="w-full h-full" />
+        <View className="absolute top-0 right-0 left-0 flex-row justify-between p-4">
+          <TouchableOpacity className="bg-black/60 p-2.5 rounded" onPress={onClose}>
+            <Ionicons name="close" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity className="absolute bottom-4 right-4 bg-black/60 p-2.5 rounded" onPress={retakePhoto}>
           <Text className="text-white">Retake</Text>
         </TouchableOpacity>
@@ -64,7 +69,7 @@ const CameraWidget = ({ onImageCaptured, imageUri }) => {
       {permission === false && <Text>No access to camera</Text>}
 
       {permission && (
-        <CameraView ref={cameraRef} className="flex-1" style={{ height: 400 }} facing={cameraType} onCameraReady={() => setIsCameraReady(true)}>
+        <CameraView ref={cameraRef} className="flex-1 rounded-md" style={{ height: 400, borderRadius: 5 }} facing={cameraType} onCameraReady={() => setIsCameraReady(true)}>
           <View className="flex-1 h flex-row items-end justify-around mb-5">
             <TouchableOpacity className="p-4" onPress={flipCamera}>
               <Ionicons name="camera-reverse" size={24} color="#fff" />
@@ -74,7 +79,9 @@ const CameraWidget = ({ onImageCaptured, imageUri }) => {
               <View className="w-[60px] h-[60px] rounded-full bg-white" />
             </TouchableOpacity>
 
-            <View className="w-[52px]" />
+            <TouchableOpacity className="p-4" onPress={onClose}>
+              <Ionicons name="close" size={24} color="white" />
+            </TouchableOpacity>
           </View>
         </CameraView>
       )}

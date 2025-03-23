@@ -1,35 +1,24 @@
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
-
+import { useEffect } from "react";
 import { icons } from "@/constants/index";
 import { PermissionData } from "@/data/textContent";
 import PermissionScreen from "@/views/Permissions/PermissionScreen";
-import accessLocation from "@/utilities/accessLocation";
-import userStorage from "@/storage/userStorage";
+import useLocation from "@/hooks/useLocation";
+// import userStorage from "@/storage/userStorage";
 
 const Geolocation = () => {
-  // State for loading and user location
-  const [userLocation, setUserLocation] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // Use the modified location hook
+  const { location, loading, getLocation } = useLocation();
 
   const nextScreen = async () => {
-    setIsLoading(true);
-    try {
-      const location = await accessLocation();
-      setUserLocation(location);
-    } catch (error) {
-      console.error("Error getting location:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    await getLocation();
   };
 
   useEffect(() => {
-    if (userLocation) {
-      userStorage.setItem("userLocation", JSON.stringify(userLocation));
+    if (location) {
       router.push("/notificationAccess");
     }
-  }, [userLocation]);
+  }, [location]);
 
   // STYLES
   const gradient = {
@@ -46,11 +35,11 @@ const Geolocation = () => {
       permissionTitleDescription={PermissionData.location.titleDescription}
       permissionDescription={PermissionData.location.description}
       handlePress={nextScreen}
-      disabled={isLoading}
+      disabled={loading}
       gradient={gradient}
       statusBarColor={statusBarColor}
       permissionType="location"
-      buttonText={isLoading ? "Loading..." : "Next"}
+      buttonText={loading ? "Loading..." : "Next"}
     />
   );
 };

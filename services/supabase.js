@@ -1,5 +1,6 @@
 import uuid from "react-native-uuid";
 import { Platform } from "react-native";
+import * as ImageManipulator from "expo-image-manipulator";
 
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/tokens/tokens";
 import { createClient } from "@supabase/supabase-js";
@@ -42,12 +43,35 @@ export const fetchHazardReports = async () => {
   return data;
 };
 
+const compressHazardImage = async (uri) => {
+  try {
+    // 0.65 quality provides good compression while keeping important details visible
+    // 1000px width is sufficient for most hazard documentation
+    const result = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 1000 } }], {
+      compress: 0.65,
+      format: ImageManipulator.SaveFormat.JPEG,
+    });
+
+    console.log(`Original image compressed: ${uri} -> ${result.uri}`);
+    return { uri: result.uri, error: null };
+  } catch (error) {
+    console.error("Image compression failed:", error);
+    return { uri: null, error };
+  }
+};
+
 const uploadImage = async (uri, fileName) => {
+  const { uri: compressedUri, error: compressionError } = await compressHazardImage(uri);
+
+  if (compressionError) {
+    console.warn("Compression failed, using original image:", compressionError);
+  }
+
   try {
     // Create proper form data for the upload
     const formData = new FormData();
     formData.append("file", {
-      uri: Platform.OS === "ios" ? uri.replace("file://", "") : uri,
+      uri: Platform.OS === "ios" ? uri.replace("file://", "") : compressedUri,
       name: fileName,
       type: "image/jpeg", // Adjust based on your image type
     });
@@ -74,9 +98,6 @@ const uploadImage = async (uri, fileName) => {
 export const uploadHazardReport = async (hazardData, imageUri) => {
   try {
     const userId = getUserId();
-    console.log("Starting upload with user ID:", userId);
-    console.log("Hazard data:", hazardData);
-    console.log("Image URI:", imageUri);
 
     // Upload image first
     let imagePath = null;

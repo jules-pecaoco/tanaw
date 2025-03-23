@@ -5,7 +5,6 @@ const OPENWEATHER_FORECAST_API_URL = "https://api.openweathermap.org/data/2.5/fo
 const OPENWEATHER_HOURLY_API_URL = "https://pro.openweathermap.org/data/2.5/forecast/hourly";
 
 const fetchDailytData = async ({ currentLocation }) => {
-  console.log(currentLocation);
   console.log("Fetching foreast data.....");
 
   try {

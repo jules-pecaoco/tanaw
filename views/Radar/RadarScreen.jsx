@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { PointAnnotation } from "@rnmapbox/maps";
@@ -12,21 +12,22 @@ import HazardLayers from "./widgets/HazardLayers";
 import CitiesWeatherMarker from "./widgets/CitiesWeatherMarker";
 import SideButtons from "./widgets/SideButtons";
 import BaseMap from "./widgets/BaseMap";
-import accessLocation from "@/utilities/accessLocation";
 import CriticalFacilitiesMarker from "./widgets/CriticalFacilitiesMarker";
 import SearchCity from "./widgets/SearchCity";
-import userStorage from "@/storage/userStorage";
 import HazardMarker from "./widgets/UserReport/UserReportedHazardMarker";
 import HeatMapLayer from "./widgets/UserReport/UserReportedHeatMapLayer";
 import useHazardReports from "@/hooks/useHazardReports";
 import useLocation from "@/hooks/useLocation";
 
 const RadarScreen = () => {
-  // Default to central Negros coordinates if user location not available
+  // Use the location hook
+  const { location, loading, getLocation } = useLocation();
+
+  console.log("Location: ", location);
+  // Default to Bacolod coordinates if user location not available
   const [currentLocation, setCurrentLocation] = useState(() => {
-    const userLocation = JSON.parse(userStorage.getItem("userLocation"));
-    if (userLocation?.coords) {
-      return { latitude: userLocation.coords.latitude, longitude: userLocation.coords.longitude };
+    if (location) {
+      return { latitude: location.latitude, longitude: location.longitude };
     }
     return { latitude: 10.65709, longitude: 122.948 };
   });
@@ -78,52 +79,20 @@ const RadarScreen = () => {
   }, []);
 
   const handleZoomButton = useCallback(async () => {
-    try {
-      // Get current user location
-      const location = await accessLocation();
-
-      if (location?.coords) {
-        const newLocation = {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        };
-
-        setCurrentLocation(newLocation);
-
-        userStorage.setItem("userLocation", JSON.stringify(location));
-
-        cameraRef.current?.setCamera({
-          zoomLevel: 12,
-          centerCoordinate: [newLocation.longitude, newLocation.latitude],
-          animationDuration: 1000,
-          pitch: 30,
-          heading: 0,
-        });
-      } else {
-        // If location access fails, use existing location
-        cameraRef.current?.setCamera({
-          zoomLevel: 12,
-          centerCoordinate: [currentLocation.longitude, currentLocation.latitude],
-          animationDuration: 1000,
-          pitch: 30,
-          heading: 0,
-        });
-      }
-    } catch (error) {
-      console.error("Error getting user location:", error);
-      cameraRef.current?.setCamera({
-        zoomLevel: 12,
-        centerCoordinate: [currentLocation.longitude, currentLocation.latitude],
-        animationDuration: 1000,
-        pitch: 30,
-        heading: 0,
-      });
-    }
+    cameraRef.current?.setCamera({
+      zoomLevel: 14,
+      centerCoordinate: [currentLocation.longitude, currentLocation.latitude],
+      animationDuration: 1000,
+      pitch: 30,
+      heading: 0,
+    });
 
     setState((prevState) => ({
       ...prevState,
       activeBottomSheet: "zoom",
     }));
+
+    await getLocation();
   }, [currentLocation]);
 
   const handleSearchZoom = useCallback(
@@ -150,8 +119,6 @@ const RadarScreen = () => {
 
   // Handle changing the data source
   const handleSourceChange = useCallback((newSource) => {
-    console.log("Hello" + newSource);
-
     setState((prevState) => ({
       ...prevState,
       isFacilitiesLayerActive: {
@@ -257,7 +224,9 @@ const RadarScreen = () => {
     };
   }, [state.isFacilitiesLayerActive]);
 
-  console.log(searchCityDetails);
+  if (!location) {
+    return <View>Loading...</View>;
+  }
 
   return (
     <View className="relative flex-1">
@@ -295,12 +264,11 @@ const RadarScreen = () => {
         {renderFacilityMarker("EvacSites")}
 
         {/*User Reported Hazard markers */}
-        {!isLoading && reports && reports.map((report) => {
-          console.log(report);
-          return (
-            <HazardMarker key={report.id} report={report} onPress={() => onMarkerPress(report)} />
-          )
-        })}
+        {!isLoading &&
+          reports &&
+          reports.map((report) => {
+            return <HazardMarker key={report.id} report={report} onPress={() => onMarkerPress(report)} />;
+          })}
 
         {/*User Reported Heatmap layer (conditionally rendered) */}
         {showHeatmap && <HeatMapLayer data={getHeatmapData()} />}

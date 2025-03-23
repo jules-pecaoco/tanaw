@@ -1,64 +1,71 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import * as Location from "expo-location";
+import userStorage from "@/storage/userStorage";
+
+const LOCATION_STORAGE_KEY = "userLocation";
 
 const useLocation = () => {
-  const [location, setLocation] = useState(null);
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    (async () => {
+  // Initialize location from storage during state initialization
+  const getInitialLocation = () => {
+    const storedLocation = userStorage.getItem(LOCATION_STORAGE_KEY);
+    if (storedLocation) {
       try {
-        setLoading(true);
-
-        // Request location permissions
-        const { status } = await Location.requestForegroundPermissionsAsync();
-
-        if (status !== "granted") {
-          setErrorMsg("Permission to access location was denied");
-          setLoading(false);
-          return;
+        const parsedLocation = JSON.parse(storedLocation);
+        // Check if it's in the expected format
+        if (parsedLocation && parsedLocation.latitude && parsedLocation.longitude) {
+          return parsedLocation;
+        } else if (parsedLocation && parsedLocation.coords) {
+          // Handle the case where it's stored in the coords format
+          return {
+            latitude: parsedLocation.coords.latitude,
+            longitude: parsedLocation.coords.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          };
         }
-
-        // Get current location
-        const currentLocation = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-
-        setLocation({
-          latitude: currentLocation.coords.latitude,
-          longitude: currentLocation.coords.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        });
       } catch (error) {
-        setErrorMsg("Error getting location: " + error.message);
-      } finally {
-        setLoading(false);
+        console.error("Error parsing stored location:", error);
       }
-    })();
-  }, []);
+    }
+    return null;
+  };
 
-  const refreshLocation = async () => {
+  const [location, setLocation] = useState(getInitialLocation);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const getLocation = async () => {
     try {
       setLoading(true);
 
+      // Request location permissions
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        setLoading(false);
+        return null;
+      }
+
+      // Get current location
       const currentLocation = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
 
-      setLocation({
+      const locationData = {
         latitude: currentLocation.coords.latitude,
         longitude: currentLocation.coords.longitude,
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
-      });
+      };
+
+      // Save to state
+      setLocation(locationData);
+
+      // Save to storage
+      userStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(locationData));
 
       setLoading(false);
-      return {
-        latitude: currentLocation.coords.latitude,
-        longitude: currentLocation.coords.longitude,
-      };
+      return locationData;
     } catch (error) {
       setErrorMsg("Error getting location: " + error.message);
       setLoading(false);
@@ -66,7 +73,7 @@ const useLocation = () => {
     }
   };
 
-  return { location, errorMsg, loading, refreshLocation };
+  return { location, errorMsg, loading, getLocation };
 };
 
 export default useLocation;

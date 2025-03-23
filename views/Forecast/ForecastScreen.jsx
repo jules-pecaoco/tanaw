@@ -8,19 +8,19 @@ import CustomButton from "@/views/components/CustomButton";
 import ForecastWidget from "@/views/Forecast/widgets/ForecastWidget";
 import AnalyticsWidget from "@/views/Forecast/widgets/AnalyticsWidget";
 import TrendsWidget from "@/views/Forecast/widgets/TrendsWidget";
-import userStorage from "@/storage/userStorage";
+import useLocation from "@/hooks/useLocation";
 
 const ForecastScreen = () => {
-  console.log("ForecastScreen");
+  const { location, loading, getLocation } = useLocation();
+
+  console.log("Location: ", location);
+
+  // Default to Bacolod coordinates if user location not available
   const [currentLocation, setCurrentLocation] = useState(() => {
-    try {
-      const location = JSON.parse(userStorage.getItem("userLocation"));
-      if (location && location.coords) {
-        return { latitude: location.coords.latitude, longitude: location.coords.longitude };
-      }
-    } catch (error) {
-      return { latitude: 10.65709, longitude: 122.948 };
+    if (location) {
+      return { latitude: location.latitude, longitude: location.longitude };
     }
+    return { latitude: 10.65709, longitude: 122.948 };
   });
 
   const [active, setActive] = useState("forecast");
@@ -49,6 +49,8 @@ const ForecastScreen = () => {
   });
 
   let closestHour = null;
+
+
 
   if (!isLoadingUserWeather && userWeather) {
     const userCurrentHour = new Date().getHours();
