@@ -11,7 +11,7 @@ const MAPBOX_RETRIEVE_URL = "https://api.mapbox.com/search/searchbox/v1/retrieve
  * @param {string} sessionToken - Unique token for this search session (from parent)
  * @returns {Promise<Array>} - List of matching city suggestions
  */
-const searchCity = async (cityName, currentLocation , sessionToken) => {
+const searchCity = async (cityName, currentLocation, sessionToken) => {
   try {
     const response = await axios.get(MAPBOX_SEARCH_URL, {
       params: {
@@ -40,7 +40,7 @@ const searchCity = async (cityName, currentLocation , sessionToken) => {
  */
 const searchCityDetails = async (cityId, session_token) => {
   try {
-    const response = await axios.get(MAPBOX_RETRIEVE_URL+`/${cityId}`, {
+    const response = await axios.get(MAPBOX_RETRIEVE_URL + `/${cityId}`, {
       params: {
         language: "en",
         session_token: session_token,

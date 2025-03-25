@@ -2,8 +2,10 @@ import { View, Text, Image, ActivityIndicator } from "react-native";
 import { React, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchNegrosWeather } from "@/services/citiesWeatherAPI";
-import { fetchUserWeather } from "@/services/userWeatherAPI";
+// API Services
+import { fetchNegrosWeather, fetchUserWeather } from "@/services/openweather";
+
+// Components
 import CustomButton from "@/views/components/CustomButton";
 import ForecastWidget from "@/views/Forecast/widgets/ForecastWidget";
 import AnalyticsWidget from "@/views/Forecast/widgets/AnalyticsWidget";
@@ -11,7 +13,7 @@ import TrendsWidget from "@/views/Forecast/widgets/TrendsWidget";
 import useLocation from "@/hooks/useLocation";
 
 const ForecastScreen = () => {
-  const { location, loading, getLocation } = useLocation();
+  const { location } = useLocation();
 
   console.log("Location: ", location);
 
@@ -49,8 +51,6 @@ const ForecastScreen = () => {
   });
 
   let closestHour = null;
-
-
 
   if (!isLoadingUserWeather && userWeather) {
     const userCurrentHour = new Date().getHours();

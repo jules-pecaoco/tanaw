@@ -3,7 +3,7 @@ import { View, TextInput, FlatList, Text, TouchableOpacity } from "react-native"
 import uuid from "react-native-uuid";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-import { searchCity, searchCityDetails } from "@/services/searchCityAPI";
+import { searchCity, searchCityDetails } from "@/services/mapbox";
 
 const SearchCity = ({ currentLocation, setSearchCityDetails, handleSearchZoom }) => {
   const [query, setQuery] = useState("");

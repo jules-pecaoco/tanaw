@@ -18,5 +18,4 @@ const OpenWeatherLayer = ({ openWeatherTile }) => {
   );
 };
 
-
 export { RainViewerLayer, OpenWeatherLayer };

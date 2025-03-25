@@ -38,14 +38,11 @@ const CameraWidget = ({ onImageCaptured, imageUri, onClose }) => {
   // If no image is captured and camera is not visible, show button to open camera
   if ((!imageUri && !permission?.granted) || !openCamera) {
     const onClick = () => {
-      if (permission === null) {
-        requestPermission();
-      } else {
-        setOpenCamera(true);
-      }
+      requestPermission();
+      setOpenCamera(true);
     };
     return (
-      <TouchableOpacity className="bg-primary w-full h-[400px] flex-row items-center justify-center rounded-md my-2.5" onPress={onClick}>
+      <TouchableOpacity style={{ height: 400 }} className="bg-primary w-full flex-row items-center justify-center rounded-md" onPress={onClick}>
         <Ionicons name="camera" size={24} color="white" />
         <Text className="text-white ml-2.5">Take Photo</Text>
       </TouchableOpacity>
@@ -55,7 +52,7 @@ const CameraWidget = ({ onImageCaptured, imageUri, onClose }) => {
   // If image is captured, show preview
   if (imageUri) {
     return (
-      <View className="w-full rounded-lg overflow-hidden mb-4 relative" style={{ height: 400 }}>
+      <View className="w-full rounded-lg overflow-hidden relative" style={{ height: 400 }}>
         <Image source={{ uri: imageUri }} className="w-full h-full" />
         <View className="absolute top-0 right-0 left-0 flex-row justify-between p-4">
           <TouchableOpacity className="bg-black/60 p-2.5 rounded" onPress={onClose}>
@@ -68,7 +65,6 @@ const CameraWidget = ({ onImageCaptured, imageUri, onClose }) => {
       </View>
     );
   }
-
 
   // Show camera view
   return (
@@ -85,7 +81,7 @@ const CameraWidget = ({ onImageCaptured, imageUri, onClose }) => {
           facing={cameraType}
           onCameraReady={() => setIsCameraReady(true)}
         >
-          <View className="flex-1 h flex-row items-end justify-around mb-5">
+          <View className="flex-1 h flex-row items-end justify-around mb-4">
             <TouchableOpacity className="p-4" onPress={flipCamera}>
               <Ionicons name="camera-reverse" size={24} color="#fff" />
             </TouchableOpacity>

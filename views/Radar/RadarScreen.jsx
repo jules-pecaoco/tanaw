@@ -3,11 +3,15 @@ import { View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { PointAnnotation } from "@rnmapbox/maps";
 
-import { fetchGoogleFacilitiesByType, fetchOpenStreetFacilitiesByType } from "@/services/criticalFacilitiesAPI";
-import { fetchNegrosWeather } from "@/services/citiesWeatherAPI";
-import { fetchRainViewerData, fetchOpenWeatherData } from "@/services/weatherLayerAPI";
-import { FacilitiesSelectionBottomSheet, HazardSelectionBottomSheet, FacilitiesMarkerBottomSheet } from "./widgets/BottomSheets";
+// API Services
+import { fetchOpenStreetFacilitiesByType } from "@/services/openstreet";
+import { fetchGoogleFacilitiesByType } from "@/services/google";
+import { fetchOpenWeatherTile, fetchNegrosWeather } from "@/services/openweather";
+import { fetchRainViewerTile } from "@/services/rainviewer";
+
+// Components
 import { RainViewerLayer, OpenWeatherLayer } from "./widgets/WeatherLayers";
+import { FacilitiesSelectionBottomSheet, HazardSelectionBottomSheet, FacilitiesMarkerBottomSheet } from "./widgets/BottomSheets";
 import HazardLayers from "./widgets/HazardLayers";
 import CitiesWeatherMarker from "./widgets/CitiesWeatherMarker";
 import SideButtons from "./widgets/SideButtons";
@@ -21,9 +25,8 @@ import useLocation from "@/hooks/useLocation";
 
 const RadarScreen = () => {
   // Use the location hook
-  const { location, loading, getLocation } = useLocation();
+  const { location, getLocation } = useLocation();
 
-  console.log("Location: ", location);
   // Default to Bacolod coordinates if user location not available
   const [currentLocation, setCurrentLocation] = useState(() => {
     if (location) {
@@ -172,14 +175,15 @@ const RadarScreen = () => {
 
   const { data: openWeatherTile } = useQuery({
     queryKey: ["openWeatherTile"],
-    queryFn: () => fetchOpenWeatherData("temp_new"),
-    gcTime: 1000 * 60 * 60 * 6,
-    staleTime: 1000 * 60 * 60 * 3,
+    queryFn: () => fetchOpenWeatherTile(),
+    gcTime: 1000 * 60 * 60,
+    staleTime: 1000 * 60 * 20,
+    refetchInterval: 1000 * 60,
   });
 
   const { data: rainViewerTile } = useQuery({
     queryKey: ["rainViewerData"],
-    queryFn: fetchRainViewerData,
+    queryFn: fetchRainViewerTile,
     gcTime: 1000 * 60 * 60,
     staleTime: 1000 * 60 * 20,
     refetchInterval: 1000 * 60,

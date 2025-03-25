@@ -3,7 +3,7 @@ import React from "react";
 import { MarkerView, PointAnnotation } from "@rnmapbox/maps";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { fetchGoogleFacilityById } from "@/services/criticalFacilitiesAPI";
+import { fetchGoogleFacilityById } from "@/services/google";
 
 const facilityColors = {
   Hospitals: "pink",
