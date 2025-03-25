@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, Dimensions, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
-import { LineChart } from "react-native-chart-kit";
+import { LineChart } from "react-native-gifted-charts";
 import { Picker } from "@react-native-picker/picker";
 import { useQuery } from "@tanstack/react-query";
 import { fetchWeatherData } from "@/services/openmeteo";
@@ -27,7 +27,11 @@ const AnalyticsWidget = () => {
   const [selectedCity, setSelectedCity] = useState("Bacolod City");
   const [selectedDay, setSelectedDay] = useState("");
 
-  const { data, isLoading, error } = useQuery(["weatherData", selectedCity, cities], fetchWeatherData, {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["weatherData"],
+    queryFn: () => fetchWeatherData(selectedCity),
+    gcTime: 1000 * 60 * 60 * 24,
+    staleTime: 1000 * 60 * 60 * 12,
     onSuccess: (data) => {
       if (!selectedDay && data.initialSelectedDay) {
         setSelectedDay(data.initialSelectedDay);
@@ -79,20 +83,20 @@ const AnalyticsWidget = () => {
         }
       : dataSource;
 
-  const chartDataTemperature = {
-    labels: filteredHourlyData.time.map((t) => (selectedRange === "hourly" ? t.split("T")[1].slice(0, 5) : t.split("T")[0])),
-    datasets: [{ data: filteredHourlyData.temperature80m || [] }],
-  };
+  // Convert data to Gifted Charts format
+  const prepareChartData = (dataArray) =>
+    dataArray.map((value, index) => ({
+      value,
+      label: filteredHourlyData.time[index]
+        ? selectedRange === "hourly"
+          ? filteredHourlyData.time[index].split("T")[1].slice(0, 5)
+          : filteredHourlyData.time[index].split("T")[0]
+        : "",
+    }));
 
-  const chartDataRain = {
-    labels: filteredHourlyData.time.map((t) => (selectedRange === "hourly" ? t.split("T")[1].slice(0, 5) : t.split("T")[0])),
-    datasets: [{ data: filteredHourlyData.rain || [] }],
-  };
-
-  const chartDataPrecipitation = {
-    labels: filteredHourlyData.time.map((t) => (selectedRange === "hourly" ? t.split("T")[1].slice(0, 5) : t.split("T")[0])),
-    datasets: [{ data: filteredHourlyData.precipitationProbability || [] }],
-  };
+  const temperatureData = prepareChartData(filteredHourlyData.temperature80m || []);
+  const rainData = prepareChartData(filteredHourlyData.rain || []);
+  const precipitationData = prepareChartData(filteredHourlyData.precipitationProbability || []);
 
   return (
     <ScrollView className="flex-1 bg-gray-100 px-4 pt-12">
@@ -131,20 +135,18 @@ const AnalyticsWidget = () => {
         <Text className="text-center text-lg font-bold mb-2">Temperature (°C)</Text>
         <ScrollView horizontal>
           <LineChart
-            data={chartDataTemperature}
+            data={temperatureData}
             width={screenWidth * 1.5}
             height={250}
-            yAxisSuffix={"°C"}
-            chartConfig={{
-              backgroundGradientFrom: "#fff",
-              backgroundGradientTo: "#f5f5f5",
-              decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(255, 140, 0, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              propsForLabels: { rotation: -45 },
-            }}
-            bezier
-            style={{ borderRadius: 10 }}
+            color="#FF8C00"
+            textColor="black"
+            dataPointsColor="#FF8C00"
+            hideRules
+            yAxisSuffix="°C"
+            xAxisLabelTextStyle={{ transform: [{ rotate: "-45deg" }] }}
+            showVerticalLines
+            verticalLinesColor="rgba(0,0,0,0.1)"
+            yAxisTextStyle={{ color: "black" }}
           />
         </ScrollView>
       </View>
@@ -154,20 +156,18 @@ const AnalyticsWidget = () => {
         <Text className="text-center text-lg font-bold mb-2">Rainfall (mm)</Text>
         <ScrollView horizontal>
           <LineChart
-            data={chartDataRain}
+            data={rainData}
             width={screenWidth * 1.5}
             height={250}
+            color="#0096FF"
+            textColor="black"
+            dataPointsColor="#0096FF"
+            hideRules
             yAxisSuffix="mm"
-            chartConfig={{
-              backgroundGradientFrom: "#fff",
-              backgroundGradientTo: "#f5f5f5",
-              decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(0, 150, 255, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              propsForLabels: { rotation: -45 },
-            }}
-            bezier
-            style={{ borderRadius: 10 }}
+            xAxisLabelTextStyle={{ transform: [{ rotate: "-45deg" }] }}
+            showVerticalLines
+            verticalLinesColor="rgba(0,0,0,0.1)"
+            yAxisTextStyle={{ color: "black" }}
           />
         </ScrollView>
       </View>
@@ -177,20 +177,18 @@ const AnalyticsWidget = () => {
         <Text className="text-center text-lg font-bold mb-2">Precipitation Probability (%)</Text>
         <ScrollView horizontal>
           <LineChart
-            data={chartDataPrecipitation}
+            data={precipitationData}
             width={screenWidth * 1.5}
             height={250}
+            color="#0096FF"
+            textColor="black"
+            dataPointsColor="#0096FF"
+            hideRules
             yAxisSuffix="%"
-            chartConfig={{
-              backgroundGradientFrom: "#fff",
-              backgroundGradientTo: "#f5f5f5",
-              decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(0, 150, 255, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              propsForLabels: { rotation: -45 },
-            }}
-            bezier
-            style={{ borderRadius: 10 }}
+            xAxisLabelTextStyle={{ transform: [{ rotate: "-45deg" }] }}
+            showVerticalLines
+            verticalLinesColor="rgba(0,0,0,0.1)"
+            yAxisTextStyle={{ color: "black" }}
           />
         </ScrollView>
       </View>

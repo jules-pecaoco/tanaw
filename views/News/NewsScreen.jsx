@@ -38,7 +38,6 @@ const NewsScreen = () => {
   };
 
   const renderItem = ({ item }) => {
-    console.log(getImageUrl(item.image_path));
     const hazardType = item.hazard_type.toLowerCase();
     const badgeColor = getBadgeColor(hazardType);
     const textColorClass = getTextColorClass(hazardType);

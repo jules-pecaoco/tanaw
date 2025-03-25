@@ -2,9 +2,25 @@ import axios from "axios";
 
 const OPENMETEO_API_URL = "https://api.open-meteo.com/v1/forecast";
 
-const fetchWeatherData = async ({ queryKey }) => {
-  const [, selectedCity, cities] = queryKey;
-  const { lat, lon } = cities[selectedCity];
+const cities = {
+  "Bacolod City": { lat: 10.6765, lon: 122.9509 },
+  "Bago City": { lat: 10.5333, lon: 122.8333 },
+  "Cadiz City": { lat: 10.95, lon: 123.3 },
+  "Escalante City": { lat: 10.8333, lon: 123.5 },
+  "Himamaylan City": { lat: 10.1, lon: 122.8667 },
+  "Kabankalan City": { lat: 9.9833, lon: 122.8167 },
+  "La Carlota City": { lat: 10.4167, lon: 122.9167 },
+  "Sagay City": { lat: 10.9, lon: 123.4167 },
+  "San Carlos City": { lat: 10.4333, lon: 123.4167 },
+  "Silay City": { lat: 10.8, lon: 122.9667 },
+  "Sipalay City": { lat: 9.75, lon: 122.4 },
+  "Talisay City": { lat: 10.7333, lon: 122.9667 },
+  "Victorias City": { lat: 10.9, lon: 123.0833 },
+};
+
+const fetchWeatherData = async (selectedCity) => {
+  const selected = selectedCity;
+  const { lat, lon } = cities[selected];
 
   const response = await axios.get(OPENMETEO_API_URL, {
     params: {

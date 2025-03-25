@@ -61,7 +61,7 @@ const ForecastScreen = () => {
     });
   }
 
-  if (isLoadingUserWeather || isLoadingNegrosWeather) return <ActivityIndicator size="large" color="#000" className="flex-1" />;
+  if (isLoadingUserWeather || isLoadingNegrosWeather) return <ActivityIndicator size="large" color="#FF8C00" className="flex-1" />;
 
   return (
     <View className="flex-1 bg-white">

@@ -10,7 +10,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 
-import { storage } from "@/storage/storage";
+import storage from "@/storage/storage";
 import { PROJECT_ID } from "@/tokens/tokens";
 import { NotificationProvider } from "@/context/NotificationContext";
 import "@/global.css";
