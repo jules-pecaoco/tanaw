@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { images } from "@/constants/index";
 import { IndexData } from "@/data/textContent";
 import IndexScreen from "@/views/IndexScreen";
-import userStorage from "@/storage/userStorage";
+import storage from "@/storage/storage";
 
 const Index = () => {
   const [loading, setLoading] = useState(true);
@@ -12,7 +12,7 @@ const Index = () => {
 
   useEffect(() => {
     const checkVisited = () => {
-      const visited = userStorage.getItem("hasVisited");
+      const visited = storage.getItem("hasVisited");
       if (visited) {
         router.push("/radar");
       } else {
@@ -25,7 +25,7 @@ const Index = () => {
   }, []);
 
   const nextScreen = () => {
-    userStorage.setItem("hasVisited", "true");
+    storage.setItem("hasVisited", "true");
     router.push("/locationAccess");
   };
 

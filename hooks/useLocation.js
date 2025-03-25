@@ -1,13 +1,13 @@
 import { useState } from "react";
 import * as Location from "expo-location";
-import userStorage from "@/storage/userStorage";
+import storage from "@/storage/storage";
 
 const LOCATION_STORAGE_KEY = "userLocation";
 
 const useLocation = () => {
   // Initialize location from storage during state initialization
   const getInitialLocation = () => {
-    const storedLocation = userStorage.getItem(LOCATION_STORAGE_KEY);
+    const storedLocation = storage.getItem(LOCATION_STORAGE_KEY);
     if (storedLocation) {
       try {
         const parsedLocation = JSON.parse(storedLocation);
@@ -62,7 +62,7 @@ const useLocation = () => {
       setLocation(locationData);
 
       // Save to storage
-      userStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(locationData));
+      storage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(locationData));
 
       setLoading(false);
       return locationData;

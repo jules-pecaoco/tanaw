@@ -4,7 +4,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/tokens/tokens";
 import { createClient } from "@supabase/supabase-js";
-import userStorage from "@/storage/userStorage";
+import storage from "@/storage/storage";
 
 // Replace with your Supabase URL and anon key
 const supabaseUrl = SUPABASE_URL;
@@ -17,11 +17,11 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Get or create user ID
 export const getUserId = () => {
-  let userId = userStorage.getItem("userId");
+  let userId = storage.getItem("userId");
 
   if (!userId) {
     userId = uuid.v4();
-    userStorage.setItem("userId", userId);
+    storage.setItem("userId", userId);
   }
 
   return userId;

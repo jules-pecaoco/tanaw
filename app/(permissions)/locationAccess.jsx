@@ -4,10 +4,8 @@ import { icons } from "@/constants/index";
 import { PermissionData } from "@/data/textContent";
 import PermissionScreen from "@/views/Permissions/PermissionScreen";
 import useLocation from "@/hooks/useLocation";
-// import userStorage from "@/storage/userStorage";
 
 const Geolocation = () => {
-  // Use the modified location hook
   const { location, loading, getLocation } = useLocation();
 
   const nextScreen = async () => {

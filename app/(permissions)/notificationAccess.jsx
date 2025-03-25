@@ -5,7 +5,7 @@ import uuid from "react-native-uuid";
 import { icons } from "@/constants/index";
 import { PermissionData } from "@/data/textContent";
 import PermissionScreen from "@/views/Permissions/PermissionScreen";
-import userStorage from "@/storage/userStorage";
+import storage from "@/storage/storage";
 import { useNotification } from "@/context/NotificationContext";
 
 const Notification = () => {
@@ -25,16 +25,16 @@ const Notification = () => {
     }
   };
 
-  let userId = userStorage.getItem("userID");
+  let userId = storage.getItem("userID");
 
   if (!userId) {
     userId = uuid.v4();
-    userStorage.setItem("userID", userId);
+    storage.setItem("userID", userId);
   }
 
   useEffect(() => {
     if (expoToken) {
-      userStorage.setItem("expoToken", expoToken);
+      storage.setItem("expoToken", expoToken);
       router.replace("/radar");
     }
   }, [expoToken]);

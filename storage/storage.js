@@ -1,26 +1,25 @@
 import { MMKV } from "react-native-mmkv";
-const storage = new MMKV();
 
-export const userStorage = {
+const store = new MMKV();
+
+const storage = {
   getItem: (key) => {
-    const value = storage.getString(key);
+    const value = store.getString(key);
     return value ? JSON.parse(value) : null;
   },
   setItem: (key, value) => {
     try {
-      storage.set(key, JSON.stringify(value));
+      store.set(key, JSON.stringify(value));
     } catch (error) {
       console.error(`Error storing key ${key}:`, error);
     }
   },
   removeItem: (key) => {
-    storage.delete(key);
+    store.delete(key);
   },
   getAllKeys: () => {
-    return storage.getAllKeys();
+    return store.getAllKeys();
   },
 };
 
-export const mmkvStorage = storage;
-
-export default userStorage;
+export default storage;

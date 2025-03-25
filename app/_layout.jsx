@@ -9,8 +9,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import { userStorage } from "@/storage/userStorage";
 
+import { storage } from "@/storage/storage";
 import { PROJECT_ID } from "@/tokens/tokens";
 import { NotificationProvider } from "@/context/NotificationContext";
 import "@/global.css";
@@ -67,7 +67,7 @@ const RootLayout = () => {
   });
 
   const userPersistStorage = createSyncStoragePersister({
-    storage: userStorage,
+    storage: storage,
     key: "react-query-full-cache",
     retry: 3,
   });
