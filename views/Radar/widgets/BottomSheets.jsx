@@ -9,6 +9,8 @@ const buttonConfig = {
   weather: {
     buttons: ["Rain", "HeatIndex"],
     icons: ["cloudy-snowing", "thermostat"],
+    radius: ["City", "Proximity"],
+    radiusIcons: ["location-city", "radar"],
   },
   hazard: {
     buttons: ["Flood", "Landslide", "StormSurge"],
@@ -108,6 +110,41 @@ const HazardSelectionBottomSheet = ({ state, setState }) => {
         ))}
       </View>
 
+      {state.weatherLayer.type === "HeatIndex" && (
+        <>
+          <View className="w-full bg-black h-[2px] my-5"></View>
+
+          <View className="flex justify-between items-center flex-row">
+            <Text className="text-lg font-rregular">Radius</Text>
+          </View>
+
+          <View className="flex flex-row justify-around items-center mt-5 gap-2 flex-wrap w-full">
+            {buttonConfig.weather.radius.map((button, index) => {
+              console.log(state.weatherLayer.radius, button);
+              return (
+                <SheetButton
+                  key={index}
+                  title={button}
+                  isactive={state.weatherLayer.radius === button}
+                  onPress={() => {
+                    setState({
+                      ...state,
+                      weatherLayer: {
+                        ...state.weatherLayer,
+                        radius: button,
+                      },
+                    });
+                  }}
+                  customStyle={`flex-1`}
+                >
+                  {<MaterialIcons name={buttonConfig.weather.radiusIcons[index]} size={24} color="black" />}
+                </SheetButton>
+              );
+            })}
+          </View>
+        </>
+      )}
+
       <View className="w-full bg-black h-[2px] my-5"></View>
 
       <View className="flex justify-between items-center flex-row">
@@ -124,7 +161,7 @@ const HazardSelectionBottomSheet = ({ state, setState }) => {
                 ...state,
                 isHazardLayerActive: {
                   ...state.isHazardLayerActive,
-                  [button]: !state.isHazardLayerActive[button], // Toggle current value
+                  [button]: !state.isHazardLayerActive[button],
                 },
               });
             }}

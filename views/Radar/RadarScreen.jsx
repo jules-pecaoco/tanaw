@@ -6,7 +6,7 @@ import { PointAnnotation } from "@rnmapbox/maps";
 // API Services
 import { fetchOpenStreetFacilitiesByType } from "@/services/openstreet";
 import { fetchGoogleFacilitiesByType } from "@/services/google";
-import { fetchOpenWeatherTile, fetchNegrosWeather } from "@/services/openweather";
+import { fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather } from "@/services/openweather";
 import { fetchRainViewerTile } from "@/services/rainviewer";
 
 // Components
@@ -45,7 +45,8 @@ const RadarScreen = () => {
       StormSurge: false,
     },
     weatherLayer: {
-      type: "none",
+      type: "HeatIndex",
+      radius: "Proximity",
     },
     isFacilitiesLayerActive: {
       source: "OpenStreet",
@@ -173,23 +174,29 @@ const RadarScreen = () => {
     staleTime: 1000 * 60 * 60 * 2,
   });
 
+  const { data: proximityWeather } = useQuery({
+    queryKey: ["proximityWeatherData"],
+    queryFn: () => fetchProximityWeather({ currentLocation }),
+    gcTime: 1000 * 60 * 60 * 6,
+    staleTime: 1000 * 60 * 60 * 2,
+  });
+
   const { data: openWeatherTile } = useQuery({
     queryKey: ["openWeatherTile"],
-    queryFn: () => fetchOpenWeatherTile(),
-    gcTime: 1000 * 60 * 60,
-    staleTime: 1000 * 60 * 20,
-    refetchInterval: 1000 * 60,
+    queryFn: fetchOpenWeatherTile,
+    gcTime: 0,
+    staleTime: 0,
+    refetchInterval: 1000 * 60 * 20,
   });
 
   const { data: rainViewerTile } = useQuery({
     queryKey: ["rainViewerData"],
     queryFn: fetchRainViewerTile,
-    gcTime: 1000 * 60 * 60,
-    staleTime: 1000 * 60 * 20,
-    refetchInterval: 1000 * 60,
+    gcTime: 0,
+    staleTime: 0,
+    refetchInterval: 1000 * 60 * 20,
   });
 
-  // Only fetch Google facilities when Google is selected as the source
   const { data: googleFacilitiesByType } = useQuery({
     queryKey: ["GoogleFacilitiesByType"],
     queryFn: () => fetchGoogleFacilitiesByType({ currentLocation }),
@@ -206,7 +213,10 @@ const RadarScreen = () => {
   });
 
   // Memoized components
-  const negrosWeatherMemoized = useMemo(() => <CitiesWeatherMarker negrosWeather={negrosWeather} />, [negrosWeather]);
+  const negrosWeatherMemoized = useMemo(
+    () => <CitiesWeatherMarker cityWeatherData={state.weatherLayer.radius === "Proximity" ? proximityWeather : negrosWeather} />,
+    [state.weatherLayer.radius, negrosWeather, proximityWeather]
+  );
 
   const renderFacilityMarker = useMemo(() => {
     return (type) => {
@@ -250,7 +260,7 @@ const RadarScreen = () => {
 
         {/* Weather Layers */}
         {state.weatherLayer.type === "Rain" && <RainViewerLayer rainViewerTile={rainViewerTile} />}
-        {state.weatherLayer.type === "HeatIndex" && (
+        {(state.weatherLayer.type === "HeatIndex") & openWeatherTile && (
           <>
             <OpenWeatherLayer openWeatherTile={openWeatherTile} />
             {negrosWeatherMemoized}
@@ -275,7 +285,7 @@ const RadarScreen = () => {
           })}
 
         {/*User Reported Heatmap layer (conditionally rendered) */}
-        {showHeatmap && <HeatMapLayer data={getHeatmapData()} />}
+        {<HeatMapLayer data={getHeatmapData()} />}
       </BaseMap>
 
       {/* SIDE BUTTONS */}

@@ -139,7 +139,7 @@ const AnalyticsWidget = () => {
 
       {/* Temperature Chart */}
       <View className="bg-white p-3 rounded-xl my-4">
-        <Text className="text-center text-lg font-rmedium mb-2">Temperature (°C)</Text>
+        <Text className="text-center text-lg font-rmedium mb-2">Temperature (°C) Trends</Text>
         <ScrollView horizontal>
           <LineChart
             data={formatDataForChart(filteredHourlyData.temperature80m || [], "#FF8C00")}
@@ -160,7 +160,7 @@ const AnalyticsWidget = () => {
 
       {/* Rainfall Chart */}
       <View className="bg-white p-3 rounded-xl my-4">
-        <Text className="text-center text-lg font-rmedium mb-2">Rainfall (mm)</Text>
+        <Text className="text-center text-lg font-rmedium mb-2">Rain Water Height</Text>
         <ScrollView horizontal>
           <LineChart
             data={formatDataForChart(filteredHourlyData.rain || [], "#0096FF")}
@@ -180,7 +180,7 @@ const AnalyticsWidget = () => {
 
       {/* Precipitation Chart */}
       <View className="bg-white p-3 rounded-xl mb-16">
-        <Text className="text-center text-lg font-rmedium mb-2">Precipitation Probability (%)</Text>
+        <Text className="text-center text-lg font-rmedium mb-2">Chance of Rain</Text>
         <ScrollView horizontal>
           <LineChart
             data={formatDataForChart(filteredHourlyData.precipitationProbability || [], "#0096FF")}
