@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { View, TextInput, FlatList, Text, TouchableOpacity } from "react-native";
-import uuid from "react-native-uuid";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 import { searchCity, searchCityDetails } from "@/services/mapbox";
+import storage from "@/storage/storage";
 
 const SearchCity = ({ currentLocation, setSearchCityDetails, handleSearchZoom }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
-  const [sessionToken, setSessionToken] = useState(uuid.v4());
+  const [sessionToken, setSessionToken] = useState(storage.getItem("userID"));
 
   const handleSearch = async (text) => {
     setQuery(text);
@@ -19,12 +19,6 @@ const SearchCity = ({ currentLocation, setSearchCityDetails, handleSearchZoom })
     } else {
       setResults([]);
     }
-  };
-
-  const handleNewSession = () => {
-    setSessionToken(uuid.v4());
-    setResults([]);
-    setQuery("");
   };
 
   const handleSearchCityDetail = async (id, city) => {

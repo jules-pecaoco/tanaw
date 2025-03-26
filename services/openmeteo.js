@@ -19,6 +19,7 @@ const cities = {
 };
 
 const fetchWeatherData = async (selectedCity) => {
+  console.log("Fetching Open Meteo");
   const selected = selectedCity;
   const { lat, lon } = cities[selected];
 

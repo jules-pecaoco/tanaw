@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Dimensions, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
 import { Picker } from "@react-native-picker/picker";
-import { useQuery } from "@tanstack/react-query";
 import { fetchWeatherData } from "@/services/openmeteo";
 
 const cities = {
@@ -23,21 +22,33 @@ const cities = {
 
 const AnalyticsWidget = () => {
   const screenWidth = Dimensions.get("window").width - 40;
+  const [data, setData] = useState({});
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState("hourly");
   const [selectedCity, setSelectedCity] = useState("Bacolod City");
-  const [selectedDay, setSelectedDay] = useState("");
+  const [selectedDay, setSelectedDay] = useState(new Date().toISOString().split("T")[0]);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["weatherData"],
-    queryFn: () => fetchWeatherData(selectedCity),
-    gcTime: 1000 * 60 * 60 * 24,
-    staleTime: 1000 * 60 * 60 * 12,
-    onSuccess: (data) => {
-      if (!selectedDay && data.initialSelectedDay) {
-        setSelectedDay(data.initialSelectedDay);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const weatherData = await fetchWeatherData(selectedCity);
+        setData(weatherData);
+
+        if (!selectedDay && weatherData.initialSelectedDay) {
+          setSelectedDay(weatherData.initialSelectedDay);
+        }
+
+        setIsLoading(false);
+      } catch (err) {
+        setError(err);
+        setIsLoading(false);
       }
-    },
-  });
+    };
+
+    fetchData();
+  }, [selectedCity]);
 
   if (isLoading) {
     return (
@@ -83,26 +94,22 @@ const AnalyticsWidget = () => {
         }
       : dataSource;
 
-  // Convert data to Gifted Charts format
-  const prepareChartData = (dataArray) =>
-    dataArray.map((value, index) => ({
+  // Convert data for Gifted Charts
+  const formatDataForChart = (data, color) =>
+    data.map((value, index) => ({
       value,
       label: filteredHourlyData.time[index]
         ? selectedRange === "hourly"
           ? filteredHourlyData.time[index].split("T")[1].slice(0, 5)
           : filteredHourlyData.time[index].split("T")[0]
         : "",
+      labelTextStyle: { color: "gray", fontSize: 10 },
+      dataPointColor: color,
     }));
 
-  const temperatureData = prepareChartData(filteredHourlyData.temperature80m || []);
-  const rainData = prepareChartData(filteredHourlyData.rain || []);
-  const precipitationData = prepareChartData(filteredHourlyData.precipitationProbability || []);
-
   return (
-    <ScrollView className="flex-1 bg-gray-100 px-4 pt-12">
-      <Text className="text-center text-2xl font-bold text-orange-600 mb-4">Data Visualization</Text>
-
-      <Picker selectedValue={selectedCity} onValueChange={(itemValue) => setSelectedCity(itemValue)}>
+    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-gray-100 px-4 pt-12">
+      <Picker selectedValue={selectedCity} onValueChange={(itemValue) => setSelectedCity(itemValue)} className="font-fmedium text-lg">
         {Object.keys(cities).map((city) => (
           <Picker.Item key={city} label={city} value={city} />
         ))}
@@ -120,10 +127,10 @@ const AnalyticsWidget = () => {
         {["hourly", "daily"].map((type) => (
           <TouchableOpacity
             key={type}
-            className={`px-4 py-2 mx-2 rounded-lg ${selectedRange === type ? "bg-orange-500" : "bg-orange-200"}`}
+            className={`px-4 py-2 mx-2 rounded-lg ${selectedRange === type ? "bg-primary" : "bg-secondary"}`}
             onPress={() => setSelectedRange(type)}
           >
-            <Text className={`font-bold ${selectedRange === type ? "text-white" : "text-orange-800"}`}>
+            <Text className={`font-rmedium text-lg ${selectedRange === type ? "text-white" : "text-white"}`}>
               {type === "hourly" ? "Hourly Data" : "Daily Data"}
             </Text>
           </TouchableOpacity>
@@ -132,63 +139,61 @@ const AnalyticsWidget = () => {
 
       {/* Temperature Chart */}
       <View className="bg-white p-3 rounded-xl my-4">
-        <Text className="text-center text-lg font-bold mb-2">Temperature (°C)</Text>
+        <Text className="text-center text-lg font-rmedium mb-2">Temperature (°C)</Text>
         <ScrollView horizontal>
           <LineChart
-            data={temperatureData}
+            data={formatDataForChart(filteredHourlyData.temperature80m || [], "#FF8C00")}
             width={screenWidth * 1.5}
             height={250}
-            color="#FF8C00"
-            textColor="black"
-            dataPointsColor="#FF8C00"
-            hideRules
             yAxisSuffix="°C"
-            xAxisLabelTextStyle={{ transform: [{ rotate: "-45deg" }] }}
-            showVerticalLines
-            verticalLinesColor="rgba(0,0,0,0.1)"
-            yAxisTextStyle={{ color: "black" }}
+            xAxisLabelRotation={45}
+            curved
+            areaChart
+            hideRules
+            startFillColor={"rgba(255, 140, 0, 0.3)"}
+            endFillColor={"rgba(255, 140, 0, 0.05)"}
+            startOpacity={0.9}
+            endOpacity={0.2}
           />
         </ScrollView>
       </View>
 
       {/* Rainfall Chart */}
       <View className="bg-white p-3 rounded-xl my-4">
-        <Text className="text-center text-lg font-bold mb-2">Rainfall (mm)</Text>
+        <Text className="text-center text-lg font-rmedium mb-2">Rainfall (mm)</Text>
         <ScrollView horizontal>
           <LineChart
-            data={rainData}
+            data={formatDataForChart(filteredHourlyData.rain || [], "#0096FF")}
             width={screenWidth * 1.5}
             height={250}
-            color="#0096FF"
-            textColor="black"
-            dataPointsColor="#0096FF"
-            hideRules
             yAxisSuffix="mm"
-            xAxisLabelTextStyle={{ transform: [{ rotate: "-45deg" }] }}
-            showVerticalLines
-            verticalLinesColor="rgba(0,0,0,0.1)"
-            yAxisTextStyle={{ color: "black" }}
+            xAxisLabelRotation={45}
+            areaChart
+            hideRules
+            startFillColor={"rgba(0, 150, 255, 0.3)"}
+            endFillColor={"rgba(0, 150, 255, 0.05)"}
+            startOpacity={0.9}
+            endOpacity={0.2}
           />
         </ScrollView>
       </View>
 
       {/* Precipitation Chart */}
       <View className="bg-white p-3 rounded-xl mb-16">
-        <Text className="text-center text-lg font-bold mb-2">Precipitation Probability (%)</Text>
+        <Text className="text-center text-lg font-rmedium mb-2">Precipitation Probability (%)</Text>
         <ScrollView horizontal>
           <LineChart
-            data={precipitationData}
+            data={formatDataForChart(filteredHourlyData.precipitationProbability || [], "#0096FF")}
             width={screenWidth * 1.5}
             height={250}
-            color="#0096FF"
-            textColor="black"
-            dataPointsColor="#0096FF"
-            hideRules
             yAxisSuffix="%"
-            xAxisLabelTextStyle={{ transform: [{ rotate: "-45deg" }] }}
-            showVerticalLines
-            verticalLinesColor="rgba(0,0,0,0.1)"
-            yAxisTextStyle={{ color: "black" }}
+            xAxisLabelRotation={45}
+            areaChart
+            hideRules
+            startFillColor={"rgba(0, 150, 255, 0.3)"}
+            endFillColor={"rgba(0, 150, 255, 0.05)"}
+            startOpacity={0.9}
+            endOpacity={0.2}
           />
         </ScrollView>
       </View>
