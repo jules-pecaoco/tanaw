@@ -31,15 +31,6 @@ const useHazardReports = () => {
     return reports.filter((report) => report.hazard_type === type);
   };
 
-  // Get heatmap data
-  const getHeatmapData = () => {
-    if (!reports) return [];
-    return reports.map((report) => ({
-      latitude: report.latitude,
-      longitude: report.longitude,
-      weight: 1,
-    }));
-  };
 
   return {
     reports,
@@ -50,7 +41,6 @@ const useHazardReports = () => {
     isCreating: mutation.isLoading,
     creationError: mutation.error,
     filterReportsByType,
-    getHeatmapData,
   };
 };
 

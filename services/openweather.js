@@ -1,8 +1,11 @@
 import axios from "axios";
 import { OPEN_WEATHER_API_KEY } from "@/tokens/tokens";
+import { reverseGeocode } from "@/services/mapbox";
 
 const OPENWEATHER_BOX_API_URL = "https://api.openweathermap.org/data/2.5/box/city";
 const OPENWEATHER_PROXIMITY_API_URL = "https://api.openweathermap.org/data/2.5/find";
+const OPENWEATHER_ONECALL_API_URL = "https://api.openweathermap.org/data/3.0/onecall";
+
 const OPENWEATHER_FORECAST_API_URL = "https://api.openweathermap.org/data/2.5/forecast/daily";
 const OPENWEATHER_HOURLY_API_URL = "https://pro.openweathermap.org/data/2.5/forecast/hourly";
 const OPENWEATHER_TILE = "https://tile.openweathermap.org/map/{layer}/{z}/{x}/{y}.png?appid=" + OPEN_WEATHER_API_KEY;
@@ -18,9 +21,28 @@ const fetchNegrosWeather = async () => {
       },
     });
 
-    return response.data.list;
+    // extract only necessary data
+    const simplifiedData = response.data.list.map((location) => ({
+      id: location.id,
+      city: location.name,
+      heat_index: location.main.feels_like,
+      humidity: location.main.humidity,
+      clouds: location.clouds.all,
+      weather: {
+        condition: location.weather[0].main,
+        description: location.weather[0].description,
+        icon: location.weather[0].icon,
+      },
+      coords: {
+        lat: location.coord.Lat,
+        lon: location.coord.Lon,
+      },
+    }));
+
+    return simplifiedData;
   } catch (error) {
     console.error("Error fetching Negros weather:", error);
+    return [];
   }
 };
 
@@ -37,68 +59,93 @@ const fetchProximityWeather = async ({ currentLocation }) => {
       },
     });
 
-    // Response contains a list of nearby locations with their weather data
-    return response.data.list;
+    const simplifiedData = response.data.list.map((location) => ({
+      id: location.id,
+      city: location.name,
+      heat_index: location.main.feels_like,
+      humidity: location.main.humidity,
+      clouds: location.clouds.all,
+      weather: {
+        condition: location.weather[0].main,
+        description: location.weather[0].description,
+        icon: location.weather[0].icon,
+      },
+      coords: {
+        lat: location.coord.lat,
+        lon: location.coord.lon,
+      },
+    }));
+
+    return simplifiedData;
   } catch (error) {
     console.error("Error fetching Proximity Weather:", error);
     return [];
   }
 };
 
-const fetchDailytData = async ({ currentLocation }) => {
-  console.log("Fetching foreast data.....");
+const fetchOneCallWeather = async ({ currentLocation }) => {
+  console.log("Fetching one call weather data.....");
 
   try {
-    const response = await axios.get(OPENWEATHER_FORECAST_API_URL, {
+    const response = await axios.get(OPENWEATHER_ONECALL_API_URL, {
       params: {
         lat: currentLocation.latitude,
         lon: currentLocation.longitude,
+        exclude: "minutely",
         units: "metric",
         appid: OPEN_WEATHER_API_KEY,
       },
     });
 
-    return response.data;
-  } catch (error) {
-    console.log("Error fetching forecast data: ", error);
-    return null;
-  }
-};
+    const name = await reverseGeocode(response.data.lat, response.data.lon);
 
-const fetchHourlyData = async ({ currentLocation }) => {
-  console.log("Fetching hourlydata......");
-  try {
-    const response = await axios.get(OPENWEATHER_HOURLY_API_URL, {
-      params: {
-        lat: currentLocation.latitude,
-        lon: currentLocation.longitude,
-        units: "metric",
-        cnt: 12,
-        appid: OPEN_WEATHER_API_KEY,
+    // extract current, hourly, and daily data
+    const simplifiedData = {
+      name: name,
+      current: {
+        time: response.data.current.dt,
+        heat_index: response.data.current.feels_like,
+        weather: {
+          condition: response.data.current.weather[0].main,
+          description: response.data.current.weather[0].description,
+          icon: response.data.current.weather[0].icon,
+        },
       },
-    });
+      hourly: response.data.hourly.slice(0, 12).map((hour) => ({
+        time: hour.dt,
+        temp: hour.temp,
+        heat_index: hour.feels_like,
+        weather: {
+          condition: hour.weather[0].main,
+          description: hour.weather[0].description,
+          icon: hour.weather[0].icon,
+        },
+      })),
+      daily: response.data.daily.map((day) => ({
+        time: day.dt,
+        temp: {
+          min: day.temp.min,
+          max: day.temp.max,
+        },
+        heat_index: day.feels_like.day,
+        weather: {
+          condition: day.weather[0].main,
+          description: day.weather[0].description,
+          icon: day.weather[0].icon,
+        },
+      })),
+    };
 
-    return response.data;
+    return simplifiedData;
   } catch (error) {
-    console.log("Error fetching hourly data: ", error);
+    console.log("Error fetching one call weather data: ", error);
     return null;
   }
 };
 
-const fetchUserWeather = async ({ currentLocation }) => {
-  const forecastData = await fetchDailytData({ currentLocation });
-  const hourlyData = await fetchHourlyData({ currentLocation });
-
-  return {
-    forecast: forecastData || [],
-    hourly: hourlyData || [],
-  };
-};
 
 const fetchOpenWeatherTile = (layer = "temp_new") => {
   return OPENWEATHER_TILE.replace("{layer}", layer);
 };
 
-
-
-export { fetchUserWeather, fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather };
+export {  fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather, fetchOneCallWeather };

@@ -3,19 +3,16 @@ import { React, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 // API Services
-import { fetchNegrosWeather, fetchUserWeather } from "@/services/openweather";
+import { fetchUserWeather, fetchOneCallWeather } from "@/services/openweather";
 
 // Components
 import CustomButton from "@/views/components/CustomButton";
 import ForecastWidget from "@/views/Forecast/widgets/ForecastWidget";
 import AnalyticsWidget from "@/views/Forecast/widgets/AnalyticsWidget";
-import TrendsWidget from "@/views/Forecast/widgets/TrendsWidget";
 import useLocation from "@/hooks/useLocation";
 
 const ForecastScreen = () => {
   const { location } = useLocation();
-
-  console.log("Location: ", location);
 
   // Default to Bacolod coordinates if user location not available
   const [currentLocation, setCurrentLocation] = useState(() => {
@@ -39,29 +36,18 @@ const ForecastScreen = () => {
   });
 
   const {
-    data: negrosWeather,
-    isLoading: isLoadingNegrosWeather,
-    error: isErrorNegrosWeather,
+    data: userWeatherOneCall,
+    isLoading: isLoadingUserWeatherOneCall,
+    error: isErrorUserWeatherOneCall,
   } = useQuery({
-    queryKey: ["negrosWeatherData"],
-    queryFn: fetchNegrosWeather,
-    gcTime: 1000 * 60 * 60 * 6,
-    staleTime: 1000 * 60 * 60 * 3,
-    refetchInterval: 1000 * 60 * 60 * 6,
+    queryKey: ["userWeatherOneCall"],
+    queryFn: () => fetchOneCallWeather({ currentLocation }),
+    staleTime: 1,
+    gcTime: 1,
   });
 
-  let closestHour = null;
-
-  if (!isLoadingUserWeather && userWeather) {
-    const userCurrentHour = new Date().getHours();
-
-    closestHour = userWeather.hourly.list.reduce((prev, curr) => {
-      const currHour = new Date(curr.dt * 1000).getHours();
-      return Math.abs(currHour - userCurrentHour) < Math.abs(new Date(prev.dt * 1000).getHours() - userCurrentHour) ? curr : prev;
-    });
-  }
-
-  if (isLoadingUserWeather || isLoadingNegrosWeather) return <ActivityIndicator size="large" color="#FF8C00" className="flex-1" />;
+  if (isLoadingUserWeatherOneCall) return <ActivityIndicator size="large" color="#FF8C00" className="flex-1" />;
+  console.log("User Weather: ", userWeatherOneCall);
 
   return (
     <View className="flex-1 bg-white">
@@ -71,16 +57,16 @@ const ForecastScreen = () => {
           {/* DATA */}
           <View className="flex flex-row items-center justify-between w-full px-4">
             <View className="flex flex-col items-start justify-center gap-1 w-1/2">
-              <Text className="text-4xl font-rregular">{userWeather?.hourly.city.name}</Text>
-              <Text className="text-sm font-rlight">Heat Index</Text>
-              <Text className="text-7xl font-rregular">
-                {Math.round(closestHour?.main?.feels_like ?? userWeather?.hourly?.list[0]?.main?.feels_like)}°C
+              <Text className="text-4xl font-rregular">
+                {userWeatherOneCall?.name?.locality ?? "Bacolod"}, {userWeather?.name?.region ?? "Negros Occidental"}
               </Text>
+              <Text className="text-sm font-rlight">Heat Index</Text>
+              <Text className="text-7xl font-rregular">{Math.round(userWeatherOneCall.current.heat_index)}°C</Text>
             </View>
             <View className="flex flex-col items-end gap-1 w-1/2">
               <Image
                 source={{
-                  uri: `https://openweathermap.org/img/wn/${closestHour?.weather[0].icon ?? userWeather?.hourly.list[0]?.weather[0].icon}.png`,
+                  uri: `https://openweathermap.org/img/wn/${userWeatherOneCall.current.weather.icon}.png`,
                 }}
                 className="size-32"
               ></Image>
@@ -92,34 +78,21 @@ const ForecastScreen = () => {
             <CustomButton
               title="Forecast"
               handlePress={() => setActive("forecast")}
-              containerStyles="h-fit w-[30%]"
+              containerStyles="h-fit w-[49%]"
               textStyles={`text-center py-3 rounded-xl text-white font-rmedium ${active == "forecast" ? "bg-primary" : "bg-secondary"}`}
             ></CustomButton>
 
             <CustomButton
               title="Analytics"
               handlePress={() => setActive("analytics")}
-              containerStyles="h-fit w-[30%]"
+              containerStyles="h-fit w-[49%]"
               textStyles={`text-center py-3 rounded-xl text-white font-rmedium ${active == "analytics" ? "bg-primary" : "bg-secondary"}`}
-            ></CustomButton>
-
-            <CustomButton
-              title="Trends"
-              handlePress={() => setActive("map")}
-              containerStyles="h-fit w-[30%]"
-              textStyles={`text-center py-3 rounded-xl text-white font-rmedium ${active == "map" ? "bg-primary" : "bg-secondary"}`}
             ></CustomButton>
           </View>
         </View>
 
         {/* FILTERS */}
-        {active == "forecast" ? (
-          <ForecastWidget data={{ userWeather }} />
-        ) : active == "analytics" ? (
-          <AnalyticsWidget data={{}} />
-        ) : (
-          <TrendsWidget data={{ negrosWeather }} />
-        )}
+        {active == "forecast" ? <ForecastWidget data={{ userWeatherOneCall }} /> : active == "analytics" ? <AnalyticsWidget data={{}} /> : null}
       </View>
     </View>
   );

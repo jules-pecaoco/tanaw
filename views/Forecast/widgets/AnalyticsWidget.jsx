@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, Dimensions, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
 import { Picker } from "@react-native-picker/picker";
+
 import { fetchWeatherData } from "@/services/openmeteo";
 
 const cities = {

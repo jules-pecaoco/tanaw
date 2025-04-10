@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { PointAnnotation } from "@rnmapbox/maps";
 
@@ -9,19 +9,21 @@ import { fetchGoogleFacilitiesByType } from "@/services/google";
 import { fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather } from "@/services/openweather";
 import { fetchRainViewerTile } from "@/services/rainviewer";
 
+// Hooks
+import useHazardReports from "@/hooks/useHazardReports";
+import useLocation from "@/hooks/useLocation";
+
 // Components
 import { RainViewerLayer, OpenWeatherLayer } from "./widgets/WeatherLayers";
 import { FacilitiesSelectionBottomSheet, HazardSelectionBottomSheet, FacilitiesMarkerBottomSheet } from "./widgets/BottomSheets";
 import HazardLayers from "./widgets/HazardLayers";
-import CitiesWeatherMarker from "./widgets/CitiesWeatherMarker";
+import WeatherMarker from "./widgets/WeatherMarker";
 import SideButtons from "./widgets/SideButtons";
 import BaseMap from "./widgets/BaseMap";
 import CriticalFacilitiesMarker from "./widgets/CriticalFacilitiesMarker";
 import SearchCity from "./widgets/SearchCity";
 import HazardMarker from "./widgets/UserReport/UserReportedHazardMarker";
-import HeatMapLayer from "./widgets/UserReport/UserReportedHeatMapLayer";
-import useHazardReports from "@/hooks/useHazardReports";
-import useLocation from "@/hooks/useLocation";
+
 
 const RadarScreen = () => {
   // Use the location hook
@@ -66,7 +68,7 @@ const RadarScreen = () => {
     longitude: "",
   });
 
-  const { reports, isLoading, getHeatmapData } = useHazardReports();
+  const { reports, isLoading } = useHazardReports();
 
   const cameraRef = useRef(null);
   const bottomSheetRef = useRef(null);
@@ -161,14 +163,14 @@ const RadarScreen = () => {
   );
 
   // Data queries
-  const { data: negrosWeather } = useQuery({
+  const { data: negrosWeather, isLoading: negrosWeatherIsLoading } = useQuery({
     queryKey: ["negrosWeatherData"],
     queryFn: fetchNegrosWeather,
     gcTime: 1000 * 60 * 60 * 6,
     staleTime: 1000 * 60 * 60 * 2,
   });
 
-  const { data: proximityWeather } = useQuery({
+  const { data: proximityWeather, isLoading: proximityWeatherIsLoading } = useQuery({
     queryKey: ["proximityWeatherData"],
     queryFn: () => fetchProximityWeather({ currentLocation }),
     gcTime: 1000 * 60 * 60 * 6,
@@ -196,7 +198,6 @@ const RadarScreen = () => {
     queryFn: () => fetchGoogleFacilitiesByType({ currentLocation }),
     gcTime: 1000 * 60 * 60 * 24,
     staleTime: 1000 * 60 * 60 * 12,
-    enabled: state.isFacilitiesLayerActive.source === "Google Places",
   });
 
   const { data: openStreetFacilitiesByType } = useQuery({
@@ -206,9 +207,10 @@ const RadarScreen = () => {
     staleTime: 1000 * 60 * 60 * 12,
   });
 
+
   // Memoized components
-  const negrosWeatherMemoized = useMemo(
-    () => <CitiesWeatherMarker cityWeatherData={state.weatherLayer.radius === "Proximity" ? proximityWeather : negrosWeather} />,
+  const WeatherMarkerMemoized = useMemo(
+    () => <WeatherMarker negrosWeather={negrosWeather} proximityWeather={proximityWeather} radius={state.weatherLayer.radius} />,
     [state.weatherLayer.radius, negrosWeather, proximityWeather]
   );
 
@@ -232,8 +234,12 @@ const RadarScreen = () => {
     };
   }, [state.isFacilitiesLayerActive]);
 
-  if (!location) {
-    return <View>Loading...</View>;
+  if (!location || negrosWeatherIsLoading || proximityWeatherIsLoading) {
+    return (
+      <View className="flex-1">
+        <ActivityIndicator size={"large"} color={"#F47C25"}></ActivityIndicator>
+      </View>
+    );
   }
 
   return (
@@ -257,7 +263,7 @@ const RadarScreen = () => {
         {state.weatherLayer.type === "HeatIndex" && (
           <>
             <OpenWeatherLayer openWeatherTile={openWeatherTile} />
-            {negrosWeatherMemoized}
+            {WeatherMarkerMemoized}
           </>
         )}
 
@@ -277,9 +283,6 @@ const RadarScreen = () => {
           reports.map((report) => {
             return <HazardMarker key={report.id} report={report} onPress={() => onMarkerPress(report)} />;
           })}
-
-        {/*User Reported Heatmap layer (conditionally rendered) */}
-        {<HeatMapLayer data={getHeatmapData()} />}
       </BaseMap>
 
       {/* SIDE BUTTONS */}

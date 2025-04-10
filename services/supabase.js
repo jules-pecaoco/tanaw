@@ -5,6 +5,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/tokens/tokens";
 import { createClient } from "@supabase/supabase-js";
 import storage from "@/storage/storage";
+import { reverseGeocode } from "@/services/mapbox";
 
 // Replace with your Supabase URL and anon key
 const supabaseUrl = SUPABASE_URL;
@@ -40,7 +41,16 @@ export const fetchHazardReports = async () => {
     return [];
   }
 
-  return data;
+  // Use Promise.all to wait for all geocoding operations to complete
+  const reportsWithNames = await Promise.all(
+    data.map(async (report) => {
+      const name = await reverseGeocode(report.latitude, report.longitude);
+      // Return a new object with the name property added
+      return { ...report, name };
+    })
+  );
+
+  return reportsWithNames;
 };
 
 const compressHazardImage = async (uri) => {

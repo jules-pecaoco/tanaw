@@ -9,7 +9,6 @@ import useHazardReports from "@/hooks/useHazardReports";
 const NewsScreen = () => {
   const { reports, isLoading } = useHazardReports();
 
-
   if (isLoading) {
     return (
       <View>
@@ -37,7 +36,7 @@ const NewsScreen = () => {
     return darkBackgrounds.includes(hazardType.toLowerCase()) ? "text-white" : "text-gray-800";
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = async ({ item }) => {
     const hazardType = item.hazard_type.toLowerCase();
     const badgeColor = getBadgeColor(hazardType);
     const textColorClass = getTextColorClass(hazardType);
@@ -64,7 +63,7 @@ const NewsScreen = () => {
           <View className="flex-row items-center">
             <Ionicons name="location-outline" size={18} color="#666" />
             <Text className="text-gray-600 text-sm ml-1">
-              Location: {item.latitude.toFixed(6)}, {item.longitude.toFixed(6)}
+              Location: {item.name.locality || "Unknown"}, {item.name.region || "Unknown"}
             </Text>
           </View>
         </View>

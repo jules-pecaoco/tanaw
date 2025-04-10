@@ -1,7 +1,8 @@
 import { View, Text, Image, FlatList } from "react-native";
 import React from "react";
-
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+
+import formatDateTime from "@/utilities/formatDateTime";
 
 const Daycast = ({ time, caution, temp, icon }) => {
   return (
@@ -29,6 +30,8 @@ const Hourcast = ({ time, temp, icon }) => {
 };
 
 const ForecastWidget = ({ data }) => {
+  console.log("ForecastWidget data: ", data);
+  if (!data) return null; // Return null if data is not available
   return (
     <>
       {/* HOURLY FORECAST */}
@@ -43,22 +46,18 @@ const ForecastWidget = ({ data }) => {
             showsHorizontalScrollIndicator={false}
             horizontal
             className="w-full flex"
-            data={data?.userWeather?.hourly.list}
+            data={data?.userWeatherOneCall?.hourly}
             renderItem={({ item }) => {
-              const forecastDate = new Date(item.dt * 1000);
-              const formattedTime = forecastDate.toLocaleTimeString("en-US", {
-                hour: "numeric",
-              });
-
+              const label = formatDateTime(item.time).time;
               return (
                 <Hourcast
-                  time={formattedTime}
-                  temp={Math.round(item.main.feels_like)}
-                  icon={`https://openweathermap.org/img/wn/${item.weather[0]?.icon}.png`}
+                  time={label}
+                  temp={Math.round(item.heat_index)}
+                  icon={`https://openweathermap.org/img/wn/${item.weather?.icon}.png`}
                 ></Hourcast>
               );
             }}
-            keyExtractor={(item) => item.dt.toString()}
+            keyExtractor={(item) => item.time}
           />
         </View>
       </View>
@@ -67,35 +66,19 @@ const ForecastWidget = ({ data }) => {
       <FlatList
         showsVerticalScrollIndicator={false}
         className="w-full flex"
-        data={data?.userWeather?.forecast.list}
+        data={data?.userWeatherOneCall?.daily}
         renderItem={({ item }) => {
-          const forecastDate = new Date(item.dt * 1000);
-
-          const today = new Date();
-          const tomorrow = new Date();
-          tomorrow.setDate(today.getDate() + 1);
-
-          const options = { month: "short", day: "numeric" };
-          let formattedDate = forecastDate.toLocaleDateString("en-US", options);
-
-          let label = "";
-          if (forecastDate.toDateString() === today.toDateString()) {
-            label = "Today";
-          } else if (forecastDate.toDateString() === tomorrow.toDateString()) {
-            label = "Tomorrow";
-          } else {
-            label = formattedDate;
-          }
+          const label = formatDateTime(item.time).date;
           return (
             <Daycast
               time={label}
-              caution={item.weather[0]?.description || "No data"}
-              temp={Math.round(item.feels_like.day)}
-              icon={`https://openweathermap.org/img/wn/${item.weather[0]?.icon}.png`}
+              caution={item.weather?.description || "No data"}
+              temp={Math.round(item.heat_index)}
+              icon={`https://openweathermap.org/img/wn/${item.weather?.icon}.png`}
             />
           );
         }}
-        keyExtractor={(item) => item.dt.toString()}
+        keyExtractor={(item) => item.time}
       />
     </>
   );

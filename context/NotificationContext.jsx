@@ -3,6 +3,8 @@ import { Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 
+import { setupNotificationsTable, saveNotification, fetchNotifications } from "../services/sqlite"; // Adjust the import path as necessary
+
 // Create the context
 const NotificationContext = createContext(null);
 
@@ -30,8 +32,9 @@ export const NotificationProvider = ({ children, projectId }) => {
       }),
     });
 
-    // Set up notification listeners when component mounts
+    // Set up notification listeners & database when component mounts
     setupNotificationListeners();
+    setupNotificationsTable();
 
     // Clean up listeners when component unmounts
     return () => {
@@ -165,9 +168,25 @@ export const NotificationProvider = ({ children, projectId }) => {
         trigger,
       });
 
+      saveNotification(title, body); // Save notification to SQLite database
+
       return notificationId;
     } catch (error) {
       console.error("Failed to schedule notification:", error);
+      throw error;
+    }
+  };
+
+  /**
+   * Fetch notifications from the SQLite database
+   * @returns {Promise<Array>} List of notifications
+   * */
+  const getNotificationFromDatabase = async () => {
+    try {
+      const notifications = await fetchNotifications();
+      return notifications;
+    } catch (error) {
+      console.error("Failed to fetch notifications from database:", error);
       throw error;
     }
   };
@@ -205,6 +224,7 @@ export const NotificationProvider = ({ children, projectId }) => {
     pushToken,
     permissionStatus,
     lastNotification,
+    getNotificationFromDatabase,
   };
 
   return <NotificationContext.Provider value={contextValue}>{children}</NotificationContext.Provider>;
