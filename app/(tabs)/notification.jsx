@@ -5,11 +5,10 @@ import NotificationScreen from "@/views/Notification/NotificationScreen";
 import { SafeAreaView } from "react-native";
 
 const Notification = () => {
-  NotificationData.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   return (
     <SafeAreaView className="flex-1">
-      <NotificationScreen notificationData={NotificationData} />
+      <NotificationScreen  />
     </SafeAreaView>
   );
 };

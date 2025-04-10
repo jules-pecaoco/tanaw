@@ -1,7 +1,12 @@
 import * as SQLite from "expo-sqlite";
 
+let dbInstance = null;
+
 const getDatabase = async () => {
-  return await SQLite.openDatabaseAsync("notifications");
+  if (!dbInstance) {
+    dbInstance = await SQLite.openDatabaseAsync("notifications");
+  }
+  return dbInstance;
 };
 
 const setupNotificationsTable = async () => {
@@ -18,9 +23,10 @@ const setupNotificationsTable = async () => {
 
 const saveNotification = async (title, body) => {
   const db = await getDatabase();
-  const timestamp = new Date().toISOString();
+  const utcTimestamp = Math.floor(Date.now() / 1000);
+  console.log("timestap", utcTimestamp);
 
-  const result = await db.runAsync("INSERT INTO notifications (title, body, timestamp) VALUES (?, ?, ?)", [title, body, timestamp]);
+  const result = await db.runAsync("INSERT INTO notifications (title, body, timestamp) VALUES (?, ?, ?)", [title, body, utcTimestamp]);
 
   return result.lastInsertRowId;
 };

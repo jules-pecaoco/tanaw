@@ -34,7 +34,11 @@ export const NotificationProvider = ({ children, projectId }) => {
 
     // Set up notification listeners & database when component mounts
     setupNotificationListeners();
-    setupNotificationsTable();
+    const setupTable = async () => {
+      await setupNotificationsTable();
+    };
+
+    setupTable();
 
     // Clean up listeners when component unmounts
     return () => {
@@ -148,17 +152,30 @@ export const NotificationProvider = ({ children, projectId }) => {
     try {
       const { schedule = { seconds: 10 }, data = {} } = options;
 
-      // Build the trigger based on provided schedule
       let trigger;
-      if (schedule.date instanceof Date) {
-        trigger = { date: schedule.date };
+
+      if (Platform.OS === "ios" && schedule.date instanceof Date) {
+        // iOS supports exact date scheduling
+        trigger = {
+          type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+          date: schedule.date,
+        };
       } else if (typeof schedule.seconds === "number") {
-        trigger = { seconds: schedule.seconds };
+        // Cross-platform support with TIME_INTERVAL
+        trigger = {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: schedule.seconds,
+          repeats: false,
+        };
       } else {
-        trigger = { seconds: 10 }; // Default to 10 seconds
+        // Default fallback
+        trigger = {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 10,
+          repeats: false,
+        };
       }
 
-      // Schedule the notification
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title,
@@ -168,7 +185,7 @@ export const NotificationProvider = ({ children, projectId }) => {
         trigger,
       });
 
-      saveNotification(title, body); // Save notification to SQLite database
+      saveNotification(title, body); // Store in SQLite or other persistent storage
 
       return notificationId;
     } catch (error) {
@@ -176,7 +193,6 @@ export const NotificationProvider = ({ children, projectId }) => {
       throw error;
     }
   };
-
   /**
    * Fetch notifications from the SQLite database
    * @returns {Promise<Array>} List of notifications
