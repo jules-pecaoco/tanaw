@@ -68,12 +68,6 @@ const RadarScreen = () => {
 
   const { reports, isLoading, getHeatmapData } = useHazardReports();
 
-  const [showHeatmap, setShowHeatmap] = useState(false);
-
-  const toggleHeatmap = () => {
-    setShowHeatmap(!showHeatmap);
-  };
-
   const cameraRef = useRef(null);
   const bottomSheetRef = useRef(null);
 
@@ -183,10 +177,10 @@ const RadarScreen = () => {
 
   const { data: openWeatherTile } = useQuery({
     queryKey: ["openWeatherTile"],
-    queryFn: fetchOpenWeatherTile,
+    queryFn: () => fetchOpenWeatherTile(),
     gcTime: 0,
     staleTime: 0,
-    refetchInterval: 1000 * 60 * 20,
+    refetchInterval: 1000 * 60,
   });
 
   const { data: rainViewerTile } = useQuery({
@@ -260,7 +254,7 @@ const RadarScreen = () => {
 
         {/* Weather Layers */}
         {state.weatherLayer.type === "Rain" && <RainViewerLayer rainViewerTile={rainViewerTile} />}
-        {(state.weatherLayer.type === "HeatIndex") & openWeatherTile && (
+        {state.weatherLayer.type === "HeatIndex" && (
           <>
             <OpenWeatherLayer openWeatherTile={openWeatherTile} />
             {negrosWeatherMemoized}

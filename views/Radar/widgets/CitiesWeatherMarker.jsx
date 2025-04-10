@@ -4,6 +4,7 @@ import { MarkerView } from "@rnmapbox/maps";
 import { getHeatIndexColor } from "@/utilities/temperatureColorInterpretation";
 
 const CitiesWeatherMarker = ({ cityWeatherData }) => {
+  const data = cityWeatherData?.proximityWeather ?? cityWeatherData?.negrosWeather;
   return (
     <>
       {cityWeatherData.map((city) => {

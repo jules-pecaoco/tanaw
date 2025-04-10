@@ -99,4 +99,6 @@ const fetchOpenWeatherTile = (layer = "temp_new") => {
   return OPENWEATHER_TILE.replace("{layer}", layer);
 };
 
+
+
 export { fetchUserWeather, fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather };
