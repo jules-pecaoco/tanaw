@@ -2,7 +2,6 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 
 import { images } from "@/constants/index";
-import { IndexData } from "@/data/textContent";
 import IndexScreen from "@/views/IndexScreen";
 import storage from "@/storage/storage";
 
@@ -31,15 +30,23 @@ const Index = () => {
 
   const icon = images.tanawLogoWhite;
 
-  if (loading) return null; // Ensure nothing renders until loading is complete
+  if (loading) return null;
+
+  const IndexText = {
+    title: "WELCOME",
+    titleDescription: "On top of the risks, so you don’t have to be!",
+    description:
+      "Welcome to Tanaw, your essential tool for monitoring heat index levels and flood risks in your area. Be prepared, stay informed, and protect your community.",
+    textGuide: "Start you setup in 2 easy steps",
+  };
 
   return (
     hasVisited && (
       <IndexScreen
-        title={IndexData.title}
-        titleDescription={IndexData.titleDescription}
-        description={IndexData.description}
-        textGuide={IndexData.textGuide}
+        title={IndexText.title}
+        titleDescription={IndexText.titleDescription}
+        description={IndexText.description}
+        textGuide={IndexText.textGuide}
         logo={icon}
         handlePress={nextScreen}
       />

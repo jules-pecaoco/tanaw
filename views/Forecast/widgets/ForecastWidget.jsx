@@ -53,7 +53,7 @@ const ForecastWidget = ({ data }) => {
                 <Hourcast
                   time={label}
                   temp={Math.round(item.heat_index)}
-                  icon={`https://openweathermap.org/img/wn/${item.weather?.icon}.png`}
+                  icon={item.weather?.icon}
                 ></Hourcast>
               );
             }}
@@ -74,7 +74,7 @@ const ForecastWidget = ({ data }) => {
               time={label}
               caution={item.weather?.description || "No data"}
               temp={Math.round(item.heat_index)}
-              icon={`https://openweathermap.org/img/wn/${item.weather?.icon}.png`}
+              icon={item.weather?.icon}
             />
           );
         }}

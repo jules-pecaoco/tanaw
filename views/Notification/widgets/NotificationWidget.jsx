@@ -11,7 +11,7 @@ const NotificationCard = ({ item, dateLabel }) => {
   return (
     <>
       <Text className="font-rregular text-base">
-        {dateLabel.date}, {dateLabel.time}
+        {dateLabel.date}, {dateLabel.detailed_time}
       </Text>
       <TouchableOpacity activeOpacity={0.7} onPress={() => setPress(!press)}>
         <View className="bg-white flex flex-col items-center justify-between gap-2 rounded-lg p-5 w-[95%] self-end">

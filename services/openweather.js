@@ -31,7 +31,7 @@ const fetchNegrosWeather = async () => {
       weather: {
         condition: location.weather[0].main,
         description: location.weather[0].description,
-        icon: location.weather[0].icon,
+        icon: `https://openweathermap.org/img/wn/${location.weather[0].icon}.png`,
       },
       coords: {
         lat: location.coord.Lat,
@@ -68,7 +68,8 @@ const fetchProximityWeather = async ({ currentLocation }) => {
       weather: {
         condition: location.weather[0].main,
         description: location.weather[0].description,
-        icon: location.weather[0].icon,
+        icon: `https://openweathermap.org/img/wn/${location.weather[0].icon}.png`,
+
       },
       coords: {
         lat: location.coord.lat,
@@ -108,7 +109,8 @@ const fetchOneCallWeather = async ({ currentLocation }) => {
         weather: {
           condition: response.data.current.weather[0].main,
           description: response.data.current.weather[0].description,
-          icon: response.data.current.weather[0].icon,
+          icon: `https://openweathermap.org/img/wn/${response.data.current.weather[0].icon}.png`,
+
         },
       },
       hourly: response.data.hourly.slice(0, 12).map((hour) => ({
@@ -118,7 +120,8 @@ const fetchOneCallWeather = async ({ currentLocation }) => {
         weather: {
           condition: hour.weather[0].main,
           description: hour.weather[0].description,
-          icon: hour.weather[0].icon,
+          icon: `https://openweathermap.org/img/wn/${hour.weather[0].icon}.png`,
+
         },
       })),
       daily: response.data.daily.map((day) => ({
@@ -131,7 +134,7 @@ const fetchOneCallWeather = async ({ currentLocation }) => {
         weather: {
           condition: day.weather[0].main,
           description: day.weather[0].description,
-          icon: day.weather[0].icon,
+          icon: `https://openweathermap.org/img/wn/${day.weather[0].icon}.png`,
         },
       })),
     };

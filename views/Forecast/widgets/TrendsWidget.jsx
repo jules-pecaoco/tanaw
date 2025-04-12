@@ -1,7 +1,6 @@
 import { View, Text, Image, FlatList } from "react-native";
 import React from "react";
 
-
 const CitiesComponent = ({ city, temp, warning, icon }) => {
   return (
     <View className="bg-white w-[95%] p-4 justify-between rounded-xl flex flex-row items-center self-center mb-3">
@@ -31,7 +30,7 @@ const TrendsWidget = ({ data }) => {
           city={item.name}
           temp={item.main.feels_like}
           warning={item.weather[0]?.description || "No data"}
-          icon={`https://openweathermap.org/img/wn/${item.weather[0]?.icon}.png`}
+          icon={item.weather[0]?.icon}
         />
       )}
     />

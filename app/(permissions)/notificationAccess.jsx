@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import uuid from "react-native-uuid";
 
 import { icons } from "@/constants/index";
-import { PermissionData } from "@/data/textContent";
 import PermissionScreen from "@/views/Permissions/PermissionScreen";
 import storage from "@/storage/storage";
 import { useNotification } from "@/context/NotificationContext";
@@ -47,12 +46,19 @@ const Notification = () => {
   const icon = icons.notifications;
   const statusBarColor = "#E8434C";
 
+  const NotificationText = {
+    title: "NOTIFICATION PERMISSION",
+    titleDescription: "Turn On Notifications for Alerts",
+    description: "We need your permission to send you notifications about important updates and alerts.",
+    permission: "notification",
+  };
+
   return (
     <PermissionScreen
       icon={icon}
-      permissionTitle={PermissionData.notification.title}
-      permissionTitleDescription={PermissionData.notification.titleDescription}
-      permissionDescription={PermissionData.notification.description}
+      permissionTitle={NotificationText.title}
+      permissionTitleDescription={NotificationText.titleDescription}
+      permissionDescription={NotificationText.description}
       handlePress={nextScreen}
       gradient={gradient}
       statusBarColor={statusBarColor}

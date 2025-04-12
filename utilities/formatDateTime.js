@@ -4,14 +4,11 @@
  * @returns {Object} Object with formatted date and time
  */
 function formatDateTime(unixTime) {
-  // Convert Unix timestamp (seconds) to milliseconds
   const date = new Date(unixTime * 1000);
   const now = new Date();
 
-  // Create date string (today, yesterday, tomorrow, or month/day)
   let dateStr;
 
-  // Reset hours, minutes, seconds, and milliseconds for date comparison
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
 
@@ -24,7 +21,6 @@ function formatDateTime(unixTime) {
   const targetDate = new Date(date);
   targetDate.setHours(0, 0, 0, 0);
 
-  // Compare dates
   if (targetDate.getTime() === today.getTime()) {
     dateStr = "Today";
   } else if (targetDate.getTime() === yesterday.getTime()) {
@@ -32,26 +28,25 @@ function formatDateTime(unixTime) {
   } else if (targetDate.getTime() === tomorrow.getTime()) {
     dateStr = "Tomorrow";
   } else {
-    // Format as Month Day (e.g., "April 10")
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     dateStr = `${months[date.getMonth()]} ${date.getDate()}`;
   }
 
-  // Format time in 12-hour format with AM/PM
   let hours = date.getHours();
   const ampm = hours >= 12 ? "PM" : "AM";
   hours = hours % 12;
-  hours = hours ? hours : 12; // Convert 0 to 12
+  hours = hours ? hours : 12;
+
+  const minutes = date.getMinutes().toString().padStart(2, "0");
 
   const timeStr = `${hours}${ampm}`;
+  const detailed_timeStr = `${hours}:${minutes} ${ampm}`;
 
-  // Return formatted object
   return {
     date: dateStr,
     time: timeStr,
+    detailed_time: detailed_timeStr,
   };
 }
 
 export default formatDateTime;
-
-

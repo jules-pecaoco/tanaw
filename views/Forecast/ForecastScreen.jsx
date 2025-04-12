@@ -66,7 +66,7 @@ const ForecastScreen = () => {
             <View className="flex flex-col items-end gap-1 w-1/2">
               <Image
                 source={{
-                  uri: `https://openweathermap.org/img/wn/${userWeatherOneCall.current.weather.icon}.png`,
+                  uri: userWeatherOneCall.current.weather.icon,
                 }}
                 className="size-32"
               ></Image>
