@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Linking, Image } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
@@ -229,41 +229,103 @@ const FacilitiesSelectionBottomSheet = ({ state, setState, onSourceChange }) => 
   );
 };
 
-const FacilitiesMarkerBottomSheet = React.forwardRef(({ data, handleSheetChanges }, ref) => {
-  console.log("Facilities BottomSheet Render....");
-  // Function to open the dialer with the contact number
-  const handleCallPress = (phoneNumber) => {
-    const phoneUrl = `tel:${phoneNumber}`;
-    Linking.openURL(phoneUrl).catch((err) => {
-      console.error("Error opening dialer:", err);
-    });
-  };
+const FacilitiesMarkerBottomSheet = React.forwardRef(
+  (
+    {
+      data,
+      handleSheetChanges,
+      findRoute,
+      resetRoute,
+      routeIsLoading,
+      routeError,
+      hasClickedGetDirections,
+      distance,
+      duration,
+      setUserDestination,
+      userDestination,
+      setHasClickedGetDirections,
+    },
+    ref
+  ) => {
+    const [isCurrentRouteActive, setIsCurrentRouteActive] = useState();
 
-  return (
-    <BottomSheet
-      ref={ref}
-      index={-1}
-      onChange={handleSheetChanges}
-      snapPoints={["28%"]}
-      enablePanDownToClose={true}
-      enableOverDrag={false}
-      animateOnMount={true}
-    >
-      <BottomSheetView className="flex-1 p-5">
-        <Text className="text-2xl font-bold mb-5 text-[#F47C25]">Facilities Information</Text>
-        <View className="bg-white p-2 rounded-lg">
-          <Text className="text-black font-bold">{data.facilityName}</Text>
-          <Text className="text-black mb-2">{data.facilityContact}</Text>
+    useEffect(() => {
+      setIsCurrentRouteActive(data.location === userDestination);
+    }, [data]);
 
-          <View>
-            <TouchableOpacity className="bg-primary p-2 rounded-md" onPress={() => handleCallPress(data.facilityContact)}>
-              <Text className="text-white text-center">Call Now</Text>
-            </TouchableOpacity>
+    // Function to open the dialer with the contact number
+    const handleCallPress = (phoneNumber) => {
+      const phoneUrl = `tel:${phoneNumber}`;
+      Linking.openURL(phoneUrl).catch((err) => {
+        console.error("Error opening dialer:", err);
+      });
+    };
+
+    // Function to handle route finding
+    const handleFindRoute = () => {
+      console.log("handleFindRoute called, data:", data);
+      if (data?.location) {
+        setUserDestination(data.location);
+        findRoute(data.location);
+        setHasClickedGetDirections(true);
+        setIsCurrentRouteActive(true);
+      }
+    };
+
+    // Function to handle reset route
+    const handleResetRoute = () => {
+      if (resetRoute) {
+        resetRoute();
+        setHasClickedGetDirections(false);
+        setIsCurrentRouteActive(false);
+      }
+    };
+
+    return (
+      <BottomSheet
+        ref={ref}
+        index={-1}
+        onChange={handleSheetChanges}
+        // 47, 37
+        snapPoints={isCurrentRouteActive ? ["50%", "47%"] : ["50%", "37%"]}
+        enablePanDownToClose={true}
+        enableOverDrag={false}
+        animateOnMount={true}
+      >
+        <BottomSheetView className="flex-1 p-5">
+          <Text className="text-2xl font-bold mb-5 text-[#F47C25]">Facilities Information</Text>
+          <View className="bg-white p-2 rounded-lg">
+            <Text className="text-black font-bold">{data.name}</Text>
+            <Text className="text-black mb-2">{data.phone}</Text>
+            {isCurrentRouteActive && hasClickedGetDirections && !routeIsLoading && routeError === null && (
+              <View className="mt-2 mb-2">
+                <Text className="text-black font-bold">Direction Detail:</Text>
+                <Text className="text-black font-bold">Distance: {distance} km</Text>
+                <Text className="text-black font-bold">Duration: {duration} minutes</Text>
+              </View>
+            )}
+            <View>
+              <TouchableOpacity className="bg-primary p-2 rounded-md mb-2" onPress={() => handleCallPress(data.phone)}>
+                <Text className="text-white text-center">Call Now</Text>
+              </TouchableOpacity>
+
+              {!isCurrentRouteActive || !hasClickedGetDirections ? (
+                <TouchableOpacity className="bg-green-500 p-2 rounded-md mb-2" onPress={handleFindRoute} disabled={routeIsLoading}>
+                  <Text className="text-white text-center">{routeIsLoading ? "Loading..." : "Get Directions"}</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity className="bg-red-500 p-2 rounded-md mb-2" onPress={handleResetRoute}>
+                  <Text className="text-white text-center">Remove Route</Text>
+                </TouchableOpacity>
+              )}
+
+              {routeError && <Text className="text-red-500 mt-2">Error: {routeError}</Text>}
+            </View>
           </View>
-        </View>
-      </BottomSheetView>
-    </BottomSheet>
-  );
-});
+        </BottomSheetView>
+      </BottomSheet>
+    );
+  }
+);
 
 export { HazardSelectionBottomSheet, FacilitiesSelectionBottomSheet, FacilitiesMarkerBottomSheet };

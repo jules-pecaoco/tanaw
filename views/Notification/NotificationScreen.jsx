@@ -1,40 +1,22 @@
-import { View, Text, FlatList, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
+// Context
 import { useNotification } from "@/context/NotificationContext";
 
+// Components
 import NotificationWidget from "./widgets/NotificationWidget";
 
 const NotificationScreen = () => {
-  const { getNotificationFromDatabase, setNotification } = useNotification();
-  const [notificationData, setNotificationData] = useState([]);
+  const { getNotificationFromDatabase } = useNotification();
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      const notifications = await getNotificationFromDatabase();
-      setNotificationData(notifications);
-    };
-
-    fetchNotifications();
-  }, []);
-
-  const addNotification = async () => {
-    await setNotification("Heads up!", "A storm warning is in your area 5 seconds interval", {
-      schedule: { seconds: 15 },
-      data: { type: "hazard", level: "storm" },
-    });
-
-    await setNotification("Heads up!", "A storm warning is in your area 1 minute inverval", {
-      schedule: { seconds: 60 },
-      data: { type: "hazard", level: "storm" },
-    });
-  };
-
-  const showNotifications = async () => {
-    const notifications = await getNotificationFromDatabase();
-    setNotificationData(notifications);
-    console.log("Notifications:", notifications);
-  };
+  const { data: notificationData = [] } = useQuery({
+    queryKey: ["notificationData"],
+    queryFn: getNotificationFromDatabase,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
+  });
 
   return (
     <View className="h-full bg-white">
@@ -46,12 +28,6 @@ const NotificationScreen = () => {
           <NotificationWidget notificationData={notificationData} />
         </View>
       </View>
-      <TouchableOpacity className="absolute bottom-10 right-10 bg-blue-500 p-3 rounded-full" onPress={addNotification}>
-        <Text className="text-white">Add Notification</Text>
-      </TouchableOpacity>
-      <TouchableOpacity className="absolute bottom-10 left-10 bg-blue-500 p-3 rounded-full" onPress={showNotifications}>
-        <Text className="text-white">Show Notifications</Text>
-      </TouchableOpacity>
     </View>
   );
 };

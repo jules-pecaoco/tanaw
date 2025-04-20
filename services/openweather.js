@@ -1,13 +1,12 @@
 import axios from "axios";
 import { OPEN_WEATHER_API_KEY } from "@/tokens/tokens";
 import { reverseGeocode } from "@/services/mapbox";
+import { convertUnixToISO } from "@/utilities/formatDateTime";
 
 const OPENWEATHER_BOX_API_URL = "https://api.openweathermap.org/data/2.5/box/city";
 const OPENWEATHER_PROXIMITY_API_URL = "https://api.openweathermap.org/data/2.5/find";
 const OPENWEATHER_ONECALL_API_URL = "https://api.openweathermap.org/data/3.0/onecall";
 
-const OPENWEATHER_FORECAST_API_URL = "https://api.openweathermap.org/data/2.5/forecast/daily";
-const OPENWEATHER_HOURLY_API_URL = "https://pro.openweathermap.org/data/2.5/forecast/hourly";
 const OPENWEATHER_TILE = "https://tile.openweathermap.org/map/{layer}/{z}/{x}/{y}.png?appid=" + OPEN_WEATHER_API_KEY;
 
 const fetchNegrosWeather = async () => {
@@ -69,7 +68,6 @@ const fetchProximityWeather = async ({ currentLocation }) => {
         condition: location.weather[0].main,
         description: location.weather[0].description,
         icon: `https://openweathermap.org/img/wn/${location.weather[0].icon}.png`,
-
       },
       coords: {
         lat: location.coord.lat,
@@ -104,28 +102,26 @@ const fetchOneCallWeather = async ({ currentLocation }) => {
     const simplifiedData = {
       name: name,
       current: {
-        time: response.data.current.dt,
+        time: convertUnixToISO(response.data.current.dt),
         heat_index: response.data.current.feels_like,
         weather: {
           condition: response.data.current.weather[0].main,
           description: response.data.current.weather[0].description,
           icon: `https://openweathermap.org/img/wn/${response.data.current.weather[0].icon}.png`,
-
         },
       },
       hourly: response.data.hourly.slice(0, 12).map((hour) => ({
-        time: hour.dt,
+        time: convertUnixToISO(hour.dt),
         temp: hour.temp,
         heat_index: hour.feels_like,
         weather: {
           condition: hour.weather[0].main,
           description: hour.weather[0].description,
           icon: `https://openweathermap.org/img/wn/${hour.weather[0].icon}.png`,
-
         },
       })),
       daily: response.data.daily.map((day) => ({
-        time: day.dt,
+        time: convertUnixToISO(day.dt),
         temp: {
           min: day.temp.min,
           max: day.temp.max,
@@ -146,9 +142,8 @@ const fetchOneCallWeather = async ({ currentLocation }) => {
   }
 };
 
-
 const fetchOpenWeatherTile = (layer = "temp_new") => {
   return OPENWEATHER_TILE.replace("{layer}", layer);
 };
 
-export {  fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather, fetchOneCallWeather };
+export { fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather, fetchOneCallWeather };

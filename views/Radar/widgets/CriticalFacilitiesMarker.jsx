@@ -2,6 +2,7 @@ import { TouchableOpacity, View } from "react-native";
 import React from "react";
 import { MarkerView, PointAnnotation } from "@rnmapbox/maps";
 import { useQueryClient } from "@tanstack/react-query";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { fetchGoogleFacilityById } from "@/services/google";
 
@@ -19,19 +20,13 @@ const FacilityMarker = ({ facility, type, setFacilitiesInformation, onPress, sou
     onPress();
 
     if (source === "OpenStreet") {
-      setFacilitiesInformation({
-        facilityName: facility.name,
-        facilityContact: facility.phone,
-      });
+      setFacilitiesInformation(facility);
       return;
     } else {
       const cachedData = queryClient.getQueryData([type, facility.id]);
 
       if (cachedData) {
-        setFacilitiesInformation({
-          facilityName: cachedData.name,
-          facilityContact: cachedData.phone,
-        });
+        setFacilitiesInformation(cachedData);
       } else {
         try {
           const facilityData = await queryClient.fetchQuery({
@@ -41,10 +36,7 @@ const FacilityMarker = ({ facility, type, setFacilitiesInformation, onPress, sou
             staleTime: 0,
           });
 
-          setFacilitiesInformation({
-            facilityName: facilityData.name,
-            facilityContact: facilityData.phone ?? "None",
-          });
+          setFacilitiesInformation(facilityData);
         } catch (error) {
           console.error("Error fetching facility details:", error);
         }
@@ -52,10 +44,11 @@ const FacilityMarker = ({ facility, type, setFacilitiesInformation, onPress, sou
     }
   };
 
+  const facilityIcon = type === "Hospitals" ? "local-hospital" : type === "FireStations" ? "fire-truck" : "night-shelter";
   return (
     <MarkerView id={`${type}-${facility.id}`} coordinate={[facility.location.longitude, facility.location.latitude]}>
       <TouchableOpacity onPress={handlePress}>
-        <View className={`p-3 rounded-full `} style={{ backgroundColor: facilityColors[type] || "gray" }}></View>
+        <MaterialIcons name={facilityIcon} size={30} color={facilityColors[type]} />
       </TouchableOpacity>
     </MarkerView>
   );

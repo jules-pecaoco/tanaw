@@ -9,7 +9,7 @@ const getHeatIndexColor = (temp) => {
   if (temp >= 42) return "#ff6600"; // Very hot
   if (temp >= 33) return "#ffcc00"; // Hot
   if (temp >= 27) return "#ffff00"; // Warm
-  return "#ffff"; 
+  return "#ffff";
 };
 
 export { getHeatIndexColor };

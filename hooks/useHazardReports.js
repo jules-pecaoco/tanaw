@@ -7,8 +7,8 @@ const useHazardReports = () => {
   // Fetch reports
   const {
     data: reports,
-    isLoading,
-    error,
+    reportsIsLoading,
+    reportsError,
     refetch,
   } = useQuery({
     queryKey: ["hazardReports"],
@@ -31,11 +31,10 @@ const useHazardReports = () => {
     return reports.filter((report) => report.hazard_type === type);
   };
 
-
   return {
     reports,
-    isLoading,
-    error,
+    reportsIsLoading,
+    reportsError,
     refetch,
     createReport: mutation.mutate,
     isCreating: mutation.isLoading,

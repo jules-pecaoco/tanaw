@@ -3,7 +3,8 @@ import { MAPBOX_PUBLIC_TOKEN } from "@/tokens/tokens";
 
 const MAPBOX_SEARCH_URL = "https://api.mapbox.com/search/searchbox/v1/suggest";
 const MAPBOX_RETRIEVE_URL = "https://api.mapbox.com/search/searchbox/v1/retrieve";
-const MPABOX_REVERSEGEOCODE_URL = "https://api.mapbox.com/search/geocode/v6/reverse";
+const MAPBOX_REVERSEGEOCODE_URL = "https://api.mapbox.com/search/geocode/v6/reverse";
+const MAPBOX_DIRECTIONS_URL = "https://api.mapbox.com/directions/v5/mapbox";
 
 /**
  * Search for cities using Mapbox API
@@ -65,7 +66,7 @@ const searchCityDetails = async (cityId, session_token) => {
 
 const reverseGeocode = async (latitude, longitude) => {
   try {
-    const response = await axios.get(MPABOX_REVERSEGEOCODE_URL, {
+    const response = await axios.get(MAPBOX_REVERSEGEOCODE_URL, {
       params: {
         latitude: latitude,
         longitude: longitude,
@@ -84,4 +85,53 @@ const reverseGeocode = async (latitude, longitude) => {
   }
 };
 
-export { searchCity, searchCityDetails, reverseGeocode };
+/**
+ * Fetches directions data from Mapbox Directions API
+ *
+ * @param {Array} origin - Origin coordinates [longitude, latitude]
+ * @param {Array} destination - Destination coordinates [longitude, latitude]
+ * @param {String} profile - Travel profile (driving, walking, cycling)
+ * @returns {Promise} - Route data with geometry, distance, duration
+ */
+const fetchDirections = async (origin, destination, profile = "driving") => {
+  console.log("Fetching directions from:", origin, "to:", destination);
+  try {
+    // **Important:** Mapbox uses [longitude, latitude] order.
+    const startLng = origin.longitude;
+    const startLat = origin.latitude;
+    const endLng = destination.longitude;
+    const endLat = destination.latitude;
+
+    const waypoints = `${startLng},${startLat};${endLng},${endLat}`; 
+    const response = await axios.get(
+      `${MAPBOX_DIRECTIONS_URL}/${profile}/${waypoints}`, 
+      {
+        params: {
+          alternatives: false,
+          geometries: "geojson",
+          language: "en",
+          overview: "full",
+          steps: false,
+          access_token: MAPBOX_PUBLIC_TOKEN, 
+        },
+      }
+    );
+
+    if (response.data.routes && response.data.routes.length > 0) {
+      const route = response.data.routes[0];
+      return {
+        coordinates: route.geometry.coordinates,
+        distance: route.distance / 1000,
+        duration: Math.round(route.duration / 60),
+        geometry: route.geometry, // Use the geometry directly from the response
+      };
+    }
+
+    throw new Error("No routes found");
+  } catch (error) {
+    console.error("Error fetching directions:", error);
+    throw error;
+  }
+};
+
+export { searchCity, searchCityDetails, reverseGeocode, fetchDirections };

@@ -1,6 +1,5 @@
 import Mapbox, { MapView, Camera, UserLocation } from "@rnmapbox/maps";
 import React, { useEffect, forwardRef } from "react";
-import { View } from "react-native";
 
 import { MAPBOX_PUBLIC_TOKEN } from "@/tokens/tokens";
 
@@ -10,7 +9,6 @@ import { MAPBOX_PUBLIC_TOKEN } from "@/tokens/tokens";
 Mapbox.setAccessToken(MAPBOX_PUBLIC_TOKEN);
 
 const BaseMap = React.forwardRef(({ currentLocation, children }, ref) => {
-
   useEffect(() => {
     Mapbox.setTelemetryEnabled(false);
   }, []);

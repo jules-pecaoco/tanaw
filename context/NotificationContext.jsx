@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 
-import { setupNotificationsTable, saveNotification, fetchNotifications } from "../services/sqlite"; // Adjust the import path as necessary
+import { setupNotificationsTable, saveNotification, fetchNotifications } from "@/services/sqlite"; // Adjust the import path as necessary
 
 // Create the context
 const NotificationContext = createContext(null);
@@ -146,32 +146,23 @@ export const NotificationProvider = ({ children, projectId }) => {
    * @param {number} [options.schedule.seconds] - Seconds from now to trigger notification
    * @param {Date} [options.schedule.date] - Specific date to trigger notification
    * @param {Object} [options.data] - Additional data to include with the notification
+   * @param {Date} [timestamp] -
    * @returns {Promise<string>} Notification identifier
    */
-  const setNotification = async (title, body, options = {}) => {
+  const setNotification = async (title, body, options = {}, timeStamp) => {
     try {
-      const { schedule = { seconds: 10 }, data = {} } = options;
+      const { data = {}, offsetHours = 3 } = options;
 
       let trigger;
 
-      if (Platform.OS === "ios" && schedule.date instanceof Date) {
-        // iOS supports exact date scheduling
+      if (timeStamp) {
+        const eventDateUTC = new Date(timeStamp);
+
+        const triggerDate = new Date(eventDateUTC.getTime() - offsetHours * 60 * 60 * 1000);
+
         trigger = {
-          type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-          date: schedule.date,
-        };
-      } else if (typeof schedule.seconds === "number") {
-        // Cross-platform support with TIME_INTERVAL
-        trigger = {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: schedule.seconds,
-          repeats: false,
-        };
-      } else {
-        // Default fallback
-        trigger = {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: 10,
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: triggerDate,
           repeats: false,
         };
       }
@@ -185,7 +176,7 @@ export const NotificationProvider = ({ children, projectId }) => {
         trigger,
       });
 
-      saveNotification(title, body); // Store in SQLite or other persistent storage
+      saveNotification(title, body, timeStamp); // Save original ISO timestamp
 
       return notificationId;
     } catch (error) {
@@ -193,6 +184,64 @@ export const NotificationProvider = ({ children, projectId }) => {
       throw error;
     }
   };
+
+  const sendNotificationIfNeeded = async (data) => {
+    const { current, hourly } = data;
+
+    const alertConditions = ["Thunderstorm", "Rain", "Extreme", "Snow"];
+
+    // 🔥 Current Heat Index
+    const currentHeatColor = getHeatIndexColor(current.heat_index);
+    const currentFormattedTime = formatDateTime(current.time);
+
+    if (currentHeatColor === "#cc0001") {
+      await setNotification(
+        "Extreme Heat Alert 🔥",
+        `Feels like ${current.heat_index}°C at ${currentFormattedTime.detailed_time}. Avoid outdoor activities and stay cool.`,
+        {},
+        current.time
+      );
+    }else if (currentHeatColor === "#ff6600") {
+      await setNotification(
+        "Very Hot Weather ⚠️",
+        `Heat index is ${current.heat_index}°C at ${currentFormattedTime.detailed_time}. Minimize sun exposure.`,
+        {},
+        current.time
+      );
+    }else if (currentHeatColor === "#ffcc00") {
+      await setNotification(
+        "Hot Weather Alert 🌡️",
+        `Feels like ${current.heat_index}°C at ${currentFormattedTime.detailed_time}. Stay hydrated!`,
+        {},
+        current.time
+      );
+    }
+
+    // 🌧️ Current Severe Weather
+    if (alertConditions.includes(current.weather.condition)) {
+      await setNotification(
+        `Weather Alert: ${current.weather.condition}`,
+        `Current condition is ${current.weather.description} (${currentFormattedTime.detailed_time}). Stay safe.`,
+        {},
+        current.time
+      );
+    }
+
+    // 🕒 Hourly Forecast (next 12 hours)
+    for (let hour of hourly) {
+      const color = getHeatIndexColor(hour.heat_index);
+      const { detailed_time } = formatDateTime(hour.time);
+
+      if (color === "#cc0001" || color === "#ff6600") {
+        await setNotification("Upcoming Heat Alert 🔥", `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`, {}, hour.time);
+      }
+
+      if (alertConditions.includes(hour.weather.condition)) {
+        await setNotification(`Upcoming Weather Alert`, `Forecast: ${hour.weather.description} at ${detailed_time}.`, {}, hour.time);
+      }
+    }
+  };
+
   /**
    * Fetch notifications from the SQLite database
    * @returns {Promise<Array>} List of notifications
@@ -241,6 +290,7 @@ export const NotificationProvider = ({ children, projectId }) => {
     permissionStatus,
     lastNotification,
     getNotificationFromDatabase,
+    sendNotificationIfNeeded,
   };
 
   return <NotificationContext.Provider value={contextValue}>{children}</NotificationContext.Provider>;

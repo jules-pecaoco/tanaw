@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-import formatDateTime from "@/utilities/formatDateTime";
+import { formatDateTime } from "@/utilities/formatDateTime";
 
 const NotificationCard = ({ item, dateLabel }) => {
   const [press, setPress] = useState(false);
@@ -37,8 +37,6 @@ const NotificationCard = ({ item, dateLabel }) => {
 };
 
 const NotificationWidget = ({ notificationData }) => {
-  const [press, setPress] = useState(false);
-
   console.log("Notification Data Widget:", notificationData);
   return (
     <FlatList
@@ -46,12 +44,16 @@ const NotificationWidget = ({ notificationData }) => {
       data={notificationData}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => {
-        const dateLabel = formatDateTime(item.timestamp, "dd/MM/yyyy");
+        const dateLabel = formatDateTime(item.timestamp);
+        // only render a component that is before or on the current date and time
+        if (new Date(item.timestamp).getTime() > new Date().getTime()) {
+          return null;
+        }
 
         return (
           <View className="flex flex-col gap-4 w-full mb-10">
             <NotificationCard item={item} dateLabel={dateLabel} />
-           </View>
+          </View>
         );
       }}
     />

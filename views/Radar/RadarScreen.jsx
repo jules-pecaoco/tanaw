@@ -3,15 +3,17 @@ import { ActivityIndicator, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { PointAnnotation } from "@rnmapbox/maps";
 
-// API Services
+// API & Services
 import { fetchOpenStreetFacilitiesByType } from "@/services/openstreet";
 import { fetchGoogleFacilitiesByType } from "@/services/google";
 import { fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather } from "@/services/openweather";
 import { fetchRainViewerTile } from "@/services/rainviewer";
+import { registerWeatherTask } from "@/services/weatherTaskManager";
 
 // Hooks
 import useHazardReports from "@/hooks/useHazardReports";
 import useLocation from "@/hooks/useLocation";
+import useDirections from "@/hooks/useDirections";
 
 // Components
 import { RainViewerLayer, OpenWeatherLayer } from "./widgets/WeatherLayers";
@@ -23,13 +25,29 @@ import BaseMap from "./widgets/BaseMap";
 import CriticalFacilitiesMarker from "./widgets/CriticalFacilitiesMarker";
 import SearchCity from "./widgets/SearchCity";
 import HazardMarker from "./widgets/UserReport/UserReportedHazardMarker";
-
+import RouteDisplay from "./widgets/RouteDisplay";
 
 const RadarScreen = () => {
-  // Use the location hook
-  const { location, getLocation } = useLocation();
+  // ref
+  const cameraRef = useRef(null);
+  const bottomSheetRef = useRef(null);
 
-  // Default to Bacolod coordinates if user location not available
+  //  hooks
+  const { location, getLocation } = useLocation();
+  const {
+    origin,
+    route,
+    distance,
+    duration,
+    routeIsLoading,
+    routeError,
+    findRoute,
+    resetRoute,
+    setOrigin,
+    hasClickedGetDirections, 
+    setHasClickedGetDirections
+  } = useDirections();
+
   const [currentLocation, setCurrentLocation] = useState(() => {
     if (location) {
       return { latitude: location.latitude, longitude: location.longitude };
@@ -58,6 +76,9 @@ const RadarScreen = () => {
     },
   });
 
+  //states
+  const [userDestination, setUserDestination] = useState(null);
+
   const [facilitiesInformation, setFacilitiesInformation] = useState({
     facilityName: "",
     facilityContact: "",
@@ -68,10 +89,18 @@ const RadarScreen = () => {
     longitude: "",
   });
 
-  const { reports, isLoading } = useHazardReports();
+  const { reports, reportsIsLoading } = useHazardReports();
 
-  const cameraRef = useRef(null);
-  const bottomSheetRef = useRef(null);
+  useEffect(() => {
+    const setupLocationAndTasks = async () => {
+      const userLocation = currentLocation;
+      setOrigin(currentLocation);
+
+      registerWeatherTask(userLocation);
+    };
+
+    setupLocationAndTasks();
+  }, []);
 
   // Callback functions
   const handleActiveBottomSheet = useCallback((item) => {
@@ -207,7 +236,6 @@ const RadarScreen = () => {
     staleTime: 1000 * 60 * 60 * 12,
   });
 
-
   // Memoized components
   const WeatherMarkerMemoized = useMemo(
     () => <WeatherMarker negrosWeather={negrosWeather} proximityWeather={proximityWeather} radius={state.weatherLayer.radius} />,
@@ -278,11 +306,13 @@ const RadarScreen = () => {
         {renderFacilityMarker("EvacSites")}
 
         {/*User Reported Hazard markers */}
-        {!isLoading &&
+        {!reportsIsLoading &&
           reports &&
           reports.map((report) => {
             return <HazardMarker key={report.id} report={report} onPress={() => onMarkerPress(report)} />;
           })}
+
+        {hasClickedGetDirections && !routeIsLoading && <RouteDisplay route={route} origin={origin} destination={userDestination} />}
       </BaseMap>
 
       {/* SIDE BUTTONS */}
@@ -298,7 +328,21 @@ const RadarScreen = () => {
       </View>
 
       {/* BOTTOM SHEETS */}
-      <FacilitiesMarkerBottomSheet ref={bottomSheetRef} handleSheetChanges={handleSheetChanges} data={facilitiesInformation} />
+      <FacilitiesMarkerBottomSheet
+        ref={bottomSheetRef}
+        handleSheetChanges={handleSheetChanges}
+        data={facilitiesInformation}
+        findRoute={findRoute}
+        resetRoute={resetRoute}
+        routeIsLoading={routeIsLoading}
+        routeError={routeError}
+        hasClickedGetDirections={hasClickedGetDirections}
+        distance={distance}
+        duration={duration}
+        setUserDestination={setUserDestination}
+        destination={userDestination}
+        setHasClickedGetDirections={setHasClickedGetDirections}
+      />
 
       {state.activeBottomSheet === "hazards" && <HazardSelectionBottomSheet state={state} setState={setState} />}
       {state.activeBottomSheet === "facilities" && (

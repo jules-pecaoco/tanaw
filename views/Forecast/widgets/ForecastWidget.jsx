@@ -2,7 +2,7 @@ import { View, Text, Image, FlatList } from "react-native";
 import React from "react";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-import formatDateTime from "@/utilities/formatDateTime";
+import { formatDateTime } from "@/utilities/formatDateTime";
 
 const Daycast = ({ time, caution, temp, icon }) => {
   return (
@@ -49,13 +49,7 @@ const ForecastWidget = ({ data }) => {
             data={data?.userWeatherOneCall?.hourly}
             renderItem={({ item }) => {
               const label = formatDateTime(item.time).time;
-              return (
-                <Hourcast
-                  time={label}
-                  temp={Math.round(item.heat_index)}
-                  icon={item.weather?.icon}
-                ></Hourcast>
-              );
+              return <Hourcast time={label} temp={Math.round(item.heat_index)} icon={item.weather?.icon}></Hourcast>;
             }}
             keyExtractor={(item) => item.time}
           />
@@ -70,12 +64,7 @@ const ForecastWidget = ({ data }) => {
         renderItem={({ item }) => {
           const label = formatDateTime(item.time).date;
           return (
-            <Daycast
-              time={label}
-              caution={item.weather?.description || "No data"}
-              temp={Math.round(item.heat_index)}
-              icon={item.weather?.icon}
-            />
+            <Daycast time={label} caution={item.weather?.description || "No data"} temp={Math.round(item.heat_index)} icon={item.weather?.icon} />
           );
         }}
         keyExtractor={(item) => item.time}

@@ -4,7 +4,7 @@ export default ({ config }) => ({
   ...config,
   name: "Tanaw",
   slug: "tanaw",
-  version: "0.2",
+  version: "0.7.0",
   orientation: "portrait",
   icon: "./assets/images/tanaw-logo.png",
   scheme: "myapp",
