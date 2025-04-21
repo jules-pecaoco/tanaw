@@ -20,8 +20,6 @@ const NotificationCard = ({ item, dateLabel }) => {
               <MaterialCommunityIcons name="weather-sunny" size={24} color="black" />
               <Text className="font-rlight text-5xl">|</Text>
               <Text className="font-rbold text-2xl">{item.title}</Text>
-              <Text className="font-rbold text-2xl">:</Text>
-              <Text className="font-rsemibold text-2xl">{item.title}</Text>
             </View>
             {press ? <Entypo name="chevron-up" size={24} color="black" /> : <Entypo name="chevron-down" size={24} color="black" />}
           </View>
@@ -45,6 +43,7 @@ const NotificationWidget = ({ notificationData }) => {
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => {
         const dateLabel = formatDateTime(item.timestamp);
+        console.log(dateLabel.detailed_time);
         // only render a component that is before or on the current date and time
         if (new Date(item.timestamp).getTime() > new Date().getTime()) {
           return null;

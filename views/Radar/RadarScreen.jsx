@@ -6,11 +6,12 @@ import { PointAnnotation } from "@rnmapbox/maps";
 // API & Services
 import { fetchOpenStreetFacilitiesByType } from "@/services/openstreet";
 import { fetchGoogleFacilitiesByType } from "@/services/google";
-import { fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather } from "@/services/openweather";
+import { fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather, fetchOneCallWeather } from "@/services/openweather";
 import { fetchRainViewerTile } from "@/services/rainviewer";
 import { registerWeatherTask } from "@/services/weatherTaskManager";
 
 // Hooks
+import { useNotification } from "@/context/NotificationContext";
 import useHazardReports from "@/hooks/useHazardReports";
 import useLocation from "@/hooks/useLocation";
 import useDirections from "@/hooks/useDirections";
@@ -44,8 +45,8 @@ const RadarScreen = () => {
     findRoute,
     resetRoute,
     setOrigin,
-    hasClickedGetDirections, 
-    setHasClickedGetDirections
+    hasClickedGetDirections,
+    setHasClickedGetDirections,
   } = useDirections();
 
   const [currentLocation, setCurrentLocation] = useState(() => {
@@ -91,12 +92,15 @@ const RadarScreen = () => {
 
   const { reports, reportsIsLoading } = useHazardReports();
 
+  const { sendNotificationIfNeeded } = useNotification();
   useEffect(() => {
     const setupLocationAndTasks = async () => {
-      const userLocation = currentLocation;
       setOrigin(currentLocation);
-
-      registerWeatherTask(userLocation);
+      const data = await fetchOneCallWeather({ currentLocation });
+      if (data) {
+        sendNotificationIfNeeded(data);
+      }
+      // registerWeatherTask(currentLocation);
     };
 
     setupLocationAndTasks();

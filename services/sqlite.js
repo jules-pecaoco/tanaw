@@ -33,4 +33,10 @@ const fetchNotifications = async () => {
   return await db.getAllAsync("SELECT * FROM notifications ORDER BY timestamp DESC");
 };
 
-export { setupNotificationsTable, saveNotification, fetchNotifications };
+const clearAllNotifications = async () => {
+  const db = await getDatabase();
+  await db.execAsync("DELETE FROM notifications");
+  return true;
+};
+
+export { setupNotificationsTable, saveNotification, fetchNotifications, clearAllNotifications };

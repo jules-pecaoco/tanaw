@@ -5,6 +5,9 @@ import * as Notifications from "expo-notifications";
 
 import { setupNotificationsTable, saveNotification, fetchNotifications } from "@/services/sqlite"; // Adjust the import path as necessary
 
+import { formatDateTime } from "@/utilities/formatDateTime";
+import { getHeatIndexColor } from "@/utilities/temperatureColorInterpretation"; // Adjust the import path as necessary
+
 // Create the context
 const NotificationContext = createContext(null);
 
@@ -150,15 +153,20 @@ export const NotificationProvider = ({ children, projectId }) => {
    * @returns {Promise<string>} Notification identifier
    */
   const setNotification = async (title, body, options = {}, timeStamp) => {
+    console.log("Setting notification...");
+    console.log(timeStamp);
     try {
-      const { data = {}, offsetHours = 3 } = options;
+      const { data = {}, offsetHours = 2 } = options;
 
       let trigger;
 
       if (timeStamp) {
         const eventDateUTC = new Date(timeStamp);
+        console.log("Event date in UTC:", eventDateUTC.toString());
 
         const triggerDate = new Date(eventDateUTC.getTime() - offsetHours * 60 * 60 * 1000);
+
+        console.log("Trigger date:", triggerDate.toString());
 
         trigger = {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -176,7 +184,9 @@ export const NotificationProvider = ({ children, projectId }) => {
         trigger,
       });
 
-      saveNotification(title, body, timeStamp); // Save original ISO timestamp
+      console.log("Notification scheduled with ID:", notificationId);
+
+      saveNotification(title, body, timeStamp);
 
       return notificationId;
     } catch (error) {
@@ -186,53 +196,18 @@ export const NotificationProvider = ({ children, projectId }) => {
   };
 
   const sendNotificationIfNeeded = async (data) => {
-    const { current, hourly } = data;
+    console.log("Sending notification if needed...");
+    const { hourly } = data;
 
-    const alertConditions = ["Thunderstorm", "Rain", "Extreme", "Snow"];
+    const alertConditions = ["Thunderstorm", "Rain", "Extreme"];
 
-    // 🔥 Current Heat Index
-    const currentHeatColor = getHeatIndexColor(current.heat_index);
-    const currentFormattedTime = formatDateTime(current.time);
-
-    if (currentHeatColor === "#cc0001") {
-      await setNotification(
-        "Extreme Heat Alert 🔥",
-        `Feels like ${current.heat_index}°C at ${currentFormattedTime.detailed_time}. Avoid outdoor activities and stay cool.`,
-        {},
-        current.time
-      );
-    }else if (currentHeatColor === "#ff6600") {
-      await setNotification(
-        "Very Hot Weather ⚠️",
-        `Heat index is ${current.heat_index}°C at ${currentFormattedTime.detailed_time}. Minimize sun exposure.`,
-        {},
-        current.time
-      );
-    }else if (currentHeatColor === "#ffcc00") {
-      await setNotification(
-        "Hot Weather Alert 🌡️",
-        `Feels like ${current.heat_index}°C at ${currentFormattedTime.detailed_time}. Stay hydrated!`,
-        {},
-        current.time
-      );
-    }
-
-    // 🌧️ Current Severe Weather
-    if (alertConditions.includes(current.weather.condition)) {
-      await setNotification(
-        `Weather Alert: ${current.weather.condition}`,
-        `Current condition is ${current.weather.description} (${currentFormattedTime.detailed_time}). Stay safe.`,
-        {},
-        current.time
-      );
-    }
-
-    // 🕒 Hourly Forecast (next 12 hours)
+    // Hourly Forecast (next 12 hours)
     for (let hour of hourly) {
       const color = getHeatIndexColor(hour.heat_index);
       const { detailed_time } = formatDateTime(hour.time);
 
-      if (color === "#cc0001" || color === "#ff6600") {
+      if (color === "#cc0001" || color === "#ff6600" || color === "#ffcc00") {
+        console.log("Heat alert triggered for hourly forecast");
         await setNotification("Upcoming Heat Alert 🔥", `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`, {}, hour.time);
       }
 
