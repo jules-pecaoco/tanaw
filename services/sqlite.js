@@ -22,8 +22,10 @@ const setupNotificationsTable = async () => {
 };
 
 const saveNotification = async (title, body, timeStamp) => {
+  const isoTimestamp = timeStamp.toISOString();
+
   const db = await getDatabase();
-  const result = await db.runAsync("INSERT INTO notifications (title, body, timestamp) VALUES (?, ?, ?)", [title, body, timeStamp]);
+  const result = await db.runAsync("INSERT INTO notifications (title, body, timestamp) VALUES (?, ?, ?)", [title, body, isoTimestamp]);
 
   return result.lastInsertRowId;
 };

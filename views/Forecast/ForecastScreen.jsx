@@ -1,9 +1,9 @@
 import { View, Text, Image, ActivityIndicator } from "react-native";
-import { React, useState } from "react";
+import { React, useState, useEffect } from "react"; // Import useEffect
 import { useQuery } from "@tanstack/react-query";
 
 // API Services
-import { fetchUserWeather, fetchOneCallWeather } from "@/services/openweather";
+import { fetchOneCallWeather } from "@/services/openweather";
 
 // Components
 import CustomButton from "@/views/components/CustomButton";
@@ -13,8 +13,6 @@ import useLocation from "@/hooks/useLocation";
 
 const ForecastScreen = () => {
   const { location } = useLocation();
-
-  // Default to Bacolod coordinates if user location not available
   const [currentLocation, setCurrentLocation] = useState(() => {
     if (location) {
       return { latitude: location.latitude, longitude: location.longitude };
@@ -25,29 +23,18 @@ const ForecastScreen = () => {
   const [active, setActive] = useState("forecast");
 
   const {
-    data: userWeather,
-    isLoading: isLoadingUserWeather,
-    error: isErrorUserWeather,
-  } = useQuery({
-    queryKey: ["userWeather"],
-    queryFn: () => fetchUserWeather({ currentLocation }),
-    staleTime: 1000 * 60 * 60 * 3,
-    refetchInterval: 1000 * 60 * 60 * 6,
-  });
-
-  const {
     data: userWeatherOneCall,
     isLoading: isLoadingUserWeatherOneCall,
     error: isErrorUserWeatherOneCall,
   } = useQuery({
     queryKey: ["userWeatherOneCall"],
-    queryFn: () => fetchOneCallWeather({ currentLocation }),
-    staleTime: 1,
-    gcTime: 1,
+    queryFn: () => fetchOneCallWeather({currentLocation}),
+    staleTime: 1000 * 60 * 60 * 3, //3 hours
+    gcTime: 1000 * 60 * 60 * 6, //6 hours
   });
 
   if (isLoadingUserWeatherOneCall) return <ActivityIndicator size="large" color="#FF8C00" className="flex-1" />;
-  console.log("User Weather: ", userWeatherOneCall);
+  console.log("User Weather OneCall: ", userWeatherOneCall);
 
   return (
     <View className="flex-1 bg-white">
@@ -58,18 +45,20 @@ const ForecastScreen = () => {
           <View className="flex flex-row items-center justify-between w-full px-4">
             <View className="flex flex-col items-start justify-center gap-1 w-1/2">
               <Text className="text-4xl font-rregular">
-                {userWeatherOneCall?.name?.locality ?? "Bacolod"}, {userWeather?.name?.region ?? "Negros Occidental"}
+                {userWeatherOneCall?.name?.locality ?? "Bacolod"}, {userWeatherOneCall?.name?.region ?? "Negros Occidental"}
               </Text>
               <Text className="text-sm font-rlight">Heat Index</Text>
-              <Text className="text-7xl font-rregular">{Math.round(userWeatherOneCall.current.heat_index)}°C</Text>
+              <Text className="text-7xl font-rregular">{Math.round(userWeatherOneCall?.current?.heat_index) ?? "-"}°C</Text>
             </View>
             <View className="flex flex-col items-end gap-1 w-1/2">
-              <Image
-                source={{
-                  uri: userWeatherOneCall.current.weather.icon,
-                }}
-                className="size-32"
-              ></Image>
+              {userWeatherOneCall?.current?.weather?.icon && (
+                <Image
+                  source={{
+                    uri: userWeatherOneCall?.current?.weather?.icon,
+                  }}
+                  className="size-32"
+                />
+              )}
             </View>
           </View>
 

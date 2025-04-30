@@ -96,6 +96,12 @@ const RootLayout = () => {
                   headerShown: false,
                 }}
               />
+              <Stack.Screen
+                name="AlertScreen"
+                options={{
+                  headerShown: false,
+                }}
+              ></Stack.Screen>
             </Stack>
           </GestureHandlerRootView>
         </SafeAreaProvider>

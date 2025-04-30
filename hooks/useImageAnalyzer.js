@@ -4,7 +4,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import { analyzeImageWithGemini } from "@/services/gemini";
 
 /**
- * Custom hook to analyze an image with Gemini
+ * 
  * @returns {{
  *   analyze: (imageUri: string) => Promise<void>,
  *   compressImage: (imageUri: string) => Promise<{uri: string | null, error: Error | null}>,
@@ -18,6 +18,11 @@ const useGeminiHazardAnalysis = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  
+  /** 
+    *@param {string} imageUri - the image directory  
+    * 
+  */
   const compressImage = useCallback(async (imageUri) => {
     try {
       const result = await ImageManipulator.manipulateAsync(imageUri, [{ resize: { width: 1000 } }], {

@@ -3,10 +3,11 @@ import { Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 
-import { setupNotificationsTable, saveNotification, fetchNotifications } from "@/services/sqlite"; // Adjust the import path as necessary
+import { setupNotificationsTable, saveNotification, fetchNotifications } from "@/services/sqlite";
 
 import { formatDateTime } from "@/utilities/formatDateTime";
-import { getHeatIndexColor } from "@/utilities/temperatureColorInterpretation"; // Adjust the import path as necessary
+import { getHeatIndexColor } from "@/utilities/temperatureColorInterpretation";
+import { router } from "expo-router";
 
 // Create the context
 const NotificationContext = createContext(null);
@@ -58,14 +59,43 @@ export const NotificationProvider = ({ children, projectId }) => {
    * Set up notification listeners
    */
   const setupNotificationListeners = () => {
-    // This listener is fired whenever a notification is received while the app is foregrounded
-    notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
-      setLastNotification(notification);
+    notificationListener.current = Notifications.addNotificationReceivedListener((response) => {
+      const data = response.request.content;
+
+      console.log("Notification received Foreground:", data);
+
+      if (data.data.type === "alert") {
+        router.push({
+          pathname: "/AlertScreen",
+          params: { data: JSON.stringify(data) },
+        });
+      }
+
+      if (data.type === "notification") {
+        router.push("/notifications");
+      }
+
+      setLastNotification(response);
     });
 
-    // This listener is fired whenever a user taps on or interacts with a notification
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       const { notification } = response;
+
+      const data = notification.request.content;
+
+      console.log("Notification received Background:", data);
+
+      if (data.data.type === "alert") {
+        router.push({
+          pathname: "/AlertScreen",
+          params: { data: JSON.stringify(data) },
+        });
+      }
+
+      if (data.type === "notification") {
+        router.push("/notifications");
+      }
+
       setLastNotification(notification);
     });
   };
@@ -153,16 +183,14 @@ export const NotificationProvider = ({ children, projectId }) => {
    * @returns {Promise<string>} Notification identifier
    */
   const setNotification = async (title, body, options = {}, timeStamp) => {
-    console.log("Setting notification...");
-    console.log(timeStamp);
     try {
       const { data = {}, offsetHours = 2 } = options;
 
       let trigger;
 
       if (timeStamp) {
+        // timestamp in iso format
         const eventDateUTC = new Date(timeStamp);
-        console.log("Event date in UTC:", eventDateUTC.toString());
 
         const triggerDate = new Date(eventDateUTC.getTime() - offsetHours * 60 * 60 * 1000);
 
@@ -184,9 +212,7 @@ export const NotificationProvider = ({ children, projectId }) => {
         trigger,
       });
 
-      console.log("Notification scheduled with ID:", notificationId);
-
-      saveNotification(title, body, timeStamp);
+      saveNotification(title, body, trigger.date);
 
       return notificationId;
     } catch (error) {
@@ -196,27 +222,73 @@ export const NotificationProvider = ({ children, projectId }) => {
   };
 
   const sendNotificationIfNeeded = async (data) => {
-    console.log("Sending notification if needed...");
     const { hourly } = data;
 
-    const alertConditions = ["Thunderstorm", "Rain", "Extreme"];
+    const alertConditions = ["thunderstorm", "rain", "shower rain", "broken clouds"];
 
     // Hourly Forecast (next 12 hours)
     for (let hour of hourly) {
       const color = getHeatIndexColor(hour.heat_index);
       const { detailed_time } = formatDateTime(hour.time);
 
-      if (color === "#cc0001" || color === "#ff6600" || color === "#ffcc00") {
-        console.log("Heat alert triggered for hourly forecast");
-        await setNotification("Upcoming Heat Alert 🔥", `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`, {}, hour.time);
+      if (color === "#cc0001") {
+        await setNotification(
+          "Extreme Danger Heat Alert!",
+          `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
+          { data: { type: "alert", weatherType: "heat" } },
+          hour.time
+        );
+      }
+      if (color === "#cc0001" || color === "#ff6600") {
+        await setNotification(
+          "Danger Heat Alert!",
+          `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
+          { data: { type: "alert", weatherType: "heat" } },
+          hour.time
+        );
       }
 
-      if (alertConditions.includes(hour.weather.condition)) {
-        await setNotification(`Upcoming Weather Alert`, `Forecast: ${hour.weather.description} at ${detailed_time}.`, {}, hour.time);
+      if (color === "#ffcc00") {
+        await setNotification(
+          "Caution High Heat Index!",
+          `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
+          { data: { type: "notification", weatherType: "heat" } },
+          hour.time
+        );
+      }
+
+      if (hour.weather.condition === alertConditions[0]) {
+        await setNotification(
+          "Thunderstorm Alert!",
+          `Forecast thunderstorm at ${detailed_time}.`,
+          { data: { type: "alert", weatherType: "rain" } },
+          hour.time
+        );
+      }
+
+      if (hour.weather.condition === alertConditions[1]) {
+        await setNotification("Rain Alert!", `Forecast rain at ${detailed_time}.`, { data: { type: "alert", weatherType: "rain" } }, hour.time);
+      }
+
+      if (hour.weather.condition === alertConditions[2]) {
+        await setNotification(
+          "Caution Shower Rain!",
+          `Forecast shower rain at ${detailed_time}.`,
+          { data: { type: "notification", weatherType: "rain" } },
+          hour.time
+        );
+      }
+
+      if (hour.weather.condition === alertConditions[3]) {
+        await setNotification(
+          "Caution Broken Clouds!",
+          `Forecast broken clouds at ${detailed_time}.`,
+          { data: { type: "notification", weatherType: "rain" } },
+          hour.time
+        );
       }
     }
   };
-
   /**
    * Fetch notifications from the SQLite database
    * @returns {Promise<Array>} List of notifications

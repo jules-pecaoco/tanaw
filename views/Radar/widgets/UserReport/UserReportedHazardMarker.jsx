@@ -1,6 +1,6 @@
 import React from "react";
-import { View } from "react-native";
-import { PointAnnotation } from "@rnmapbox/maps";
+import { TouchableOpacity, View } from "react-native";
+import { MarkerView, PointAnnotation } from "@rnmapbox/maps";
 import { MaterialIcons } from "@expo/vector-icons";
 
 const hazardIcons = {
@@ -30,20 +30,29 @@ const hazardIcons = {
   },
 };
 
-const HazardMarker = ({ report, onPress }) => {
-  // Get appropriate icon based on hazard type
+const HazardMarker = ({ report, onPress, setUserSelectedReport }) => {
   const getMarkerIcon = () => {
-    // Default to 'other' if hazard type is not found
     const hazardType = report.hazard_type?.toLowerCase() || "other";
     return hazardIcons[hazardType] || hazardIcons.other;
   };
 
   const markerIcon = getMarkerIcon();
 
+  const handlePress = () => {
+    onPress(onPress);
+    setUserSelectedReport(report);
+  };
+
   return (
-    <PointAnnotation id={`marker-${report.id}`} coordinate={[report.longitude, report.latitude]} onSelected={() => onPress(report)}>
-      {markerIcon.icon}
-    </PointAnnotation>
+    <MarkerView
+      id={`marker-${report.id}`}
+      coordinate={[report.longitude, report.latitude]}
+      onSelected={handlePress}
+      anchor={{ x: 0.5, y: 0.5 }}
+      style={{ backgroundColor: markerIcon.color }}
+    >
+      <TouchableOpacity onPress={handlePress}>{markerIcon.icon}</TouchableOpacity>
+    </MarkerView>
   );
 };
 

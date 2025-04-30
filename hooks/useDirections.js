@@ -49,13 +49,16 @@ const useDirections = () => {
   }, []);
 
   // Function to trigger getDirections based on the current origin and destination
-  const findRoute = useCallback(async (destination) => {
-    if (origin && destination) {
-      await getDirections(origin, destination);
-    } else {
-      console.warn("Origin or destination not set. Cannot fetch directions.");
-    }
-  }, [origin, getDirections]);
+  const findRoute = useCallback(
+    async (destination) => {
+      if (origin && destination) {
+        await getDirections(origin, destination);
+      } else {
+        console.warn("Origin or destination not set. Cannot fetch directions.");
+      }
+    },
+    [origin, getDirections]
+  );
 
   // Reset the route and the click state
   const resetRoute = useCallback(() => {
@@ -85,7 +88,7 @@ const useDirections = () => {
     route,
     distance: routeInfo.distance,
     duration: routeInfo.duration,
-    routeIsLoading, 
+    routeIsLoading,
     routeError,
     hasClickedGetDirections,
 
@@ -94,9 +97,9 @@ const useDirections = () => {
     resetRoute,
     getDirectionsBetweenPoints,
 
-    // Direct setters 
+    // Direct setters
     setOrigin,
-    setHasClickedGetDirections
+    setHasClickedGetDirections,
   };
 };
 

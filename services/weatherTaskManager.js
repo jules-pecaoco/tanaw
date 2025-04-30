@@ -1,24 +1,43 @@
 import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
 import { fetchOneCallWeather } from "@/services/openweather";
-import { useNotification } from "@/context/NotificationContext";
 
+// Constants
+const WEATHER_TASK_NAME = "background-weather-fetch";
+
+// Global state that persists between task executions
 let latestLocation = null;
+let notificationHandler = null;
 
+// Function to set location for background tasks
 const setUserLocationForTask = (loc) => {
   latestLocation = loc;
 };
 
-TaskManager.defineTask("background-weather-fetch", async () => {
-  const { sendNotificationIfNeeded } = useNotification();
+// Function to set notification handler for background tasks
+const setNotificationHandlerForTask = (handler) => {
+  notificationHandler = handler;
+};
+
+// Define the background task
+TaskManager.defineTask(WEATHER_TASK_NAME, async () => {
   try {
     if (!latestLocation) {
       console.log("Location not available for weather fetch");
       return BackgroundFetch.Result.NoData;
     }
 
-    const weatherData = await fetchOneCallWeather(latestLocation);
-    await sendNotificationIfNeeded(weatherData);
+    if (!notificationHandler) {
+      console.log("Notification handler not available");
+      return BackgroundFetch.Result.NoData;
+    }
+
+    console.log("Executing background weather fetch with location:", `${latestLocation.latitude.toFixed(4)}, ${latestLocation.longitude.toFixed(4)}`);
+
+    const weatherData = await fetchOneCallWeather({ currentLocation: latestLocation });
+    await notificationHandler(weatherData);
+
+    console.log("Background weather fetch completed successfully");
     return BackgroundFetch.Result.NewData;
   } catch (e) {
     console.error("Weather task error:", e);
@@ -26,33 +45,75 @@ TaskManager.defineTask("background-weather-fetch", async () => {
   }
 });
 
-const registerWeatherTask = async (location) => {
-  const { sendNotificationIfNeeded } = useNotification();
-
-  setUserLocationForTask(location);
-
-  // Register the background task
-  await BackgroundFetch.registerTaskAsync("background-weather-fetch", {
-    minimumInterval: 3600 * 6, // 6 hours
-    stopOnTerminate: false,
-    startOnBoot: true,
-  });
-
-  console.log("Weather background task registered with location");
-
-  // Execute the task immediately after registration
+// Check if the task is registered
+const isWeatherTaskRegistered = async () => {
   try {
-    console.log("Running initial weather fetch immediately...");
-    if (latestLocation) {
-      const weatherData = await fetchOneCallWeather(latestLocation);
-      await sendNotificationIfNeeded(weatherData);
-      console.log("Initial weather fetch completed successfully");
-    } else {
-      console.log("Location not available for initial weather fetch");
-    }
+    const tasks = await TaskManager.getRegisteredTasksAsync();
+    const isRegistered = tasks.some((task) => task.taskName === WEATHER_TASK_NAME);
+    console.log(`Weather task registered: ${isRegistered}`);
+    return isRegistered;
   } catch (error) {
-    console.error("Error during initial weather fetch:", error);
+    console.error("Error checking task registration:", error);
+    return false;
   }
 };
 
-export { registerWeatherTask, setUserLocationForTask };
+const registerWeatherTask = async (location, notificationCallback) => {
+  console.log("Registering weather task with location:", location);
+  try {
+    // Set the global state
+    setUserLocationForTask(location);
+    setNotificationHandlerForTask(notificationCallback);
+
+    console.log("Register Latest Location:", latestLocation);
+
+    const taskRegistered = await isWeatherTaskRegistered();
+
+    if (taskRegistered) {
+      console.log("Weather task already registered, updating location data only");
+    } else {
+      await BackgroundFetch.registerTaskAsync(WEATHER_TASK_NAME, {
+        minimumInterval: 3600 * 6,
+        stopOnTerminate: false,
+        startOnBoot: true,
+      });
+      console.log("Weather background task registered successfully");
+    }
+
+    // Execute the task immediately after registration
+    console.log("Running initial weather fetch immediately...");
+    if (latestLocation && notificationHandler) {
+      const weatherData = await fetchOneCallWeather({ currentLocation: latestLocation });
+      await notificationHandler(weatherData);
+      console.log("Initial weather fetch completed successfully");
+    } else {
+      console.log("Missing location or notification handler for initial weather fetch");
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error registering weather task:", error);
+    return false;
+  }
+};
+
+// Unregister the weather task
+const unregisterWeatherTask = async () => {
+  try {
+    const isRegistered = await isWeatherTaskRegistered();
+
+    if (isRegistered) {
+      await BackgroundFetch.unregisterTaskAsync(WEATHER_TASK_NAME);
+      console.log("Weather background task unregistered successfully");
+      return true;
+    } else {
+      console.log("No weather task registered to unregister");
+      return false;
+    }
+  } catch (error) {
+    console.error("Error unregistering weather task:", error);
+    return false;
+  }
+};
+
+export { registerWeatherTask, unregisterWeatherTask, setUserLocationForTask, isWeatherTaskRegistered };

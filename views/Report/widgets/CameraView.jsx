@@ -40,7 +40,7 @@ const CameraWidget = ({ onImageCaptured, imageUri }) => {
       setOpenCamera(true);
     };
     return (
-      <TouchableOpacity style={{ height: 500 }} className="bg-primary w-full flex-row items-center justify-center rounded-md" onPress={onClick}>
+      <TouchableOpacity style={{ height: 600 }} className="bg-primary w-full flex-row items-center justify-center rounded-md" onPress={onClick}>
         <Ionicons name="camera" size={24} color="white" />
         <Text className="text-white ml-2.5">Take Photo</Text>
       </TouchableOpacity>
@@ -50,7 +50,7 @@ const CameraWidget = ({ onImageCaptured, imageUri }) => {
   // If image is captured, show preview
   if (imageUri) {
     return (
-      <View className="w-full rounded-lg overflow-hidden relative" style={{ height: 500 }}>
+      <View className="w-full rounded-lg overflow-hidden relative" style={{ height: 600 }}>
         <Image source={{ uri: imageUri }} className="w-full h-full" />
         <View className="absolute top-0 right-0 left-0 flex-row justify-between p-4">
           <TouchableOpacity className="bg-black/60 p-2.5 rounded" onPress={() => setOpenCamera(false)}>
@@ -75,7 +75,7 @@ const CameraWidget = ({ onImageCaptured, imageUri }) => {
         <CameraView
           ref={cameraRef}
           className="flex-1 rounded-md"
-          style={{ height: 500, borderRadius: 5 }}
+          style={{ height: 600, borderRadius: 5 }}
           facing={cameraType}
           onCameraReady={() => setIsCameraReady(true)}
         >

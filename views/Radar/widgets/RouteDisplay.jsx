@@ -3,6 +3,8 @@ import { View, StyleSheet } from "react-native";
 import { PointAnnotation, ShapeSource, LineLayer } from "@rnmapbox/maps";
 
 const RouteDisplay = ({ route, origin, destination, lineColor = "#3887be", lineWidth = 4 }) => {
+  
+
   return (
     <>
       {/* Origin Marker */}

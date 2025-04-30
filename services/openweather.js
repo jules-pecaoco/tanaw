@@ -83,6 +83,7 @@ const fetchProximityWeather = async ({ currentLocation }) => {
 };
 
 const fetchOneCallWeather = async ({ currentLocation }) => {
+  console.log("Location", currentLocation);
   console.log("Fetching one call weather data.....");
 
   try {

@@ -6,9 +6,9 @@ import { PointAnnotation } from "@rnmapbox/maps";
 // API & Services
 import { fetchOpenStreetFacilitiesByType } from "@/services/openstreet";
 import { fetchGoogleFacilitiesByType } from "@/services/google";
-import { fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather, fetchOneCallWeather } from "@/services/openweather";
+import { fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather } from "@/services/openweather";
 import { fetchRainViewerTile } from "@/services/rainviewer";
-import { registerWeatherTask } from "@/services/weatherTaskManager";
+import { registerWeatherTask, isWeatherTaskRegistered, setUserLocationForTask } from "@/services/weatherTaskManager";
 
 // Hooks
 import { useNotification } from "@/context/NotificationContext";
@@ -18,7 +18,12 @@ import useDirections from "@/hooks/useDirections";
 
 // Components
 import { RainViewerLayer, OpenWeatherLayer } from "./widgets/WeatherLayers";
-import { FacilitiesSelectionBottomSheet, HazardSelectionBottomSheet, FacilitiesMarkerBottomSheet } from "./widgets/BottomSheets";
+import {
+  FacilitiesSelectionBottomSheet,
+  HazardSelectionBottomSheet,
+  FacilitiesMarkerBottomSheet,
+  UserReportBottomSheet,
+} from "./widgets/BottomSheets";
 import HazardLayers from "./widgets/HazardLayers";
 import WeatherMarker from "./widgets/WeatherMarker";
 import SideButtons from "./widgets/SideButtons";
@@ -31,7 +36,8 @@ import RouteDisplay from "./widgets/RouteDisplay";
 const RadarScreen = () => {
   // ref
   const cameraRef = useRef(null);
-  const bottomSheetRef = useRef(null);
+  const facilitiesMarkerBottomSheetRef = useRef(null);
+  const userReportBottomSheetRef = useRef(null);
 
   //  hooks
   const { location, getLocation } = useLocation();
@@ -48,6 +54,10 @@ const RadarScreen = () => {
     hasClickedGetDirections,
     setHasClickedGetDirections,
   } = useDirections();
+
+  const { reports, reportsIsLoading } = useHazardReports();
+
+  const { sendNotificationIfNeeded } = useNotification();
 
   const [currentLocation, setCurrentLocation] = useState(() => {
     if (location) {
@@ -79,6 +89,7 @@ const RadarScreen = () => {
 
   //states
   const [userDestination, setUserDestination] = useState(null);
+  const [userSelectedReport, setUserSelectedReport] = useState(null);
 
   const [facilitiesInformation, setFacilitiesInformation] = useState({
     facilityName: "",
@@ -90,21 +101,31 @@ const RadarScreen = () => {
     longitude: "",
   });
 
-  const { reports, reportsIsLoading } = useHazardReports();
-
-  const { sendNotificationIfNeeded } = useNotification();
   useEffect(() => {
-    const setupLocationAndTasks = async () => {
+    const setupBackgroundTask = async () => {
       setOrigin(currentLocation);
-      const data = await fetchOneCallWeather({ currentLocation });
-      if (data) {
-        sendNotificationIfNeeded(data);
+      try {
+        // Check if task is actually registered with the system
+        const isTaskRegistered = await isWeatherTaskRegistered();
+
+        if (!isTaskRegistered) {
+          console.log("Registering background weather task");
+          await registerWeatherTask(currentLocation, sendNotificationIfNeeded);
+        } else {
+          console.log("Background task already registered");
+          setUserLocationForTask(currentLocation);
+        }
+      } catch (error) {
+        console.error("Error setting up background task:", error);
       }
-      // registerWeatherTask(currentLocation);
     };
 
-    setupLocationAndTasks();
-  }, []);
+    if (currentLocation) {
+      setupBackgroundTask();
+    } else {
+      console.warn("Cannot setup background task: location not available");
+    }
+  }, [currentLocation]);
 
   // Callback functions
   const handleActiveBottomSheet = useCallback((item) => {
@@ -140,14 +161,24 @@ const RadarScreen = () => {
     [searchCityDetails]
   );
 
-  const handleSheetChanges = useCallback((index) => {
+  const handleFacilitiesMarkerBottomSheet = useCallback((index) => {
     if (index > 0) {
-      bottomSheetRef.current?.close();
+      facilitiesMarkerBottomSheetRef.current?.close();
     }
   }, []);
 
-  const openBottomSheet = useCallback(() => {
-    bottomSheetRef.current?.snapToIndex(0);
+  const openFacilitiesMarkerBottomSheet = useCallback(() => {
+    facilitiesMarkerBottomSheetRef.current?.snapToIndex(0);
+  }, []);
+
+  const handleUserReportBottomSheet = useCallback((index) => {
+    if (index > 0) {
+      userReportBottomSheetRef.current?.close();
+    }
+  }, []);
+
+  const openUserReportBottomSheet = useCallback(() => {
+    userReportBottomSheetRef.current?.snapToIndex(0);
   }, []);
 
   // Handle changing the data source
@@ -258,7 +289,7 @@ const RadarScreen = () => {
         <CriticalFacilitiesMarker
           data={facilityData}
           type={type}
-          onPress={openBottomSheet}
+          onPress={openFacilitiesMarkerBottomSheet}
           setFacilitiesInformation={setFacilitiesInformation}
           source={state.isFacilitiesLayerActive.source}
         />
@@ -284,7 +315,7 @@ const RadarScreen = () => {
       )}
 
       {/* BASE MAP */}
-      <BaseMap openBottomSheet={openBottomSheet} currentLocation={currentLocation} ref={cameraRef}>
+      <BaseMap currentLocation={currentLocation} ref={cameraRef}>
         {/* Hazard Layers */}
         {state.isHazardLayerActive.Flood && <HazardLayers props={hazardLayerProps.Flood} />}
         {state.isHazardLayerActive.Landslide && <HazardLayers props={hazardLayerProps.Landslide} />}
@@ -313,7 +344,7 @@ const RadarScreen = () => {
         {!reportsIsLoading &&
           reports &&
           reports.map((report) => {
-            return <HazardMarker key={report.id} report={report} onPress={() => onMarkerPress(report)} />;
+            return <HazardMarker key={report.id} report={report} onPress={openUserReportBottomSheet} setUserSelectedReport={setUserSelectedReport} />;
           })}
 
         {hasClickedGetDirections && !routeIsLoading && <RouteDisplay route={route} origin={origin} destination={userDestination} />}
@@ -333,8 +364,8 @@ const RadarScreen = () => {
 
       {/* BOTTOM SHEETS */}
       <FacilitiesMarkerBottomSheet
-        ref={bottomSheetRef}
-        handleSheetChanges={handleSheetChanges}
+        ref={facilitiesMarkerBottomSheetRef}
+        handleSheetChanges={handleFacilitiesMarkerBottomSheet}
         data={facilitiesInformation}
         findRoute={findRoute}
         resetRoute={resetRoute}
@@ -347,6 +378,12 @@ const RadarScreen = () => {
         destination={userDestination}
         setHasClickedGetDirections={setHasClickedGetDirections}
       />
+
+      <UserReportBottomSheet
+        ref={userReportBottomSheetRef}
+        item={userSelectedReport}
+        handleSheetChanges={handleUserReportBottomSheet}
+      ></UserReportBottomSheet>
 
       {state.activeBottomSheet === "hazards" && <HazardSelectionBottomSheet state={state} setState={setState} />}
       {state.activeBottomSheet === "facilities" && (

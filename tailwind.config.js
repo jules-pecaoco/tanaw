@@ -6,10 +6,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'primary': "#F47C25",
-        'secondary': "#3C454C",
-        'tertiary': "#E84E4C",
-        'white': "#ffffff",
+        primary: "#F47C25",
+        secondary: "#3C454C",
+        tertiary: "#E84E4C",
+        white: "#ffffff",
       },
       fontFamily: {
         rthin: ["RobotoCondensed-Thin", "sans-serif"],
