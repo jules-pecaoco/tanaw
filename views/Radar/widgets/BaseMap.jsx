@@ -9,6 +9,8 @@ import { MAPBOX_PUBLIC_TOKEN } from "@/tokens/tokens";
 Mapbox.setAccessToken(MAPBOX_PUBLIC_TOKEN);
 
 const BaseMap = React.forwardRef(({ currentLocation, children }, ref) => {
+
+  console.log("BaseMap Rendered", currentLocation);
   useEffect(() => {
     Mapbox.setTelemetryEnabled(false);
   }, []);

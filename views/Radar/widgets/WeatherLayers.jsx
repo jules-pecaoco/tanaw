@@ -1,10 +1,13 @@
 import { RasterLayer, RasterSource } from "@rnmapbox/maps";
+import React from "react";
 
-const RainViewerLayer = ({ rainViewerTile }) => {
-  console.log("RainViewerLayer Render");
+const RainViewerLayer = ({ rainViewerPath }) => {
+  console.log("RainViewerLayer Rendered", rainViewerPath);
+  const pathHash = rainViewerPath ? rainViewerPath.split("/").slice(-7, -4).join("_") : "default";
+
   return (
-    <RasterSource id="rainviewer-tile" tileUrlTemplates={[rainViewerTile]} tileSize={256}>
-      <RasterLayer id="rainviewer-layer" />
+    <RasterSource id={`rainviewer-tile-${pathHash}`} tileUrlTemplates={[rainViewerPath]} tileSize={256}>
+      <RasterLayer id={`rainviewer-layer-${pathHash}`} />
     </RasterSource>
   );
 };

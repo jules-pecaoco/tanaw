@@ -34,6 +34,7 @@ import CriticalFacilitiesMarker from "./widgets/CriticalFacilitiesMarker";
 import SearchCity from "./widgets/SearchCity";
 import HazardMarker from "./widgets/UserReport/UserReportedHazardMarker";
 import RouteDisplay from "./widgets/RouteDisplay";
+import RainViewerTimestampSlider from "./widgets/RainViewerTimestampSlider";
 
 const RadarScreen = () => {
   // ref
@@ -103,6 +104,8 @@ const RadarScreen = () => {
     longitude: "",
   });
 
+  const [rainViewerPath, setRainViewerPath] = useState();
+
   useEffect(() => {
     const setupBackgroundTask = async () => {
       setOrigin(currentLocation);
@@ -136,6 +139,10 @@ const RadarScreen = () => {
   // Callback functions
   const handleActiveBottomSheet = useCallback((item) => {
     setState((prevState) => ({ ...prevState, activeBottomSheet: item }));
+  }, []);
+
+  const handleTimestampChange = useCallback((path) => {
+    setRainViewerPath(path);
   }, []);
 
   const handleZoomButton = useCallback(async () => {
@@ -255,12 +262,12 @@ const RadarScreen = () => {
     refetchInterval: 1000 * 60,
   });
 
-  const { data: rainViewerTile } = useQuery({
+  const { data: rainViewerData } = useQuery({
     queryKey: ["rainViewerData"],
     queryFn: fetchRainViewerTile,
     gcTime: 1000 * 60 * 60,
-    staleTime: 1000 * 1,
-    refetchInterval: 1000 * 1,
+    staleTime: 1000 * 60 * 20,
+    refetchInterval: 1000 * 60 * 20,
   });
 
   const { data: googleFacilitiesByType } = useQuery({
@@ -303,6 +310,13 @@ const RadarScreen = () => {
     };
   }, [state.isFacilitiesLayerActive]);
 
+  const renderRainViewerLayer = useMemo(() => {
+    if (state.weatherLayer.type === "Rain" && rainViewerPath) {
+      return <RainViewerLayer rainViewerPath={rainViewerPath} />;
+    }
+    return null;
+  }, [state.weatherLayer.type, rainViewerPath]);
+
   if (!location || negrosWeatherIsLoading || proximityWeatherIsLoading) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -328,7 +342,7 @@ const RadarScreen = () => {
         {state.isHazardLayerActive.StormSurge && <HazardLayers props={hazardLayerProps.StormSurge} />}
 
         {/* Weather Layers */}
-        {state.weatherLayer.type === "Rain" && <RainViewerLayer rainViewerTile={rainViewerTile} />}
+        {state.weatherLayer.type === "Rain" && renderRainViewerLayer}
         {state.weatherLayer.type === "HeatIndex" && (
           <>
             <OpenWeatherLayer openWeatherTile={openWeatherTile} />
@@ -356,8 +370,11 @@ const RadarScreen = () => {
         {hasClickedGetDirections && !routeIsLoading && <RouteDisplay route={route} origin={origin} destination={userDestination} />}
       </BaseMap>
 
+      {/* RAIN VIEWER TIMESTAMP SLIDER */}
+      {state.weatherLayer.type === "Rain" && <RainViewerTimestampSlider timestamps={rainViewerData} onTimestampChange={handleTimestampChange} />}
+
       {/* SIDE BUTTONS */}
-      <View className="absolute bottom-20 right-10 flex justify-between flex-col gap-6">
+      <View className="absolute bottom-[20%] right-10 flex justify-between flex-col gap-6">
         <SideButtons onPress={() => handleActiveBottomSheet("hazards")} iconName="layers" isActive={state.activeBottomSheet === "hazards"} />
         <SideButtons
           onPress={() => handleActiveBottomSheet("facilities")}
