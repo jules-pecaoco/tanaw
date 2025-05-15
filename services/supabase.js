@@ -1,30 +1,16 @@
-import uuid from "react-native-uuid";
 import { Platform } from "react-native";
 import * as ImageManipulator from "expo-image-manipulator";
+import axios from "axios";
+import { createClient } from "@supabase/supabase-js";
 
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/tokens/tokens";
-import { createClient } from "@supabase/supabase-js";
-import storage from "@/storage/storage";
 import { reverseGeocode } from "@/services/mapbox";
 
 // Initialize Supabase client
-const supabaseUrl = SUPABASE_URL;
-const supabaseKey = SUPABASE_ANON_KEY;
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
-
-export const getUserId = () => {
-  let userId = storage.getItem("userId");
-
-  if (!userId) {
-    userId = uuid.v4();
-    storage.setItem("userId", userId);
-  }
-
-  return userId;
-};
-
-export const fetchHazardReports = async () => {
+// ========== FETCH REPORTS ========== //
+const fetchHazardReports = async () => {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -45,9 +31,9 @@ export const fetchHazardReports = async () => {
   return reportsWithNames;
 };
 
+// ========== UPLOAD IMAGE ========== //
 const uploadImage = async (uri, fileName) => {
   try {
-    // Create proper form data for the upload
     const formData = new FormData();
     formData.append("file", {
       uri: Platform.OS === "ios" ? uri.replace("file://", "") : uri,
@@ -61,39 +47,27 @@ const uploadImage = async (uri, fileName) => {
       upsert: false,
     });
 
-    if (error) {
-      console.error("Storage upload error:", error);
-      throw error;
-    }
+    if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error("Image upload process failed:", error);
+    console.error("Image upload failed:", error);
     return { data: null, error };
   }
 };
 
-// Updated uploadHazardReport function with better error handling
-export const uploadHazardReport = async (hazardData, imageUri) => {
+// ========== UPLOAD REPORT ========== //
+const uploadHazardReport = async (hazardData, imageUri, uniqueIdentifier) => {
   try {
-    const userId = getUserId();
-
-    // Upload image first
+    const userId = uniqueIdentifier || null;
     let imagePath = null;
+
     if (imageUri) {
-      const fileName = `${userId}_${new Date().getTime()}.jpg`;
-
+      const fileName = `${userId}_${Date.now()}.jpg`;
       const { data, error } = await uploadImage(imageUri, fileName);
-
-      if (error) {
-        console.error("Error uploading image:", error);
-        return { success: false, error };
-      }
-
+      if (error) return { success: false, error };
       imagePath = data.path;
     }
 
-
-    // Create hazard report
     const { data, error } = await supabase
       .from("hazard_reports")
       .insert([
@@ -110,22 +84,67 @@ export const uploadHazardReport = async (hazardData, imageUri) => {
       ])
       .select();
 
-    if (error) {
-      console.error("Error creating report:", error);
-      return { success: false, error };
-    }
+    notifyNearbyUsers(hazardData.latitude, hazardData.longitude, uniqueIdentifier);
 
-    console.log("Report created successfully:", data);
+    if (error) return { success: false, error };
     return { success: true, data };
   } catch (error) {
-    console.error("Unexpected error in uploadHazardReport:", error);
     return { success: false, error: { message: "Unexpected error occurred" } };
   }
 };
-// Get public URL for an image
-export const getImageUrl = (path) => {
-  if (!path) return null;
 
+const notifyNearbyUsers = async (latitude, longitude, uniqueIdentifier) => {
+  const body = {
+    lat: latitude,
+    lon: longitude,
+    uuid: uniqueIdentifier,
+  };
+
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    "x-secret-key": "tanaw",
+  };
+
+  try {
+    const response = axios.post("https://dyankftudmfpxqwqkynf.supabase.co/functions/v1/notify_nearby_users", body, { headers });
+    console.log("Notification response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error notifying nearby users:", error);
+  }
+};
+
+// ========== PUBLIC IMAGE URL ========== //
+const getImageUrl = (path) => {
+  if (!path) return null;
   const { data } = supabase.storage.from("hazard-images").getPublicUrl(path);
   return data?.publicUrl || null;
 };
+
+// ========== UPLOAD USER LOCATION + PUSH TOKEN ========== //
+const uploadUserIdentifier = async (uniqueIdentifier, location, pushToken) => {
+  console.log("Uploading user identifier...");
+  console.log("UUID:", uniqueIdentifier);
+  console.log("Location:", location);
+  console.log("Expo Push Token:", pushToken);
+  try {
+    const { error } = await supabase.from("users_identifier").upsert(
+      {
+        uuid: uniqueIdentifier,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        push_token: pushToken,
+      },
+      { onConflict: ["uuid"] }
+    );
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to upload user device info:", error);
+    return { success: false, error };
+  }
+};
+
+export { fetchHazardReports, uploadHazardReport, getImageUrl, uploadUserIdentifier, supabase };

@@ -9,12 +9,14 @@ import { fetchGoogleFacilitiesByType } from "@/services/google";
 import { fetchOpenWeatherTile, fetchNegrosWeather, fetchProximityWeather } from "@/services/openweather";
 import { fetchRainViewerTile } from "@/services/rainviewer";
 import { registerWeatherTask, isWeatherTaskRegistered, setUserLocationForTask } from "@/services/weatherTaskManager";
+import { uploadUserIdentifier } from "@/services/supabase";
 
 // Hooks
-import { useNotification } from "@/context/NotificationContext";
+import useNotification from "@/hooks/useNotification";
 import useHazardReports from "@/hooks/useHazardReports";
 import useLocation from "@/hooks/useLocation";
 import useDirections from "@/hooks/useDirections";
+import useUserIdentifier from "@/hooks/useUserIdentifier";
 
 // Components
 import { RainViewerLayer, OpenWeatherLayer } from "./widgets/WeatherLayers";
@@ -41,6 +43,8 @@ const RadarScreen = () => {
 
   //  hooks
   const { location, getLocation } = useLocation();
+  const { pushToken, sendNotificationIfNeeded } = useNotification();
+  const { uniqueIdentifier } = useUserIdentifier();
   const {
     origin,
     route,
@@ -56,8 +60,6 @@ const RadarScreen = () => {
   } = useDirections();
 
   const { reports, reportsIsLoading } = useHazardReports();
-
-  const { sendNotificationIfNeeded } = useNotification();
 
   const [currentLocation, setCurrentLocation] = useState(() => {
     if (location) {
@@ -105,7 +107,6 @@ const RadarScreen = () => {
     const setupBackgroundTask = async () => {
       setOrigin(currentLocation);
       try {
-        // Check if task is actually registered with the system
         const isTaskRegistered = await isWeatherTaskRegistered();
 
         if (!isTaskRegistered) {
@@ -120,8 +121,13 @@ const RadarScreen = () => {
       }
     };
 
+    const uploadUserIdentification = async () => {
+      await uploadUserIdentifier(uniqueIdentifier, currentLocation, pushToken);
+    };
+
     if (currentLocation) {
       setupBackgroundTask();
+      uploadUserIdentification();
     } else {
       console.warn("Cannot setup background task: location not available");
     }
@@ -252,9 +258,9 @@ const RadarScreen = () => {
   const { data: rainViewerTile } = useQuery({
     queryKey: ["rainViewerData"],
     queryFn: fetchRainViewerTile,
-    gcTime: 0,
-    staleTime: 0,
-    refetchInterval: 1000 * 60 * 20,
+    gcTime: 1000 * 60 * 60,
+    staleTime: 1000 * 1,
+    refetchInterval: 1000 * 1,
   });
 
   const { data: googleFacilitiesByType } = useQuery({
@@ -299,7 +305,7 @@ const RadarScreen = () => {
 
   if (!location || negrosWeatherIsLoading || proximityWeatherIsLoading) {
     return (
-      <View className="flex-1">
+      <View className="flex-1 justify-center items-center">
         <ActivityIndicator size={"large"} color={"#F47C25"}></ActivityIndicator>
       </View>
     );

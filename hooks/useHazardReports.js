@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
 import { fetchHazardReports, uploadHazardReport } from "@/services/supabase";
 
 const useHazardReports = () => {
@@ -13,13 +14,13 @@ const useHazardReports = () => {
   } = useQuery({
     queryKey: ["hazardReports"],
     queryFn: fetchHazardReports,
-    refetchInterval: 60000,
-    staleTime: 30000,
+    staleTime: 1000 * 30,
+    refetchInterval: 1000 * 60,
   });
 
   // Create a new report
   const mutation = useMutation({
-    mutationFn: ({ hazardData, imageUri }) => uploadHazardReport(hazardData, imageUri),
+    mutationFn: ({ hazardData, imageUri, uniqueIdentifier }) => uploadHazardReport(hazardData, imageUri, uniqueIdentifier),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["hazardReports"] });
     },

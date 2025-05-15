@@ -31,7 +31,7 @@ const useLocation = () => {
   };
 
   const [location, setLocation] = useState(getInitialLocation);
-  const [errorMsg, setErrorMsg] = useState(null);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const getLocation = async () => {
@@ -41,7 +41,7 @@ const useLocation = () => {
       // Request location permissions
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        setErrorMsg("Permission to access location was denied");
+        setError("Permission to access location was denied");
         setLoading(false);
         return null;
       }
@@ -67,13 +67,13 @@ const useLocation = () => {
       setLoading(false);
       return locationData;
     } catch (error) {
-      setErrorMsg("Error getting location: " + error.message);
+      setError("Error getting location: " + error.message);
       setLoading(false);
       return null;
     }
   };
 
-  return { location, errorMsg, loading, getLocation };
+  return { location, error, loading, getLocation };
 };
 
 export default useLocation;

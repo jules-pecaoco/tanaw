@@ -4,6 +4,7 @@ import { View, TextInput, TouchableOpacity, Text, Alert, Keyboard, KeyboardAvoid
 // Hooks
 import useLocation from "@/hooks/useLocation";
 import useHazardReports from "@/hooks/useHazardReports";
+import useUserIdentifier from "@/hooks/useUserIdentifier"
 import useGeminiHazardAnalysis from "@/hooks/useImageAnalyzer";
 
 // Components
@@ -43,6 +44,7 @@ const DescriptionInput = memo(({ value }) => {
 const ReportScreen = () => {
   const { getLocation } = useLocation();
   const { createReport, isCreating } = useHazardReports();
+  const { uniqueIdentifier } = useUserIdentifier();
   const [image, setImage] = useState(null);
   // const [selectedCategory, setSelectedCategory] = useState(null);
   const [description, setDescription] = useState("");
@@ -74,6 +76,7 @@ const ReportScreen = () => {
       if (hazardInfo.valid === false) {
         setDescription(hazardInfo);
         Alert.alert("Invalid Image", `Image analysis failed: ${hazardInfo.invalid_reason}`);
+        setReportSubmitted(true);
         setIsSubmitting(false);
         return;
       }
@@ -87,6 +90,7 @@ const ReportScreen = () => {
           longitude: currentLocation.longitude,
         },
         imageUri: compressed.uri,
+        uniqueIdentifier: uniqueIdentifier,
       });
 
       if (result && result.success === false) {

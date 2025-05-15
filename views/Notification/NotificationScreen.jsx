@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import React, { useEffect, useState } from "react";
 
 // Context
-import { useNotification } from "@/context/NotificationContext";
+import useNotification from "@/hooks/useNotification";
 
 // Service
 import { clearAllNotifications, fetchNotifications } from "@/services/sqlite";
@@ -49,7 +49,7 @@ const NotificationScreen = () => {
 
   const addNotificationAlert = async () => {
     const currentDate = new Date();
-    const notificationDate = new Date(currentDate.getTime() +  10 * 1000); 
+    const notificationDate = new Date(currentDate.getTime() + 10 * 1000);
     const isoDate = notificationDate.toISOString();
     await setNotification(
       "Extreme Caution Alert",

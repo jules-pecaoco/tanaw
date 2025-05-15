@@ -1,11 +1,10 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import uuid from "react-native-uuid";
 
 import { icons } from "@/constants/index";
 import PermissionScreen from "@/views/Permissions/PermissionScreen";
 import storage from "@/storage/storage";
-import { useNotification } from "@/context/NotificationContext";
+import useNotification from "@/hooks/useNotification";
 
 const Notification = () => {
   const { getNotification } = useNotification();
@@ -23,13 +22,6 @@ const Notification = () => {
       setIsLoading(false);
     }
   };
-
-  let userId = storage.getItem("userID");
-
-  if (!userId) {
-    userId = uuid.v4();
-    storage.setItem("userID", userId);
-  }
 
   useEffect(() => {
     if (expoToken) {

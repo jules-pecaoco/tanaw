@@ -1,30 +1,55 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-
-import { setupNotificationsTable, saveNotification, fetchNotifications } from "@/services/sqlite";
-
-import { formatDateTime } from "@/utilities/formatDateTime";
-import { getHeatIndexColor } from "@/utilities/temperatureColorInterpretation";
 import { router } from "expo-router";
 
-// Create the context
-const NotificationContext = createContext(null);
+import { PROJECT_ID } from "@/tokens/tokens";
+import { setupNotificationsTable, saveNotification, fetchNotifications } from "@/services/sqlite";
+import { formatDateTime } from "@/utilities/formatDateTime";
+import { getHeatIndexColor } from "@/utilities/temperatureColorInterpretation";
+import storage from "@/storage/storage";
+
+const PUSH_TOKEN_STORAGE_KEY = "pushToken";
+const PERMISSION_STATUS_STORAGE_KEY = "permissionStatus";
 
 /**
- * Provider component for notification functionality
- * @param {Object} props - Component props
- * @param {Object} props.children - Child components
- * @param {string} props.projectId - Expo project ID
- * @returns {JSX.Element} Provider component
+ * Custom hook for notification functionality with push token persistence.
+ * @returns {Object} - Object containing notification functions and state
  */
-export const NotificationProvider = ({ children, projectId }) => {
-  const [pushToken, setPushToken] = useState(null);
+const useNotification = () => {
+  const getInitialPushToken = () => {
+    const storedToken = storage.getItem(PUSH_TOKEN_STORAGE_KEY);
+    if (storedToken) {
+      return storedToken;
+    }
+    return null;
+  };
+
+  const [pushToken, setPushToken] = useState(getInitialPushToken);
   const [permissionStatus, setPermissionStatus] = useState(null);
   const [lastNotification, setLastNotification] = useState(null);
   const notificationListener = useRef();
   const responseListener = useRef();
+  const [loading, setLoading] = useState(true);
+
+  const getStoredNotificationInfo = useCallback(async () => {
+    try {
+      const storedToken = storage.getItem(PUSH_TOKEN_STORAGE_KEY);
+      const storedPermissionStatus = storage.getItem(PERMISSION_STATUS_STORAGE_KEY);
+
+      if (storedToken) {
+        setPushToken(storedToken);
+      }
+      if (storedPermissionStatus) {
+        setPermissionStatus(storedPermissionStatus);
+      }
+    } catch (error) {
+      console.error("Error retrieving notification info from storage:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     // Configure notification handler
@@ -43,6 +68,7 @@ export const NotificationProvider = ({ children, projectId }) => {
     };
 
     setupTable();
+    getStoredNotificationInfo();
 
     // Clean up listeners when component unmounts
     return () => {
@@ -53,7 +79,7 @@ export const NotificationProvider = ({ children, projectId }) => {
         Notifications.removeNotificationSubscription(responseListener.current);
       }
     };
-  }, []);
+  }, [getStoredNotificationInfo]);
 
   /**
    * Set up notification listeners
@@ -80,7 +106,6 @@ export const NotificationProvider = ({ children, projectId }) => {
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       const { notification } = response;
-
       const data = notification.request.content;
 
       console.log("Notification received Background:", data);
@@ -113,7 +138,7 @@ export const NotificationProvider = ({ children, projectId }) => {
    * Request notification permissions and get push token
    * @returns {Promise<string|null>} Push token if successful, null if permission denied
    */
-  const getNotification = async () => {
+  const getNotification = useCallback(async () => {
     // Set notification channel for Android
     if (Platform.OS === "android") {
       await Notifications.setNotificationChannelAsync("default", {
@@ -133,12 +158,14 @@ export const NotificationProvider = ({ children, projectId }) => {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
     setPermissionStatus(existingStatus);
+    storage.setItem(PERMISSION_STATUS_STORAGE_KEY, finalStatus);
 
-    // If permission already granted, return true
+    // If permission already granted, try to get the token
     if (existingStatus === "granted") {
       try {
-        const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+        const token = (await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID })).data;
         setPushToken(token);
+        storage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
         return token;
       } catch (e) {
         handleRegistrationError(`Error getting push token: ${e}`);
@@ -150,25 +177,27 @@ export const NotificationProvider = ({ children, projectId }) => {
     const { status } = await Notifications.requestPermissionsAsync();
     finalStatus = status;
     setPermissionStatus(finalStatus);
+    storage.setItem(PERMISSION_STATUS_STORAGE_KEY, finalStatus);
 
     if (finalStatus !== "granted") {
       return null;
     }
 
-    if (!projectId) {
+    if (!PROJECT_ID) {
       handleRegistrationError("Project ID not found");
       return null;
     }
 
     try {
-      const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+      const token = (await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID })).data;
       setPushToken(token);
+      storage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
       return token;
     } catch (e) {
       handleRegistrationError(`${e}`);
       return null;
     }
-  };
+  }, []);
 
   /**
    * Schedule a notification
@@ -182,7 +211,7 @@ export const NotificationProvider = ({ children, projectId }) => {
    * @param {Date} [timestamp] -
    * @returns {Promise<string>} Notification identifier
    */
-  const setNotification = async (title, body, options = {}, timeStamp) => {
+  const setNotification = useCallback(async (title, body, options = {}, timeStamp) => {
     try {
       const { data = {}, offsetHours = 2 } = options;
 
@@ -212,88 +241,91 @@ export const NotificationProvider = ({ children, projectId }) => {
         trigger,
       });
 
-      saveNotification(title, body, trigger.date);
+      saveNotification(title, body, trigger?.date?.toISOString());
 
       return notificationId;
     } catch (error) {
       console.error("Failed to schedule notification:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const sendNotificationIfNeeded = async (data) => {
-    const { hourly } = data;
+  const sendNotificationIfNeeded = useCallback(
+    async (data) => {
+      const { hourly } = data;
+      const alertConditions = ["thunderstorm", "rain", "shower rain", "broken clouds"];
 
-    const alertConditions = ["thunderstorm", "rain", "shower rain", "broken clouds"];
+      // Hourly Forecast (next 12 hours)
+      for (let hour of hourly) {
+        const color = getHeatIndexColor(hour.heat_index);
+        const { detailed_time } = formatDateTime(hour.time);
 
-    // Hourly Forecast (next 12 hours)
-    for (let hour of hourly) {
-      const color = getHeatIndexColor(hour.heat_index);
-      const { detailed_time } = formatDateTime(hour.time);
+        if (color === "#cc0001") {
+          await setNotification(
+            "Extreme Danger Heat Alert!",
+            `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
+            { data: { type: "alert", weatherType: "heat" } },
+            hour.time
+          );
+        }
+        if (color === "#cc0001" || color === "#ff6600") {
+          await setNotification(
+            "Danger Heat Alert!",
+            `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
+            { data: { type: "alert", weatherType: "heat" } },
+            hour.time
+          );
+        }
 
-      if (color === "#cc0001") {
-        await setNotification(
-          "Extreme Danger Heat Alert!",
-          `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
-          { data: { type: "alert", weatherType: "heat" } },
-          hour.time
-        );
+        if (color === "#ffcc00") {
+          await setNotification(
+            "Caution High Heat Index!",
+            `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
+            { data: { type: "notification", weatherType: "heat" } },
+            hour.time
+          );
+        }
+
+        if (hour.weather.condition === alertConditions[0]) {
+          await setNotification(
+            "Thunderstorm Alert!",
+            `Forecast thunderstorm at ${detailed_time}.`,
+            { data: { type: "alert", weatherType: "rain" } },
+            hour.time
+          );
+        }
+
+        if (hour.weather.condition === alertConditions[1]) {
+          await setNotification("Rain Alert!", `Forecast rain at ${detailed_time}.`, { data: { type: "alert", weatherType: "rain" } }, hour.time);
+        }
+
+        if (hour.weather.condition === alertConditions[2]) {
+          await setNotification(
+            "Caution Shower Rain!",
+            `Forecast shower rain at ${detailed_time}.`,
+            { data: { type: "notification", weatherType: "rain" } },
+            hour.time
+          );
+        }
+
+        if (hour.weather.condition === alertConditions[3]) {
+          await setNotification(
+            "Caution Broken Clouds!",
+            `Forecast broken clouds at ${detailed_time}.`,
+            { data: { type: "notification", weatherType: "rain" } },
+            hour.time
+          );
+        }
       }
-      if (color === "#cc0001" || color === "#ff6600") {
-        await setNotification(
-          "Danger Heat Alert!",
-          `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
-          { data: { type: "alert", weatherType: "heat" } },
-          hour.time
-        );
-      }
+    },
+    [formatDateTime, getHeatIndexColor, setNotification]
+  );
 
-      if (color === "#ffcc00") {
-        await setNotification(
-          "Caution High Heat Index!",
-          `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
-          { data: { type: "notification", weatherType: "heat" } },
-          hour.time
-        );
-      }
-
-      if (hour.weather.condition === alertConditions[0]) {
-        await setNotification(
-          "Thunderstorm Alert!",
-          `Forecast thunderstorm at ${detailed_time}.`,
-          { data: { type: "alert", weatherType: "rain" } },
-          hour.time
-        );
-      }
-
-      if (hour.weather.condition === alertConditions[1]) {
-        await setNotification("Rain Alert!", `Forecast rain at ${detailed_time}.`, { data: { type: "alert", weatherType: "rain" } }, hour.time);
-      }
-
-      if (hour.weather.condition === alertConditions[2]) {
-        await setNotification(
-          "Caution Shower Rain!",
-          `Forecast shower rain at ${detailed_time}.`,
-          { data: { type: "notification", weatherType: "rain" } },
-          hour.time
-        );
-      }
-
-      if (hour.weather.condition === alertConditions[3]) {
-        await setNotification(
-          "Caution Broken Clouds!",
-          `Forecast broken clouds at ${detailed_time}.`,
-          { data: { type: "notification", weatherType: "rain" } },
-          hour.time
-        );
-      }
-    }
-  };
   /**
    * Fetch notifications from the SQLite database
    * @returns {Promise<Array>} List of notifications
    * */
-  const getNotificationFromDatabase = async () => {
+  const getNotificationFromDatabase = useCallback(async () => {
     try {
       const notifications = await fetchNotifications();
       return notifications;
@@ -301,33 +333,33 @@ export const NotificationProvider = ({ children, projectId }) => {
       console.error("Failed to fetch notifications from database:", error);
       throw error;
     }
-  };
+  }, []);
 
   /**
    * Cancel a specific notification
    * @param {string} notificationId - ID of notification to cancel
    */
-  const cancelNotification = async (notificationId) => {
+  const cancelNotification = useCallback(async (notificationId) => {
     await Notifications.cancelScheduledNotificationAsync(notificationId);
-  };
+  }, []);
 
   /**
    * Cancel all scheduled notifications
    */
-  const cancelAllNotifications = async () => {
+  const cancelAllNotifications = useCallback(async () => {
     await Notifications.cancelAllScheduledNotificationsAsync();
-  };
+  }, []);
 
   /**
    * Get all pending notification requests
    * @returns {Promise<NotificationRequest[]>} List of pending notification requests
    */
-  const getPendingNotifications = async () => {
+  const getPendingNotifications = useCallback(async () => {
     return await Notifications.getAllScheduledNotificationsAsync();
-  };
+  }, []);
 
-  // Context value to be provided
-  const contextValue = {
+  // Return the context value
+  return {
     getNotification,
     setNotification,
     cancelNotification,
@@ -338,21 +370,8 @@ export const NotificationProvider = ({ children, projectId }) => {
     lastNotification,
     getNotificationFromDatabase,
     sendNotificationIfNeeded,
+    loading,
   };
-
-  return <NotificationContext.Provider value={contextValue}>{children}</NotificationContext.Provider>;
 };
 
-/**
- * Custom hook to use notification context
- * @returns {Object} Notification context value
- */
-export const useNotification = () => {
-  const context = useContext(NotificationContext);
-
-  if (!context) {
-    throw new Error("useNotification must be used within a NotificationProvider");
-  }
-
-  return context;
-};
+export default useNotification;

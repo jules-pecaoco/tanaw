@@ -181,7 +181,7 @@ const FacilitiesSelectionBottomSheet = ({ state, setState, onSourceChange }) => 
   return (
     <View className={`absolute bottom-0 w-full bg-white p-5`}>
       <View className="flex justify-between items-center flex-row">
-        <Text className="text-lg font-rregular">Emergency Facilities</Text>
+        <Text className="text-lg font-rregular">Emergency Agencies</Text>
         <TouchableOpacity activeOpacity={0.5} onPress={() => setState({ ...state, activeBottomSheet: "none" })}>
           <MaterialIcons name="close" size={24} color="black" />
         </TouchableOpacity>
@@ -295,7 +295,7 @@ const FacilitiesMarkerBottomSheet = React.forwardRef(
         animateOnMount={true}
       >
         <BottomSheetView className="flex-1 p-5">
-          <Text className="text-2xl font-bold mb-5 text-[#F47C25]">Facilities Information</Text>
+          <Text className="text-2xl font-bold mb-5 text-[#F47C25]">Agencies Information</Text>
           <View className="bg-white p-2 rounded-lg">
             <Text className="text-black font-bold">{data.name}</Text>
             <Text className="text-black mb-2">{data.phone}</Text>

@@ -73,7 +73,7 @@ const registerWeatherTask = async (location, notificationCallback) => {
       console.log("Weather task already registered, updating location data only");
     } else {
       await BackgroundFetch.registerTaskAsync(WEATHER_TASK_NAME, {
-        minimumInterval: 3600 * 6,
+        minimumInterval: 1000 * 60 * 60 * 3, // 3 hours
         stopOnTerminate: false,
         startOnBoot: true,
       });

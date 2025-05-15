@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import * as Notifications from "expo-notifications";
 import { useFonts } from "expo-font";
 import { Stack, SplashScreen } from "expo-router";
 
@@ -11,21 +10,16 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 
 import storage from "@/storage/storage";
-import { PROJECT_ID } from "@/tokens/tokens";
-import { NotificationProvider } from "@/context/NotificationContext";
+import useNotification from "@/hooks/useNotification";
+import useUserIdentifier from "@/hooks/useUserIdentifier";
 import "@/global.css";
 
 SplashScreen.preventAutoHideAsync();
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
-
 const RootLayout = () => {
+  useNotification();
+  useUserIdentifier();
+
   const [fontsLoaded, error] = useFonts({
     "RobotoCondensed-Black": require("../assets/fonts/RobotoCondensed-Black.ttf"),
     "RobotoCondensed-Bold": require("../assets/fonts/RobotoCondensed-Bold.ttf"),
@@ -73,40 +67,38 @@ const RootLayout = () => {
   });
 
   return (
-    <NotificationProvider projectId={PROJECT_ID}>
-      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: userPersistStorage }}>
-        <SafeAreaProvider className="flex-1">
-          <GestureHandlerRootView className="flex-1">
-            <Stack>
-              <Stack.Screen
-                name="index"
-                options={{
-                  headerShown: false,
-                }}
-              />
-              <Stack.Screen
-                name="(permissions)"
-                options={{
-                  headerShown: false,
-                }}
-              />
-              <Stack.Screen
-                name="(tabs)"
-                options={{
-                  headerShown: false,
-                }}
-              />
-              <Stack.Screen
-                name="AlertScreen"
-                options={{
-                  headerShown: false,
-                }}
-              ></Stack.Screen>
-            </Stack>
-          </GestureHandlerRootView>
-        </SafeAreaProvider>
-      </PersistQueryClientProvider>
-    </NotificationProvider>
+    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: userPersistStorage }}>
+      <SafeAreaProvider className="flex-1">
+        <GestureHandlerRootView className="flex-1">
+          <Stack>
+            <Stack.Screen
+              name="index"
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="(permissions)"
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="(tabs)"
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="AlertScreen"
+              options={{
+                headerShown: false,
+              }}
+            ></Stack.Screen>
+          </Stack>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
+    </PersistQueryClientProvider>
   );
 };
 
