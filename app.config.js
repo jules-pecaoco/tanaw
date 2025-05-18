@@ -1,10 +1,9 @@
 import "dotenv/config";
-
 export default ({ config }) => ({
   ...config,
   name: "Tanaw",
   slug: "tanaw",
-  version: "0.8.0",
+  version: "0.8.5",
   orientation: "portrait",
   icon: "./assets/images/tanaw-logo.png",
   scheme: "myapp",
@@ -21,6 +20,11 @@ export default ({ config }) => ({
     },
     package: "dev.expo.tanaw",
     googleServicesFile: "./google-services.json",
+    notification: {
+      icon: "./assets/images/notification-icon.png",
+      color: "#ffffff",
+      androidCollapsedTitle: "Tanaw",
+    }
   },
   web: {
     bundler: "metro",

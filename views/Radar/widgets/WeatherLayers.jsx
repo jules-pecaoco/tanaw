@@ -1,5 +1,4 @@
 import { RasterLayer, RasterSource } from "@rnmapbox/maps";
-import React from "react";
 
 const RainViewerLayer = ({ rainViewerPath }) => {
   console.log("RainViewerLayer Rendered", rainViewerPath);

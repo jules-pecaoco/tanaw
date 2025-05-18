@@ -312,7 +312,7 @@ const RadarScreen = () => {
 
   const renderRainViewerLayer = useMemo(() => {
     if (state.weatherLayer.type === "Rain" && rainViewerPath) {
-      return <RainViewerLayer rainViewerPath={rainViewerPath} />;
+      return <RainViewerLayer key={rainViewerPath} rainViewerPath={rainViewerPath} />;
     }
     return null;
   }, [state.weatherLayer.type, rainViewerPath]);
@@ -342,7 +342,7 @@ const RadarScreen = () => {
         {state.isHazardLayerActive.StormSurge && <HazardLayers props={hazardLayerProps.StormSurge} />}
 
         {/* Weather Layers */}
-        {state.weatherLayer.type === "Rain" && renderRainViewerLayer}
+        {renderRainViewerLayer}
         {state.weatherLayer.type === "HeatIndex" && (
           <>
             <OpenWeatherLayer openWeatherTile={openWeatherTile} />

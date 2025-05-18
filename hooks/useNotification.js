@@ -241,7 +241,7 @@ const useNotification = () => {
         trigger,
       });
 
-      saveNotification(title, body, trigger?.date?.toISOString());
+      saveNotification(title, body, trigger.date);
 
       return notificationId;
     } catch (error) {
