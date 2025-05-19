@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Dimensions, TouchableOpacity, ScrollView, ActivityIndicator, Modal } from "react-native";
+import { View, Text, Dimensions, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
 import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { fetchWeatherData } from "@/services/openmeteo";
 
@@ -32,18 +33,13 @@ const AnalyticsWidget = () => {
   // Date range picker state
   const [startDate, setStartDate] = useState(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)); // Default to 3 days ago
   const [endDate, setEndDate] = useState(new Date()); // Default to today
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [availableDates, setAvailableDates] = useState([]);
 
   // Set filter range mode
-  const [filterMode, setFilterMode] = useState("preset"); // "preset", "custom"
-  const [presetRange, setPresetRange] = useState("3days"); // "today", "3days", "week", "all"
-
-  // Custom date picker modal state
-  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
-  const [currentPickerType, setCurrentPickerType] = useState("start"); // "start" or "end"
-  const [tempSelectedDate, setTempSelectedDate] = useState(null);
+  const [filterMode, setFilterMode] = useState("preset");
+  const [presetRange, setPresetRange] = useState("3days");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -109,59 +105,29 @@ const AnalyticsWidget = () => {
     }
   }, [presetRange, availableDates, filterMode]);
 
-  // Generate array of selectable dates based on available data
-  const getSelectableDates = () => {
-    if (!availableDates.length) return [];
-
-    const firstDate = new Date(availableDates[0]);
-    const lastDate = new Date(availableDates[availableDates.length - 1]);
-
-    const dates = [];
-    const currentDate = new Date(firstDate);
-
-    while (currentDate <= lastDate) {
-      dates.push(new Date(currentDate));
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return dates;
-  };
-
-  // Open date picker modal
-  const openDatePicker = (type) => {
-    setCurrentPickerType(type);
-    setTempSelectedDate(type === "start" ? startDate : endDate);
-    setShowDatePickerModal(true);
-  };
-
-  // Handle date selection in custom modal
-  const handleDateSelection = (date) => {
-    setTempSelectedDate(date);
-  };
-
-  // Confirm date selection
-  const confirmDateSelection = () => {
-    if (currentPickerType === "start") {
-      // Make sure start date is not after end date
-      if (tempSelectedDate > endDate) {
+  // Handle date change
+  const onStartDateChange = (event, selectedDate) => {
+    setShowStartDatePicker(false);
+    if (selectedDate) {
+      // Make sure start date isn't after end date
+      if (selectedDate > endDate) {
         setStartDate(endDate);
       } else {
-        setStartDate(tempSelectedDate);
-      }
-    } else {
-      // Make sure end date is not before start date
-      if (tempSelectedDate < startDate) {
-        setEndDate(startDate);
-      } else {
-        setEndDate(tempSelectedDate);
+        setStartDate(selectedDate);
       }
     }
-    setShowDatePickerModal(false);
   };
 
-  // Cancel date selection
-  const cancelDateSelection = () => {
-    setShowDatePickerModal(false);
+  const onEndDateChange = (event, selectedDate) => {
+    setShowEndDatePicker(false);
+    if (selectedDate) {
+      // Make sure end date isn't before start date
+      if (selectedDate < startDate) {
+        setEndDate(startDate);
+      } else {
+        setEndDate(selectedDate);
+      }
+    }
   };
 
   if (isLoading) {
@@ -292,21 +258,43 @@ const AnalyticsWidget = () => {
           </View>
         )}
 
-        {/* Custom Date Range Selectors */}
+        {/* Custom Date Range Selectors using DateTimePicker */}
         {filterMode === "custom" && (
           <View className="mb-2">
             <View className="flex-row justify-between items-center mb-4">
               <Text className="font-rmedium">Start Date:</Text>
-              <TouchableOpacity onPress={() => openDatePicker("start")} className="px-4 py-2 bg-gray-200 rounded-lg">
+              <TouchableOpacity onPress={() => setShowStartDatePicker(true)} className="px-4 py-2 bg-gray-200 rounded-lg">
                 <Text>{formatDateForDisplay(startDate)}</Text>
               </TouchableOpacity>
+
+              {showStartDatePicker && (
+                <DateTimePicker
+                  value={startDate}
+                  mode="date"
+                  display="default"
+                  onChange={onStartDateChange}
+                  minimumDate={availableDates.length > 0 ? new Date(availableDates[0]) : undefined}
+                  maximumDate={endDate}
+                />
+              )}
             </View>
 
             <View className="flex-row justify-between items-center">
               <Text className="font-rmedium">End Date:</Text>
-              <TouchableOpacity onPress={() => openDatePicker("end")} className="px-4 py-2 bg-gray-200 rounded-lg">
+              <TouchableOpacity onPress={() => setShowEndDatePicker(true)} className="px-4 py-2 bg-gray-200 rounded-lg">
                 <Text>{formatDateForDisplay(endDate)}</Text>
               </TouchableOpacity>
+
+              {showEndDatePicker && (
+                <DateTimePicker
+                  value={endDate}
+                  mode="date"
+                  display="default"
+                  onChange={onEndDateChange}
+                  minimumDate={startDate}
+                  maximumDate={availableDates.length > 0 ? new Date(availableDates[availableDates.length - 1]) : undefined}
+                />
+              )}
             </View>
           </View>
         )}
@@ -348,46 +336,6 @@ const AnalyticsWidget = () => {
         </View>
       </View>
 
-      {/* Custom Date Picker Modal */}
-      <Modal visible={showDatePickerModal} transparent={true} animationType="fade">
-        <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
-          <View className="bg-white p-4 rounded-xl w-4/5 max-h-96">
-            <Text className="text-center text-lg font-rmedium mb-4">Select {currentPickerType === "start" ? "Start" : "End"} Date</Text>
-
-            <ScrollView className="max-h-64">
-              {getSelectableDates().map((date, index) => {
-                // Disable dates that are outside valid range
-                const isDisabled = (currentPickerType === "start" && date > endDate) || (currentPickerType === "end" && date < startDate);
-
-                const isSelected = tempSelectedDate && date.toDateString() === tempSelectedDate.toDateString();
-
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() => !isDisabled && handleDateSelection(date)}
-                    className={`py-3 px-4 mb-1 rounded-lg ${isSelected ? "bg-primary" : isDisabled ? "bg-gray-100" : "bg-gray-200"}`}
-                    disabled={isDisabled}
-                  >
-                    <Text className={`text-center ${isSelected ? "text-white font-rmedium" : isDisabled ? "text-gray-400" : "text-gray-800"}`}>
-                      {formatDateForDisplay(date)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-
-            <View className="flex-row justify-around mt-4">
-              <TouchableOpacity onPress={cancelDateSelection} className="px-4 py-2 bg-gray-300 rounded-lg">
-                <Text className="font-rmedium">Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={confirmDateSelection} className="px-4 py-2 bg-primary rounded-lg" disabled={!tempSelectedDate}>
-                <Text className="font-rmedium text-white">Confirm</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
       {filteredData.time.length === 0 ? (
         <View className="bg-white p-4 rounded-xl my-4 items-center">
           <Text className="text-lg font-rmedium text-red-500">No data available for selected date range</Text>

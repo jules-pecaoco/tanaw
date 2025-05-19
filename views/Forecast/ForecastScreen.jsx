@@ -9,6 +9,7 @@ import { fetchOneCallWeather } from "@/services/openweather";
 import CustomButton from "@/views/components/CustomButton";
 import ForecastWidget from "@/views/Forecast/widgets/ForecastWidget";
 import AnalyticsWidget from "@/views/Forecast/widgets/AnalyticsWidget";
+import UserReportWidget from "@/views/Forecast/widgets/UserReportWidget";
 import useLocation from "@/hooks/useLocation";
 
 const ForecastScreen = () => {
@@ -28,7 +29,7 @@ const ForecastScreen = () => {
     error: isErrorUserWeatherOneCall,
   } = useQuery({
     queryKey: ["userWeatherOneCall"],
-    queryFn: () => fetchOneCallWeather({currentLocation}),
+    queryFn: () => fetchOneCallWeather({ currentLocation }),
     staleTime: 1000 * 60 * 60 * 3, //3 hours
     gcTime: 1000 * 60 * 60 * 6, //6 hours
   });
@@ -67,21 +68,35 @@ const ForecastScreen = () => {
             <CustomButton
               title="Forecast"
               handlePress={() => setActive("forecast")}
-              containerStyles="h-fit w-[49%]"
+              containerStyles="h-fit w-[30%]"
               textStyles={`text-center py-3 rounded-xl text-white font-rmedium ${active == "forecast" ? "bg-primary" : "bg-secondary"}`}
             ></CustomButton>
 
             <CustomButton
               title="Analytics"
               handlePress={() => setActive("analytics")}
-              containerStyles="h-fit w-[49%]"
+              containerStyles="h-fit w-[30%]"
               textStyles={`text-center py-3 rounded-xl text-white font-rmedium ${active == "analytics" ? "bg-primary" : "bg-secondary"}`}
+            ></CustomButton>
+            <CustomButton
+              title="User Report"
+              handlePress={() => setActive("userreport")}
+              containerStyles="h-fit w-[30%]"
+              textStyles={`text-center py-3 rounded-xl text-white font-rmedium ${active == "userreport" ? "bg-primary" : "bg-secondary"}`}
             ></CustomButton>
           </View>
         </View>
 
         {/* FILTERS */}
-        {active == "forecast" ? <ForecastWidget data={{ userWeatherOneCall }} /> : active == "analytics" ? <AnalyticsWidget data={{}} /> : null}
+        <View className="flex-1">
+          {active == "forecast" ? (
+            <ForecastWidget data={{ userWeatherOneCall }} />
+          ) : active == "analytics" ? (
+            <AnalyticsWidget data={{}} />
+          ) : active == "userreport" ? (
+            <UserReportWidget data={{}} />
+          ) : null}
+        </View>
       </View>
     </View>
   );

@@ -107,8 +107,27 @@ const RadarScreen = () => {
   const [rainViewerPath, setRainViewerPath] = useState();
 
   useEffect(() => {
-    const setupBackgroundTask = async () => {
+    const setupBackgroundTaskAndUploadIdentifier = async () => {
       setOrigin(currentLocation);
+
+      // Run weather task setup once
+      await initWeatherTaskOnce();
+
+      if (uniqueIdentifier && currentLocation && pushToken) {
+        await uploadUserIdentifier(uniqueIdentifier, currentLocation, pushToken);
+      }
+    };
+
+    if (currentLocation) {
+      setupBackgroundTaskAndUploadIdentifier();
+    } else {
+      console.warn("Cannot setup background task: location not available");
+    }
+  }, [currentLocation, uniqueIdentifier, pushToken, initWeatherTaskOnce]);
+
+  // Callback functions
+  const initWeatherTaskOnce = useCallback(async () => {
+    if (currentLocation) {
       try {
         const isTaskRegistered = await isWeatherTaskRegistered();
 
@@ -116,27 +135,15 @@ const RadarScreen = () => {
           console.log("Registering background weather task");
           await registerWeatherTask(currentLocation, sendNotificationIfNeeded);
         } else {
-          console.log("Background task already registered");
+          console.log("Background task already registered, just updating location");
           setUserLocationForTask(currentLocation);
         }
       } catch (error) {
         console.error("Error setting up background task:", error);
       }
-    };
-
-    const uploadUserIdentification = async () => {
-      await uploadUserIdentifier(uniqueIdentifier, currentLocation, pushToken);
-    };
-
-    if (currentLocation) {
-      setupBackgroundTask();
-      uploadUserIdentification();
-    } else {
-      console.warn("Cannot setup background task: location not available");
     }
-  }, [currentLocation]);
+  }, [currentLocation, sendNotificationIfNeeded]);
 
-  // Callback functions
   const handleActiveBottomSheet = useCallback((item) => {
     setState((prevState) => ({ ...prevState, activeBottomSheet: item }));
   }, []);

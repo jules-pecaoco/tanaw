@@ -82,11 +82,11 @@ export default function Layout() {
           }}
         />
         <Tabs.Screen
-          name="forecast"
+          name="analytics"
           options={{
-            title: "Forecast",
+            title: "Analytics",
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon iconName="chart-bar" iconFilled="chart-bar-stacked" color={color} name="Forecast" focused={focused} />
+              <TabIcon iconName="chart-bar" iconFilled="chart-bar-stacked" color={color} name="Analytics" focused={focused} />
             ),
           }}
         />

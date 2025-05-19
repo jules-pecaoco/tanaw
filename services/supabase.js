@@ -12,7 +12,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ========== FETCH REPORTS ========== //
 const fetchHazardReports = async () => {
   const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 10);
 
   const { data, error } = await supabase.from("hazard_reports").select("*").gte("created_at", sevenDaysAgo.toISOString()).eq("active", true);
 

@@ -12,6 +12,7 @@ import storage from "@/storage/storage";
 
 const PUSH_TOKEN_STORAGE_KEY = "pushToken";
 const PERMISSION_STATUS_STORAGE_KEY = "permissionStatus";
+const SENT_NOTIFICATIONS_STORAGE_KEY = "sentNotifications";
 
 /**
  * Custom hook for notification functionality with push token persistence.
@@ -32,6 +33,8 @@ const useNotification = () => {
   const notificationListener = useRef();
   const responseListener = useRef();
   const [loading, setLoading] = useState(true);
+  // Track if listeners have been set up
+  const listenersSetupRef = useRef(false);
 
   const getStoredNotificationInfo = useCallback(async () => {
     try {
@@ -61,8 +64,12 @@ const useNotification = () => {
       }),
     });
 
-    // Set up notification listeners & database when component mounts
-    setupNotificationListeners();
+    // Set up notification listeners & database only once
+    if (!listenersSetupRef.current) {
+      setupNotificationListeners();
+      listenersSetupRef.current = true;
+    }
+
     const setupTable = async () => {
       await setupNotificationsTable();
     };
@@ -85,6 +92,14 @@ const useNotification = () => {
    * Set up notification listeners
    */
   const setupNotificationListeners = () => {
+    // Remove any existing listeners first
+    if (notificationListener.current) {
+      Notifications.removeNotificationSubscription(notificationListener.current);
+    }
+    if (responseListener.current) {
+      Notifications.removeNotificationSubscription(responseListener.current);
+    }
+
     notificationListener.current = Notifications.addNotificationReceivedListener((response) => {
       const data = response.request.content;
 
@@ -199,6 +214,34 @@ const useNotification = () => {
     }
   }, []);
 
+  // Function to check if a similar notification was recently sent
+  const isNotificationDuplicate = (title, body, triggerTime) => {
+    try {
+      const sentNotifications = JSON.parse(storage.getItem(SENT_NOTIFICATIONS_STORAGE_KEY) || "[]");
+
+      // Create a unique key for this notification
+      const notificationKey = `${title}_${body}_${triggerTime ? triggerTime.getTime() : "immediate"}`;
+
+      // Check if we already sent this notification
+      const isDuplicate = sentNotifications.includes(notificationKey);
+
+      if (!isDuplicate) {
+        // Add to sent notifications
+        sentNotifications.push(notificationKey);
+        // Keep only the last 50 notifications to prevent storage growth
+        if (sentNotifications.length > 50) {
+          sentNotifications.shift();
+        }
+        storage.setItem(SENT_NOTIFICATIONS_STORAGE_KEY, JSON.stringify(sentNotifications));
+      }
+
+      return isDuplicate;
+    } catch (error) {
+      console.error("Error checking notification duplication:", error);
+      return false;
+    }
+  };
+
   /**
    * Schedule a notification
    * @param {string} title - Notification title
@@ -216,13 +259,11 @@ const useNotification = () => {
       const { data = {}, offsetHours = 2 } = options;
 
       let trigger;
+      let triggerDate;
 
       if (timeStamp) {
-        // timestamp in iso format
         const eventDateUTC = new Date(timeStamp);
-
-        const triggerDate = new Date(eventDateUTC.getTime() - offsetHours * 60 * 60 * 1000);
-
+        triggerDate = new Date(eventDateUTC.getTime() - offsetHours * 60 * 60 * 1000);
         console.log("Trigger date:", triggerDate.toString());
 
         trigger = {
@@ -230,6 +271,12 @@ const useNotification = () => {
           date: triggerDate,
           repeats: false,
         };
+      }
+
+      // Check for duplicate notification
+      if (isNotificationDuplicate(title, body, triggerDate)) {
+        console.log("Duplicate notification detected, skipping:", title);
+        return null;
       }
 
       const notificationId = await Notifications.scheduleNotificationAsync({
@@ -241,7 +288,8 @@ const useNotification = () => {
         trigger,
       });
 
-      saveNotification(title, body, trigger.date);
+      // Use a unique key based on content and time for DB entry
+      await saveNotification(title, body, trigger?.date);
 
       return notificationId;
     } catch (error) {
@@ -250,75 +298,104 @@ const useNotification = () => {
     }
   }, []);
 
+
   const sendNotificationIfNeeded = useCallback(
     async (data) => {
-      const { hourly } = data;
-      const alertConditions = ["thunderstorm", "rain", "shower rain", "broken clouds"];
+      try {
+        const { hourly } = data;
+        const alertConditions = ["thunderstorm", "rain", "shower rain", "broken clouds"];
+        const sentNotifications = new Set();
 
-      // Hourly Forecast (next 12 hours)
-      for (let hour of hourly) {
-        const color = getHeatIndexColor(hour.heat_index);
-        const { detailed_time } = formatDateTime(hour.time);
+        // Hourly Forecast (next 12 hours)
+        for (let hour of hourly) {
+          const color = getHeatIndexColor(hour.heat_index);
+          const { detailed_time } = formatDateTime(hour.time);
 
-        if (color === "#cc0001") {
-          await setNotification(
-            "Extreme Danger Heat Alert!",
-            `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
-            { data: { type: "alert", weatherType: "heat" } },
-            hour.time
-          );
-        }
-        if (color === "#cc0001" || color === "#ff6600") {
-          await setNotification(
-            "Danger Heat Alert!",
-            `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
-            { data: { type: "alert", weatherType: "heat" } },
-            hour.time
-          );
-        }
+          // Create unique identifiers for each notification
+          const notificationKeys = {
+            extremeHeat: `extreme-heat-${hour.time}`,
+            dangerHeat: `danger-heat-${hour.time}`,
+            cautionHeat: `caution-heat-${hour.time}`,
+            thunderstorm: `thunderstorm-${hour.time}`,
+            rain: `rain-${hour.time}`,
+            showerRain: `shower-rain-${hour.time}`,
+            brokenClouds: `broken-clouds-${hour.time}`,
+          };
 
-        if (color === "#ffcc00") {
-          await setNotification(
-            "Caution High Heat Index!",
-            `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
-            { data: { type: "notification", weatherType: "heat" } },
-            hour.time
-          );
-        }
+          // Only send extreme danger once (highest priority)
+          if (color === "#cc0001" && !sentNotifications.has(notificationKeys.extremeHeat)) {
+            sentNotifications.add(notificationKeys.extremeHeat);
+            await setNotification(
+              "Extreme Danger Heat Alert!",
+              `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
+              { data: { type: "alert", weatherType: "heat" } },
+              hour.time
+            );
+            // Skip lower level heat alerts for this hour
+            continue;
+          }
 
-        if (hour.weather.condition === alertConditions[0]) {
-          await setNotification(
-            "Thunderstorm Alert!",
-            `Forecast thunderstorm at ${detailed_time}.`,
-            { data: { type: "alert", weatherType: "rain" } },
-            hour.time
-          );
-        }
+          // Send danger heat alert
+          if ((color === "#cc0001" || color === "#ff6600") && !sentNotifications.has(notificationKeys.dangerHeat)) {
+            sentNotifications.add(notificationKeys.dangerHeat);
+            await setNotification(
+              "Danger Heat Alert!",
+              `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
+              { data: { type: "alert", weatherType: "heat" } },
+              hour.time
+            );
+            // Skip lower level heat alerts for this hour
+            continue;
+          }
 
-        if (hour.weather.condition === alertConditions[1]) {
-          await setNotification("Rain Alert!", `Forecast rain at ${detailed_time}.`, { data: { type: "alert", weatherType: "rain" } }, hour.time);
-        }
+          // Send caution heat alert
+          if (color === "#ffcc00" && !sentNotifications.has(notificationKeys.cautionHeat)) {
+            sentNotifications.add(notificationKeys.cautionHeat);
+            await setNotification(
+              "Caution High Heat Index!",
+              `Forecast heat index of ${hour.heat_index}°C at ${detailed_time}.`,
+              { data: { type: "notification", weatherType: "heat" } },
+              hour.time
+            );
+          }
 
-        if (hour.weather.condition === alertConditions[2]) {
-          await setNotification(
-            "Caution Shower Rain!",
-            `Forecast shower rain at ${detailed_time}.`,
-            { data: { type: "notification", weatherType: "rain" } },
-            hour.time
-          );
-        }
+          // Process rain/weather conditions
+          const weatherCondition = hour.weather.condition.toLowerCase();
 
-        if (hour.weather.condition === alertConditions[3]) {
-          await setNotification(
-            "Caution Broken Clouds!",
-            `Forecast broken clouds at ${detailed_time}.`,
-            { data: { type: "notification", weatherType: "rain" } },
-            hour.time
-          );
+          if (weatherCondition.includes("thunderstorm") && !sentNotifications.has(notificationKeys.thunderstorm)) {
+            sentNotifications.add(notificationKeys.thunderstorm);
+            await setNotification(
+              "Thunderstorm Alert!",
+              `Forecast thunderstorm at ${detailed_time}.`,
+              { data: { type: "alert", weatherType: "rain" } },
+              hour.time
+            );
+          } else if (weatherCondition.includes("rain") && !weatherCondition.includes("shower") && !sentNotifications.has(notificationKeys.rain)) {
+            sentNotifications.add(notificationKeys.rain);
+            await setNotification("Rain Alert!", `Forecast rain at ${detailed_time}.`, { data: { type: "alert", weatherType: "rain" } }, hour.time);
+          } else if (weatherCondition.includes("shower") && !sentNotifications.has(notificationKeys.showerRain)) {
+            sentNotifications.add(notificationKeys.showerRain);
+            await setNotification(
+              "Caution Shower Rain!",
+              `Forecast shower rain at ${detailed_time}.`,
+              { data: { type: "notification", weatherType: "rain" } },
+              hour.time
+            );
+          } else if (weatherCondition.includes("broken clouds") && !sentNotifications.has(notificationKeys.brokenClouds)) {
+            sentNotifications.add(notificationKeys.brokenClouds);
+            await setNotification(
+              "Caution Broken Clouds!",
+              `Forecast broken clouds at ${detailed_time}.`,
+              { data: { type: "notification", weatherType: "rain" } },
+              hour.time
+            );
+          }
         }
+      } catch (error) {
+        console.error("Error in sendNotificationIfNeeded:", error);
       }
     },
-    [formatDateTime, getHeatIndexColor, setNotification]
+    [setNotification]
   );
 
   /**
