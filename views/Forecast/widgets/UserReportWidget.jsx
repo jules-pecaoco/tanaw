@@ -1,346 +1,333 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, Dimensions, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
-import { LineChart, PieChart } from "react-native-gifted-charts";
+import { LineChart } from "react-native-gifted-charts";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { fetchHazardReports } from "@/services/supabase";
 
-const screenWidth = Dimensions.get("window").width;
+const ALL_CITIES_VALUE = "ALL_CITIES";
+const ALL_CITIES_LABEL = "All Cities";
 
-const UserReportWidget = () => {
-  // State variables
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const getDayKey = (date) => date.toISOString().split("T")[0];
 
-  // Filter states
-  const [hazardType, setHazardType] = useState("all");
-  const [startDate, setStartDate] = useState(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)); 
+const HazardAnalyticsWidget = ({ reports: initialReports }) => {
+  const screenWidth = Dimensions.get("window").width - 40;
+
+  const [allHazards, setAllHazards] = useState([]);
+  const [availableCities, setAvailableCities] = useState([{ label: ALL_CITIES_LABEL, value: ALL_CITIES_VALUE }]);
+  const [selectedCity, setSelectedCity] = useState(ALL_CITIES_VALUE);
+
+  const [minDataDate, setMinDataDate] = useState(null);
+  const [maxDataDate, setMaxDataDate] = useState(null);
+
+  const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  const [activeFilter, setActiveFilter] = useState("all"); // all, active, inactive
 
-  // Analytics data
-  const [timeSeriesData, setTimeSeriesData] = useState([]);
-  const [hazardTypeCounts, setHazardTypeCounts] = useState([]);
-  const [activeStatusData, setActiveStatusData] = useState([]);
-  const [totalReports, setTotalReports] = useState(0);
+  const [filterMode, setFilterMode] = useState("preset");
+  const [presetRange, setPresetRange] = useState("30days");
 
-  // Available hazard types (could be fetched from backend)
-  const hazardTypes = [
-    { label: "All Types", value: "all" },
-    { label: "Flood", value: "flood" },
-    { label: "Fire", value: "fire" },
-    { label: "Earthquake", value: "earthquake" },
-    { label: "Landslide", value: "landslide" },
-    { label: "Road Damage", value: "road_damage" },
-    { label: "Power Outage", value: "power_outage" },
-    { label: "Other", value: "other" },
-  ];
+  const [chartDataPoints, setChartDataPoints] = useState([]);
+  const [totalReportsInView, setTotalReportsInView] = useState(0);
 
-  // Load reports data
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    loadReports();
-  }, [hazardType, startDate, endDate, activeFilter]);
-
-  const loadReports = async () => {
-    try {
-      setLoading(true);
-
-      // Convert dates to ISO strings for the API call
-      const startDateStr = startDate.toISOString();
-      const endDateStr = endDate.toISOString();
-
-      // Build filters object
-      const filters = {
-        startDate: startDateStr,
-        endDate: endDateStr,
-      };
-
-      if (hazardType !== "all") {
-        filters.hazardType = hazardType;
-      }
-
-      if (activeFilter !== "all") {
-        filters.active = activeFilter === "active";
-      }
-
-      const data = await fetchHazardReports(filters);
-      setReports(data);
-      processAnalyticsData(data);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error loading reports:", err);
-      setError("Failed to load reports. Please try again.");
-      setLoading(false);
-    }
-  };
-
-  // Process raw data into analytics formats
-  const processAnalyticsData = (data) => {
-    setTotalReports(data.length);
-
-    // Process time series data (reports per day)
-    const timeData = processTimeSeriesData(data);
-    setTimeSeriesData(timeData);
-
-    // Count by hazard type
-    const typeCounts = processHazardTypeCounts(data);
-    setHazardTypeCounts(typeCounts);
-
-    // Count by active status
-    const statusData = processActiveStatusData(data);
-    setActiveStatusData(statusData);
-  };
-
-  // Group reports by day for the line chart
-  const processTimeSeriesData = (data) => {
-    const reportsByDay = {};
-
-    data.forEach((report) => {
-      const date = new Date(report.created_at);
-      const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-
-      if (!reportsByDay[dateKey]) {
-        reportsByDay[dateKey] = 0;
-      }
-      reportsByDay[dateKey]++;
-    });
-
-    // Convert to chart format and sort by date
-    return Object.entries(reportsByDay)
-      .map(([date, count]) => ({
-        date,
-        value: count,
-        label: date.substring(5), // MM-DD format
-        dataPointText: count.toString(),
+    setIsLoading(true);
+    const processedHazards = initialReports
+      .map((hazard) => ({
+        ...hazard,
+        createdAtDate: new Date(hazard.created_at),
       }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  };
+      .sort((a, b) => a.createdAtDate - b.createdAtDate);
 
-  // Count reports by hazard type for the pie chart
-  const processHazardTypeCounts = (data) => {
-    const counts = {};
+    setAllHazards(processedHazards);
 
-    data.forEach((report) => {
-      const type = report.hazard_type || "unknown";
-      if (!counts[type]) {
-        counts[type] = 0;
-      }
-      counts[type]++;
+    const cities = [...new Set(processedHazards.map((h) => h.name.city))].sort();
+    setAvailableCities([{ label: ALL_CITIES_LABEL, value: ALL_CITIES_VALUE }, ...cities.map((city) => ({ label: city, value: city }))]);
+    setSelectedCity(ALL_CITIES_VALUE);
+
+    if (processedHazards.length > 0) {
+      const firstDate = processedHazards[0].createdAtDate;
+      const lastDate = processedHazards[processedHazards.length - 1].createdAtDate;
+      setMinDataDate(new Date(firstDate));
+      setMaxDataDate(new Date(lastDate));
+
+      const thirtyDaysAgo = new Date(lastDate);
+      thirtyDaysAgo.setDate(lastDate.getDate() - 29);
+
+      setStartDate(thirtyDaysAgo < firstDate ? new Date(firstDate) : thirtyDaysAgo);
+      setEndDate(new Date(lastDate));
+    } else {
+      const today = new Date();
+      setMinDataDate(today);
+      setMaxDataDate(today);
+      setStartDate(today);
+      setEndDate(today);
+    }
+    setIsLoading(false);
+  }, [initialReports]);
+
+  useEffect(() => {
+    if (!minDataDate || !maxDataDate || filterMode !== "preset") return;
+
+    let newStart = new Date(minDataDate);
+    let newEnd = new Date(maxDataDate);
+    const todayInDataSetContext = new Date(maxDataDate);
+
+    switch (presetRange) {
+      case "today":
+        newStart = new Date(todayInDataSetContext);
+        newEnd = new Date(todayInDataSetContext);
+        break;
+      case "7days":
+        newStart = new Date(todayInDataSetContext);
+        newStart.setDate(todayInDataSetContext.getDate() - 6);
+        newEnd = new Date(todayInDataSetContext);
+        break;
+      case "30days":
+        newStart = new Date(todayInDataSetContext);
+        newStart.setDate(todayInDataSetContext.getDate() - 29);
+        newEnd = new Date(todayInDataSetContext);
+        break;
+      case "all":
+        break;
+    }
+    setStartDate(newStart < minDataDate ? new Date(minDataDate) : newStart);
+    setEndDate(newEnd > maxDataDate ? new Date(maxDataDate) : newEnd);
+  }, [presetRange, filterMode, minDataDate, maxDataDate]);
+
+  const filteredAndAggregatedData = useMemo(() => {
+    if (isLoading || !allHazards.length || !startDate || !endDate) {
+      return { points: [], total: 0 };
+    }
+
+    const cityFiltered = selectedCity === ALL_CITIES_VALUE ? allHazards : allHazards.filter((h) => h.name.city === selectedCity);
+
+    const dateFiltered = cityFiltered.filter((h) => {
+      const hazardDate = h.createdAtDate;
+      const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999);
+      return hazardDate >= startDay && hazardDate <= endDay;
     });
 
-    // Convert to pie chart format
-    const colors = ["#FF7F50", "#6495ED", "#9ACD32", "#FFD700", "#8A2BE2", "#FF69B4", "#20B2AA", "#D2691E"];
+    setTotalReportsInView(dateFiltered.length);
 
-    return Object.entries(counts).map(([type, count], index) => ({
-      value: count,
-      text: `${count}`,
-      label: type,
-      color: colors[index % colors.length],
-      focused: false,
-    }));
-  };
+    if (dateFiltered.length === 0) return { points: [], total: 0 };
 
-  // Count reports by active status
-  const processActiveStatusData = (data) => {
-    let activeCount = 0;
-    let inactiveCount = 0;
-
-    data.forEach((report) => {
-      if (report.active) {
-        activeCount++;
-      } else {
-        inactiveCount++;
-      }
+    const aggregationMap = new Map();
+    dateFiltered.forEach((hazard) => {
+      const key = getDayKey(hazard.createdAtDate);
+      aggregationMap.set(key, (aggregationMap.get(key) || 0) + 1);
     });
 
-    return [
-      { value: activeCount, text: activeCount.toString(), label: "Active", color: "#FF7F50", focused: false },
-      { value: inactiveCount, text: inactiveCount.toString(), label: "Inactive", color: "#6495ED", focused: false },
-    ];
-  };
+    const sortedKeys = Array.from(aggregationMap.keys()).sort((a, b) => new Date(a) - new Date(b));
 
-  // Date picker handlers
+    const points = sortedKeys.map((key) => {
+      const dateObj = new Date(key + "T00:00:00Z");
+      const label = `${String(dateObj.getUTCMonth() + 1).padStart(2, "0")}-${String(dateObj.getUTCDate()).padStart(2, "0")}`;
+      return {
+        value: aggregationMap.get(key),
+        label: label,
+        date: key,
+        labelTextStyle: { color: "gray", fontSize: 10 },
+        dataPointColor: "#0ea5e9",
+      };
+    });
+    return { points, total: dateFiltered.length };
+  }, [isLoading, allHazards, selectedCity, startDate, endDate]);
+
+  useEffect(() => {
+    setChartDataPoints(filteredAndAggregatedData.points);
+  }, [filteredAndAggregatedData]);
+
   const onStartDateChange = (event, selectedDate) => {
     setShowStartDatePicker(false);
     if (selectedDate) {
-      setStartDate(selectedDate);
+      setStartDate(selectedDate < minDataDate ? new Date(minDataDate) : selectedDate > endDate ? new Date(endDate) : new Date(selectedDate));
     }
   };
 
   const onEndDateChange = (event, selectedDate) => {
     setShowEndDatePicker(false);
     if (selectedDate) {
-      setEndDate(selectedDate);
+      setEndDate(selectedDate > maxDataDate ? new Date(maxDataDate) : selectedDate < startDate ? new Date(startDate) : new Date(selectedDate));
     }
   };
 
-  // Format date for display
-  const formatDate = (date) => {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const formatDateForDisplay = (date) => {
+    if (!date) return "";
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center p-5 bg-secondary">
+        <ActivityIndicator size="large" color="#0ea5e9" />
+        <Text className="mt-2 text-black">Loading hazard data...</Text>
+      </View>
+    );
+  }
+
+  const getRangeDurationDisplay = () => {
+    if (!startDate || !endDate) return "";
+    const diffTime = Math.abs(endDate - startDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return `${diffDays} day${diffDays === 1 ? "" : "s"}`;
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-100  mx-2 p-2" showsVerticalScrollIndicator={false}>
-      <Text className="text-2xl font-bold mb-4 text-gray-800">Hazard Reports Analytics</Text>
-
-      {/* Filter Section */}
-      <View className="bg-white rounded-lg p-4 mb-4 shadow">
-        <Text className="text-lg font-semibold mb-3 text-gray-800">Filters</Text>
-
-        {/* Hazard Type Filter */}
-        <View className="flex-row items-center mb-3">
-          <Text className="w-24 text-base text-gray-600">Hazard Type:</Text>
-          <View className="flex-1 border border-gray-300 rounded overflow-hidden">
-            <Picker selectedValue={hazardType} onValueChange={setHazardType} className="h-10 w-full">
-              {hazardTypes.map((type) => (
-                <Picker.Item key={type.value} label={type.label} value={type.value} />
-              ))}
-            </Picker>
-          </View>
-        </View>
-
-        {/* Date Range Filters */}
-        <View className="flex-row items-center mb-3">
-          <Text className="w-24 text-base text-gray-600">Date Range:</Text>
-          <View className="flex-1 flex-row items-center">
-            <TouchableOpacity className="border border-gray-300 rounded p-2 bg-gray-50" onPress={() => setShowStartDatePicker(true)}>
-              <Text>{formatDate(startDate)}</Text>
-            </TouchableOpacity>
-            <Text className="mx-2"> to </Text>
-            <TouchableOpacity className="border border-gray-300 rounded p-2 bg-gray-50" onPress={() => setShowEndDatePicker(true)}>
-              <Text>{formatDate(endDate)}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-      
+    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-gray-200 p-3">
+      <View className="bg-white rounded-lg mb-4 shadow">
+        {availableCities.length > 0 && (
+          <Picker selectedValue={selectedCity} onValueChange={(itemValue) => setSelectedCity(itemValue)} style={{ height: 50, width: "100%" }}>
+            {availableCities.map((city) => (
+              <Picker.Item key={city.value} label={city.label} value={city.value} />
+            ))}
+          </Picker>
+        )}
       </View>
 
-      {/* Date Pickers (hidden by default) */}
-      {showStartDatePicker && <DateTimePicker value={startDate} mode="date" display="default" onChange={onStartDateChange} />}
-      {showEndDatePicker && <DateTimePicker value={endDate} mode="date" display="default" onChange={onEndDateChange} />}
+      <View className="bg-white rounded-xl p-4 mb-4 shadow">
+        <Text className="text-center text-lg font-rmedium mb-3 text-black">Date Range</Text>
 
-      {/* Analytics Content */}
-      {loading ? (
-        <View className="items-center justify-center p-5">
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text className="mt-2">Loading reports data...</Text>
-        </View>
-      ) : error ? (
-        <View className="items-center justify-center p-5">
-          <Text className="text-red-500 mb-2">{error}</Text>
-          <TouchableOpacity className="bg-primary py-2 px-5 rounded" onPress={loadReports}>
-            <Text className="text-white font-bold">Retry</Text>
+        <View className="flex-row justify-center mb-3">
+          <TouchableOpacity
+            className={`px-4 py-2 mx-1 rounded-lg ${filterMode === "preset" ? "bg-primary" : "bg-neutral-200"}`}
+            onPress={() => setFilterMode("preset")}
+          >
+            <Text className={`font-rmedium ${filterMode === "preset" ? "text-white" : "text-neutral-700"}`}>Preset</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className={`px-4 py-2 mx-1 rounded-lg ${filterMode === "custom" ? "bg-primary" : "bg-neutral-200"}`}
+            onPress={() => setFilterMode("custom")}
+          >
+            <Text className={`font-rmedium ${filterMode === "custom" ? "text-white" : "text-neutral-700"}`}>Custom</Text>
           </TouchableOpacity>
         </View>
-      ) : (
-        <View className="mt-2">
-          {/* Summary Stats */}
-          <View className="flex-row justify-between mb-4">
-            <View className="flex-1 bg-white rounded-lg p-4 items-center mx-1 shadow">
-              <Text className="text-2xl font-bold text-primary">{totalReports}</Text>
-              <Text className="text-xs text-gray-500 mt-1">Total Reports</Text>
-            </View>
-            <View className="flex-1 bg-white rounded-lg p-4 items-center mx-1 shadow">
-              <Text className="text-2xl font-bold text-primary">{hazardTypeCounts.length > 0 ? hazardTypeCounts.length : 0}</Text>
-              <Text className="text-xs text-gray-500 mt-1">Hazard Types</Text>
-            </View>
-          </View>
 
-          {/* Time Series Chart */}
-          <View className="bg-white rounded-lg p-4 mb-4 shadow">
-            <Text className="text-base font-semibold mb-3 text-gray-800">Reports Over Time</Text>
-            {timeSeriesData.length > 0 ? (
-              <LineChart
-                data={timeSeriesData}
-                width={screenWidth - 40}
-                height={220}
-                spacing={40}
-                color="#0077CC"
-                thickness={3}
-                dataPointsColor="#0077CC"
-                dataPointsRadius={4}
-                showVerticalLines
-                verticalLinesColor="rgba(0, 0, 0, 0.1)"
-                noOfSections={5}
-                yAxisLabelWidth={40}
-                yAxisTextStyle={{ color: "#333" }}
-                xAxisLabelTextStyle={{ color: "#333" }}
-                hideDataPoints={timeSeriesData.length > 15}
-                hideRules
-                adjustToWidth
-                rulesColor="rgba(0, 0, 0, 0.1)"
-                rulesType="solid"
-                initialSpacing={10}
-                endSpacing={10}
-                yAxisThickness={1}
-                xAxisThickness={1}
-                pointerConfig={{
-                  pointerStripHeight: 140,
-                  pointerStripColor: "rgba(0, 0, 0, 0.1)",
-                  pointerStripWidth: 2,
-                  pointerColor: "#0077CC",
-                  radius: 6,
-                  pointerLabelWidth: 100,
-                  pointerLabelHeight: 30,
-                  pointerLabelComponent: (item) => (
-                    <View className="bg-white rounded shadow p-2 w-24 items-center">
-                      <Text className="text-xs text-gray-600">{item.date}</Text>
-                      <Text className="text-sm font-bold text-primary">{item.value} reports</Text>
-                    </View>
-                  ),
-                }}
+        {filterMode === "preset" && (
+          <View className="flex-row flex-wrap justify-center mb-2">
+            {[
+              { label: "Today", value: "today" },
+              { label: "7 Days", value: "7days" },
+              { label: "30 Days", value: "30days" },
+              { label: "All", value: "all" },
+            ].map((range) => (
+              <TouchableOpacity
+                key={range.value}
+                className={`px-3 py-2 m-1 rounded-lg ${presetRange === range.value ? "bg-primary" : "bg-neutral-100"}`}
+                onPress={() => setPresetRange(range.value)}
+              >
+                <Text className={`font-rmedium ${presetRange === range.value ? "text-white" : "text-neutral-700"}`}>{range.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {filterMode === "custom" && (
+          <View className="mb-2">
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="font-rmedium text-black">Start Date:</Text>
+              <TouchableOpacity onPress={() => setShowStartDatePicker(true)} className="px-3 py-2 bg-neutral-200 rounded-lg">
+                <Text className="text-black">{formatDateForDisplay(startDate)}</Text>
+              </TouchableOpacity>
+            </View>
+            {showStartDatePicker && (
+              <DateTimePicker
+                value={startDate}
+                mode="date"
+                display="default"
+                onChange={onStartDateChange}
+                minimumDate={minDataDate}
+                maximumDate={endDate}
               />
-            ) : (
-              <View className="h-52 justify-center items-center">
-                <Text className="text-gray-500 text-base">No time series data available</Text>
-              </View>
+            )}
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="font-rmedium text-black">End Date:</Text>
+              <TouchableOpacity onPress={() => setShowEndDatePicker(true)} className="px-3 py-2 bg-neutral-200 rounded-lg">
+                <Text className="text-black">{formatDateForDisplay(endDate)}</Text>
+              </TouchableOpacity>
+            </View>
+            {showEndDatePicker && (
+              <DateTimePicker
+                value={endDate}
+                mode="date"
+                display="default"
+                onChange={onEndDateChange}
+                minimumDate={startDate}
+                maximumDate={maxDataDate}
+              />
             )}
           </View>
+        )}
+        <View className="bg-neutral-100 p-2 rounded-lg mt-2">
+          <Text className="text-center text-sm text-neutral-600">
+            {formatDateForDisplay(startDate)} - {formatDateForDisplay(endDate)}
+          </Text>
+        </View>
+      </View>
 
-          {/* Hazard Type Distribution */}
-          <View className="bg-white rounded-lg p-4 mb-4 shadow">
-            <Text className="text-base font-semibold mb-3 text-gray-800">Hazard Type Distribution</Text>
-            {hazardTypeCounts.length > 0 ? (
-              <View className="items-center my-2">
-                <PieChart
-                  data={hazardTypeCounts}
-                  donut
-                  radius={90}
-                  showText
-                  textSize={12}
-                  showTextBackground
-                  textBackgroundRadius={12}
-                  textColor="#000"
-                  labelsPosition="outward"
-                  showLabels
-                  showGradient={false}
-                />
-                <View className="flex-row flex-wrap justify-center mt-5">
-                  {hazardTypeCounts.map((item, index) => (
-                    <View key={index} className="flex-row items-center mr-4 mb-2">
-                      <View style={{ backgroundColor: item.color }} className="w-3 h-3 rounded-full mr-1" />
-                      <Text className="text-xs text-gray-600">
-                        {item.label} ({item.value})
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            ) : (
-              <View className="h-52 justify-center items-center">
-                <Text className="text-gray-500 text-base">No hazard type data available</Text>
-              </View>
-            )}
+      <View className="bg-white rounded-xl p-4 mb-4 shadow">
+        <Text className="text-center text-lg font-rmedium mb-3 text-black">Summary</Text>
+        <View className="flex-row justify-around">
+          <View className="items-center">
+            <Text className="font-rmedium text-black">Total Reports</Text>
+            <Text className="text-xl font-rregular text-primary">{totalReportsInView}</Text>
           </View>
+          <View className="items-center">
+            <Text className="font-rmedium text-black">Duration</Text>
+            <Text className="text-xl font-rregular text-primary">{getRangeDurationDisplay()}</Text>
+          </View>
+        </View>
+      </View>
 
+      {chartDataPoints.length === 0 ? (
+        <View className="bg-white rounded-xl p-4 mb-4 shadow items-center justify-center h-64">
+          <Text className="text-md font-rmedium text-red-500">No data for selected criteria.</Text>
+        </View>
+      ) : (
+        <View className="bg-white rounded-xl p-4 mb-4 shadow">
+          <Text className="text-center text-lg font-rmedium mb-3 text-black">Report Trends (Daily)</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={true}>
+            <LineChart
+              data={chartDataPoints}
+              width={chartDataPoints.length > 5 ? screenWidth * (chartDataPoints.length / 5) : screenWidth}
+              height={250}
+              yAxisLabelWidth={30}
+              xAxisLabelRotation={chartDataPoints.length > 10 ? 45 : 0}
+              curved
+              areaChart
+              hideRules
+              startFillColor={"rgba(14, 165, 233, 0.3)"} // sky-500 with opacity (primary)
+              endFillColor={"rgba(14, 165, 233, 0.05)"} // sky-500 with opacity (primary)
+              startOpacity={0.9}
+              endOpacity={0.2}
+              color="#0ea5e9" // sky-500 (primary)
+              noOfSections={Math.min(5, Math.max(...chartDataPoints.map((p) => p.value), 1))}
+              spacing={
+                chartDataPoints.length > 1 ? (screenWidth * (chartDataPoints.length / 5)) / chartDataPoints.length / (chartDataPoints.length / 5) : 50
+              }
+              initialSpacing={20}
+              endSpacing={20}
+              formatYLabel={(label) => {
+                const num = Number(label);
+                if (Number.isInteger(num)) return num.toString();
+                return "";
+              }}
+              yAxisTextStyle={{ color: "gray" }} // text-black
+              xAxisLabelTextStyle={{ color: "gray", fontSize: 10 }} // text-black
+            />
+          </ScrollView>
         </View>
       )}
+      <View className="h-5" />
     </ScrollView>
   );
 };
 
-export default UserReportWidget;
+export default HazardAnalyticsWidget;

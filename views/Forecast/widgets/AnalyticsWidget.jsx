@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, Dimensions, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
-import { fetchWeatherData } from "@/services/openmeteo";
+import { fetchWeatherData } from "@/services/openmeteo"; // Assuming this service exists and works
 
+// Hardcoded cities, as per original Code 1
 const cities = {
   "Bacolod City": { lat: 10.6765, lon: 122.9509 },
   "Bago City": { lat: 10.5333, lon: 122.8333 },
@@ -24,386 +25,444 @@ const cities = {
 
 const AnalyticsWidget = () => {
   const screenWidth = Dimensions.get("window").width - 40;
-  const [data, setData] = useState({});
+
+  const [rawData, setRawData] = useState(null); // Stores the full fetched data
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedRange, setSelectedRange] = useState("hourly");
-  const [selectedCity, setSelectedCity] = useState("Bacolod City");
 
-  // Date range picker state
-  const [startDate, setStartDate] = useState(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)); // Default to 3 days ago
-  const [endDate, setEndDate] = useState(new Date()); // Default to today
+  const [selectedCity, setSelectedCity] = useState("Bacolod City");
+  const [selectedRangeType, setSelectedRangeType] = useState("hourly");
+
+  // Date range and picker state
+  const [minDataDate, setMinDataDate] = useState(null);
+  const [maxDataDate, setMaxDataDate] = useState(null);
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  const [availableDates, setAvailableDates] = useState([]);
 
-  // Set filter range mode
-  const [filterMode, setFilterMode] = useState("preset");
-  const [presetRange, setPresetRange] = useState("3days");
+  // Filter mode and preset range
+  const [filterMode, setFilterMode] = useState("preset"); // 'preset' or 'custom'
+  const [presetRange, setPresetRange] = useState("3days"); // 'today', '3days', 'week', 'all'
 
+  // Effect for fetching data when city changes
   useEffect(() => {
-    const fetchData = async () => {
+    const loadWeatherData = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
-        setIsLoading(true);
-        const weatherData = await fetchWeatherData(selectedCity);
-        setData(weatherData);
+        // Use the actual coordinates if your fetchWeatherData needs them,
+        // otherwise, just pass the city name if that's what it expects.
+        // For this example, I'm assuming fetchWeatherData takes the city name.
+        const weatherData = await fetchWeatherData(selectedCity, cities[selectedCity].lat, cities[selectedCity].lon);
+        setRawData(weatherData);
 
-        // Set available dates from the returned data
-        if (weatherData?.daily?.time) {
-          setAvailableDates(weatherData.daily.time);
+        if (weatherData?.daily?.time && weatherData.daily.time.length > 0) {
+          const firstDate = new Date(weatherData.daily.time[0]);
+          const lastDate = new Date(weatherData.daily.time[weatherData.daily.time.length - 1]);
+          setMinDataDate(firstDate);
+          setMaxDataDate(lastDate);
 
-          // Set default date range based on available data
-          const firstAvailableDate = new Date(weatherData.daily.time[0]);
-          const lastAvailableDate = new Date(weatherData.daily.time[weatherData.daily.time.length - 1]);
+          // Initialize date range based on '3days' preset and available data
+          const threeDaysAgo = new Date(lastDate);
+          threeDaysAgo.setDate(lastDate.getDate() - 2);
+          setStartDate(threeDaysAgo < firstDate ? new Date(firstDate) : threeDaysAgo);
+          setEndDate(new Date(lastDate));
+        } else if (weatherData?.hourly?.time && weatherData.hourly.time.length > 0) {
+          // Fallback to hourly if daily is not comprehensive
+          const firstHourlyDateStr = weatherData.hourly.time[0].split("T")[0];
+          const lastHourlyDateStr = weatherData.hourly.time[weatherData.hourly.time.length - 1].split("T")[0];
 
-          // Default to last 3 days or what's available
-          const threeDaysAgo = new Date();
-          threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+          const firstDate = new Date(firstHourlyDateStr);
+          const lastDate = new Date(lastHourlyDateStr);
+          setMinDataDate(firstDate);
+          setMaxDataDate(lastDate);
 
-          setStartDate(threeDaysAgo < firstAvailableDate ? firstAvailableDate : threeDaysAgo);
-          setEndDate(lastAvailableDate);
+          const threeDaysAgo = new Date(lastDate);
+          threeDaysAgo.setDate(lastDate.getDate() - 2);
+          setStartDate(threeDaysAgo < firstDate ? new Date(firstDate) : threeDaysAgo);
+          setEndDate(new Date(lastDate));
+        } else {
+          // Handle case with no time data
+          const today = new Date();
+          setMinDataDate(today);
+          setMaxDataDate(today);
+          setStartDate(today);
+          setEndDate(today);
         }
-
-        setIsLoading(false);
       } catch (err) {
-        setError(err);
+        console.error("Error fetching weather data:", err);
+        setError(err.message || "Failed to fetch weather data");
+        setRawData(null); // Clear previous data on error
+      } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    loadWeatherData();
   }, [selectedCity]);
 
-  // Handle preset range selections
+  // Effect for handling preset range changes
   useEffect(() => {
-    if (!availableDates.length || filterMode !== "preset") return;
+    if (!minDataDate || !maxDataDate || filterMode !== "preset") return;
 
-    const latest = new Date(availableDates[availableDates.length - 1]);
-    const earliest = new Date(availableDates[0]);
+    let newStart = new Date(minDataDate);
+    let newEnd = new Date(maxDataDate);
+    const dataContextEndDate = new Date(maxDataDate); // Use maxDataDate as 'today' in dataset context
 
     switch (presetRange) {
       case "today":
-        setStartDate(latest);
-        setEndDate(latest);
+        newStart = new Date(dataContextEndDate);
+        newEnd = new Date(dataContextEndDate);
         break;
       case "3days":
-        const threeDaysAgo = new Date(latest);
-        threeDaysAgo.setDate(latest.getDate() - 2); // This gives 3 days total (today + 2 previous)
-        setStartDate(threeDaysAgo < earliest ? earliest : threeDaysAgo);
-        setEndDate(latest);
+        newStart = new Date(dataContextEndDate);
+        newStart.setDate(dataContextEndDate.getDate() - 2);
+        newEnd = new Date(dataContextEndDate);
         break;
       case "week":
-        const weekAgo = new Date(latest);
-        weekAgo.setDate(latest.getDate() - 6); // This gives 7 days total
-        setStartDate(weekAgo < earliest ? earliest : weekAgo);
-        setEndDate(latest);
+        newStart = new Date(dataContextEndDate);
+        newStart.setDate(dataContextEndDate.getDate() - 6);
+        newEnd = new Date(dataContextEndDate);
         break;
       case "all":
-        setStartDate(earliest);
-        setEndDate(latest);
+        // newStart and newEnd are already minDataDate and maxDataDate
         break;
     }
-  }, [presetRange, availableDates, filterMode]);
+    setStartDate(newStart < minDataDate ? new Date(minDataDate) : newStart);
+    setEndDate(newEnd > maxDataDate ? new Date(maxDataDate) : newEnd);
+  }, [presetRange, filterMode, minDataDate, maxDataDate]);
 
-  // Handle date change
+  // Memoized processing of data for charts
+  const processedChartData = useMemo(() => {
+    if (!rawData || (!rawData.hourly?.time && !rawData.daily?.time)) {
+      return { tempPoints: [], rainPoints: [], precipPoints: [], totalPoints: 0, filteredTimeLabels: [] };
+    }
+
+    const source = selectedRangeType === "hourly" ? rawData.hourly : rawData.daily;
+    if (!source || !source.time || source.time.length === 0) {
+      return { tempPoints: [], rainPoints: [], precipPoints: [], totalPoints: 0, filteredTimeLabels: [] };
+    }
+
+    const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999);
+
+    const filteredIndices = [];
+    source.time.forEach((timeStr, index) => {
+      const itemDate = new Date(timeStr);
+      if (itemDate >= startDay && itemDate <= endDay) {
+        filteredIndices.push(index);
+      }
+    });
+
+    if (filteredIndices.length === 0) {
+      return { tempPoints: [], rainPoints: [], precipPoints: [], totalPoints: 0, filteredTimeLabels: [] };
+    }
+
+    const tempValues = [];
+    const rainValues = [];
+    const precipValues = [];
+    const timeLabels = [];
+
+    filteredIndices.forEach((index) => {
+      tempValues.push(source.temperature_2m?.[index] ?? source.temperature80m?.[index] ?? 0); // Use temperature_2m if available
+      rainValues.push(source.rain?.[index] ?? 0);
+      precipValues.push(source.precipitation_probability?.[index] ?? source.precipitationProbability?.[index] ?? 0); // Use precipitation_probability
+
+      const timeStr = source.time[index];
+      timeLabels.push(
+        selectedRangeType === "hourly"
+          ? timeStr.split("T")[1].slice(0, 5) // HH:MM
+          : timeStr.split("T")[0].slice(5) // MM-DD
+      );
+    });
+
+    const commonProps = {
+      labelTextStyle: { color: "gray", fontSize: 10 },
+    };
+
+    return {
+      tempPoints: tempValues.map((value, i) => ({ value, label: timeLabels[i], ...commonProps, dataPointColor: "#FF8C00" })),
+      rainPoints: rainValues.map((value, i) => ({ value, label: timeLabels[i], ...commonProps, dataPointColor: "#0096FF" })),
+      precipPoints: precipValues.map((value, i) => ({ value, label: timeLabels[i], ...commonProps, dataPointColor: "#4CAF50" })),
+      totalPoints: filteredIndices.length,
+      filteredTimeLabels: timeLabels, // For potential debugging or direct use
+    };
+  }, [rawData, selectedRangeType, startDate, endDate]);
+
+  // Date picker change handlers
   const onStartDateChange = (event, selectedDate) => {
     setShowStartDatePicker(false);
     if (selectedDate) {
-      // Make sure start date isn't after end date
-      if (selectedDate > endDate) {
-        setStartDate(endDate);
-      } else {
-        setStartDate(selectedDate);
-      }
+      const newStartDate = selectedDate < minDataDate ? new Date(minDataDate) : selectedDate;
+      setStartDate(newStartDate > endDate ? new Date(endDate) : newStartDate);
     }
   };
 
   const onEndDateChange = (event, selectedDate) => {
     setShowEndDatePicker(false);
     if (selectedDate) {
-      // Make sure end date isn't before start date
-      if (selectedDate < startDate) {
-        setEndDate(startDate);
-      } else {
-        setEndDate(selectedDate);
-      }
+      const newEndDate = selectedDate > maxDataDate ? new Date(maxDataDate) : selectedDate;
+      setEndDate(newEndDate < startDate ? new Date(startDate) : newEndDate);
     }
   };
 
+  const formatDateForDisplay = (date) => {
+    if (!date) return "N/A";
+    return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  };
+
+  const getRangeDurationDisplay = () => {
+    if (!startDate || !endDate || !minDataDate || !maxDataDate) return "0 days";
+    const diffTime = Math.abs(endDate - startDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end day
+    return `${diffDays} day${diffDays === 1 ? "" : "s"}`;
+  };
+
   if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#FF8C00" />
-      </View>
-    );
+    return <ActivityIndicator size="large" color="#FF8C00" />;
   }
 
   if (error) {
     return (
-      <View className="flex-1 justify-center items-center">
-        <Text className="text-red-500 font-bold">Error fetching weather data</Text>
+      <View className="flex-1 justify-center items-center p-5 bg-gray-100">
+        <Text className="text-red-500 font-bold text-center">Error: {error}</Text>
+        <Text className="text-gray-600 text-center mt-2">
+          Could not load weather data for {selectedCity}. Please try again or select a different city.
+        </Text>
       </View>
     );
   }
 
-  const weatherData = data;
-  const dataSource = selectedRange === "hourly" ? weatherData.hourly : weatherData.daily;
-
-  // Format dates for filtering
-  const startDateString = startDate.toISOString().split("T")[0];
-  const endDateString = endDate.toISOString().split("T")[0];
-
-  // Filter data based on selected date range
-  const filterDataByDateRange = (data, timeArray) => {
-    const filteredIndices = timeArray.reduce((indices, time, index) => {
-      const dateString = time.split("T")[0];
-      if (dateString >= startDateString && dateString <= endDateString) {
-        indices.push(index);
-      }
-      return indices;
-    }, []);
-
-    // If no data matches our filter, return empty arrays
-    if (filteredIndices.length === 0) {
-      return {
-        time: [],
-        rain: [],
-        precipitationProbability: [],
-        temperature80m: [],
-      };
-    }
-
-    // Extract data for the filtered date range
-    const startIndex = filteredIndices[0];
-    const endIndex = filteredIndices[filteredIndices.length - 1] + 1;
-
-    return {
-      time: timeArray.slice(startIndex, endIndex),
-      rain: data.rain ? data.rain.slice(startIndex, endIndex) : [],
-      precipitationProbability: data.precipitationProbability ? data.precipitationProbability.slice(startIndex, endIndex) : [],
-      temperature80m: data.temperature80m ? data.temperature80m.slice(startIndex, endIndex) : [],
-    };
-  };
-
-  const filteredData = filterDataByDateRange(dataSource, dataSource.time);
-
-  // Convert data for Gifted Charts
-  const formatDataForChart = (data, color) =>
-    data.map((value, index) => ({
-      value,
-      label: filteredData.time[index]
-        ? selectedRange === "hourly"
-          ? filteredData.time[index].split("T")[1].slice(0, 5)
-          : filteredData.time[index].split("T")[0].slice(5) // Show only MM-DD
-        : "",
-      labelTextStyle: { color: "gray", fontSize: 10 },
-      dataPointColor: color,
-    }));
-
-  // Format date for display
-  const formatDateForDisplay = (date) => {
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  const noDataForCriteria = processedChartData.totalPoints === 0;
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-gray-100 px-4 pt-12">
-      <Picker selectedValue={selectedCity} onValueChange={(itemValue) => setSelectedCity(itemValue)} className="font-fmedium text-lg">
-        {Object.keys(cities).map((city) => (
-          <Picker.Item key={city} label={city} value={city} />
-        ))}
-      </Picker>
-
+    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-gray-200 px-4 pt-12">
+      <View className="bg-white rounded-lg mb-4 shadow-md">
+        <Picker
+          selectedValue={selectedCity}
+          onValueChange={(itemValue) => setSelectedCity(itemValue)}
+          style={{ height: 50, width: "100%" }}
+          itemStyle={{ fontFamily: "System" }} // Example for font, adjust as needed
+        >
+          {Object.keys(cities).map((city) => (
+            <Picker.Item key={city} label={city} value={city} />
+          ))}
+        </Picker>
+      </View>
       {/* Date Range Selector Section */}
-      <View className="bg-white p-4 rounded-xl my-4">
-        <Text className="text-center text-lg font-rmedium mb-4">Date Range Selector</Text>
+      <View className="bg-white p-4 rounded-xl my-4 shadow-md">
+        <Text className="text-center text-lg font-bold mb-4 text-gray-700">Date Range Selector</Text>
 
-        {/* Filter Mode Selector */}
         <View className="flex-row justify-center mb-4">
           <TouchableOpacity
-            className={`px-4 py-2 mx-2 rounded-lg ${filterMode === "preset" ? "bg-primary" : "bg-gray-300"}`}
+            className={`px-4 py-2 mx-2 rounded-lg ${filterMode === "preset" ? "bg-orange-500" : "bg-gray-300"}`}
             onPress={() => setFilterMode("preset")}
           >
-            <Text className={`font-rmedium ${filterMode === "preset" ? "text-white" : "text-gray-700"}`}>Preset Ranges</Text>
+            <Text className={`font-semibold ${filterMode === "preset" ? "text-white" : "text-gray-700"}`}>Preset</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
-            className={`px-4 py-2 mx-2 rounded-lg ${filterMode === "custom" ? "bg-primary" : "bg-gray-300"}`}
+            className={`px-4 py-2 mx-2 rounded-lg ${filterMode === "custom" ? "bg-orange-500" : "bg-gray-300"}`}
             onPress={() => setFilterMode("custom")}
           >
-            <Text className={`font-rmedium ${filterMode === "custom" ? "text-white" : "text-gray-700"}`}>Custom Range</Text>
+            <Text className={`font-semibold ${filterMode === "custom" ? "text-white" : "text-gray-700"}`}>Custom</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Preset Range Selectors */}
         {filterMode === "preset" && (
           <View className="flex-row flex-wrap justify-center mb-2">
             {[
               { label: "Today", value: "today" },
-              { label: "Last 3 Days", value: "3days" },
-              { label: "Last Week", value: "week" },
+              { label: "3 Days", value: "3days" },
+              { label: "1 Week", value: "week" },
               { label: "All Data", value: "all" },
             ].map((range) => (
               <TouchableOpacity
                 key={range.value}
                 className={`px-3 py-2 m-1 rounded-lg ${presetRange === range.value ? "bg-blue-500" : "bg-gray-200"}`}
                 onPress={() => setPresetRange(range.value)}
+                disabled={!minDataDate || !maxDataDate} // Disable if no data loaded
               >
-                <Text className={`font-rmedium ${presetRange === range.value ? "text-white" : "text-gray-700"}`}>{range.label}</Text>
+                <Text className={`font-semibold ${presetRange === range.value ? "text-white" : "text-gray-700"}`}>{range.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
         )}
 
-        {/* Custom Date Range Selectors using DateTimePicker */}
         {filterMode === "custom" && (
           <View className="mb-2">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="font-rmedium">Start Date:</Text>
+              <Text className="font-semibold text-gray-700">Start Date:</Text>
               <TouchableOpacity onPress={() => setShowStartDatePicker(true)} className="px-4 py-2 bg-gray-200 rounded-lg">
-                <Text>{formatDateForDisplay(startDate)}</Text>
+                <Text className="text-gray-800">{formatDateForDisplay(startDate)}</Text>
               </TouchableOpacity>
-
-              {showStartDatePicker && (
-                <DateTimePicker
-                  value={startDate}
-                  mode="date"
-                  display="default"
-                  onChange={onStartDateChange}
-                  minimumDate={availableDates.length > 0 ? new Date(availableDates[0]) : undefined}
-                  maximumDate={endDate}
-                />
-              )}
             </View>
-
+            {showStartDatePicker && (
+              <DateTimePicker
+                value={startDate}
+                mode="date"
+                display="default"
+                onChange={onStartDateChange}
+                minimumDate={minDataDate}
+                maximumDate={endDate}
+              />
+            )}
             <View className="flex-row justify-between items-center">
-              <Text className="font-rmedium">End Date:</Text>
+              <Text className="font-semibold text-gray-700">End Date:</Text>
               <TouchableOpacity onPress={() => setShowEndDatePicker(true)} className="px-4 py-2 bg-gray-200 rounded-lg">
-                <Text>{formatDateForDisplay(endDate)}</Text>
+                <Text className="text-gray-800">{formatDateForDisplay(endDate)}</Text>
               </TouchableOpacity>
-
-              {showEndDatePicker && (
-                <DateTimePicker
-                  value={endDate}
-                  mode="date"
-                  display="default"
-                  onChange={onEndDateChange}
-                  minimumDate={startDate}
-                  maximumDate={availableDates.length > 0 ? new Date(availableDates[availableDates.length - 1]) : undefined}
-                />
-              )}
             </View>
+            {showEndDatePicker && (
+              <DateTimePicker
+                value={endDate}
+                mode="date"
+                display="default"
+                onChange={onEndDateChange}
+                minimumDate={startDate}
+                maximumDate={maxDataDate}
+              />
+            )}
           </View>
         )}
 
-        {/* Selected Date Range Display */}
-        <View className="bg-gray-100 p-2 rounded-lg mt-2">
-          <Text className="text-center text-gray-700">
-            Showing data from {formatDateForDisplay(startDate)} to {formatDateForDisplay(endDate)}
+        <View className="bg-gray-100 p-2 rounded-lg mt-3">
+          <Text className="text-center text-sm text-gray-600">
+            Showing data: {formatDateForDisplay(startDate)} to {formatDateForDisplay(endDate)}
           </Text>
         </View>
       </View>
-
       <View className="flex-row justify-center mb-4">
         {["hourly", "daily"].map((type) => (
           <TouchableOpacity
             key={type}
-            className={`px-4 py-2 mx-2 rounded-lg ${selectedRange === type ? "bg-primary" : "bg-secondary"}`}
-            onPress={() => setSelectedRange(type)}
+            className={`px-4 py-2 mx-2 rounded-lg ${selectedRangeType === type ? "bg-orange-500" : "bg-orange-300"}`}
+            onPress={() => setSelectedRangeType(type)}
           >
-            <Text className={`font-rmedium text-lg ${selectedRange === type ? "text-white" : "text-white"}`}>
-              {type === "hourly" ? "Hourly Data" : "Daily Data"}
-            </Text>
+            <Text className="font-semibold text-lg text-white">{type.charAt(0).toUpperCase() + type.slice(1)} Data</Text>
           </TouchableOpacity>
         ))}
       </View>
-
-      {/* Data summary */}
-      <View className="bg-white p-3 rounded-xl my-4">
-        <Text className="text-center text-lg font-rmedium mb-2">Data Summary</Text>
+      <View className="bg-white p-3 rounded-xl my-4 shadow-md">
+        <Text className="text-center text-lg font-bold mb-2 text-gray-700">Data Summary</Text>
         <View className="flex-row justify-around">
           <View className="items-center">
-            <Text className="font-rmedium">Data Points</Text>
-            <Text className="text-lg">{filteredData.time.length}</Text>
+            <Text className="font-semibold text-gray-600">Data Points</Text>
+            <Text className="text-lg font-bold text-orange-600">{processedChartData.totalPoints}</Text>
           </View>
           <View className="items-center">
-            <Text className="font-rmedium">Date Range</Text>
-            <Text className="text-lg">{Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))} days</Text>
+            <Text className="font-semibold text-gray-600">Duration</Text>
+            <Text className="text-lg font-bold text-orange-600">{getRangeDurationDisplay()}</Text>
           </View>
         </View>
       </View>
-
-      {filteredData.time.length === 0 ? (
-        <View className="bg-white p-4 rounded-xl my-4 items-center">
-          <Text className="text-lg font-rmedium text-red-500">No data available for selected date range</Text>
+      {noDataForCriteria ? (
+        <View className="bg-white p-4 rounded-xl my-4 items-center justify-center h-64 shadow-md">
+          <Text className="text-lg font-semibold text-red-500">No data available for selected criteria.</Text>
         </View>
       ) : (
         <View>
           {/* Temperature Chart */}
-          <View className="bg-white p-3 rounded-xl my-4">
-            <Text className="text-center text-lg font-rmedium mb-2">Temperature (°C) Trends</Text>
-            <ScrollView horizontal>
-              <LineChart
-                data={formatDataForChart(filteredData.temperature80m || [], "#FF8C00")}
-                width={screenWidth * 1.5}
-                height={250}
-                yAxisSuffix="°C"
-                xAxisLabelRotation={45}
-                curved
-                areaChart
-                hideRules
-                startFillColor={"rgba(255, 140, 0, 0.3)"}
-                endFillColor={"rgba(255, 140, 0, 0.05)"}
-                startOpacity={0.9}
-                endOpacity={0.2}
-              />
-            </ScrollView>
-          </View>
+          {processedChartData.tempPoints.length > 0 && (
+            <View className="bg-white p-3 rounded-xl my-4 shadow-md">
+              <Text className="text-center text-lg font-bold mb-2 text-gray-700">Temperature (°C)</Text>
+              <ScrollView horizontal>
+                <LineChart
+                  data={processedChartData.tempPoints}
+                  width={Math.max(screenWidth, processedChartData.tempPoints.length * 40)} // Dynamic width
+                  height={220}
+                  yAxisSuffix="°C"
+                  xAxisLabelRotation={processedChartData.tempPoints.length > 10 ? 45 : 0}
+                  curved
+                  areaChart
+                  hideRules
+                  startFillColor="rgba(255, 140, 0, 0.3)"
+                  endFillColor="rgba(255, 140, 0, 0.05)"
+                  startOpacity={0.8}
+                  endOpacity={0.1}
+                  color="#FF8C00"
+                  noOfSections={4}
+                  yAxisTextStyle={{ color: "gray" }}
+                  spacing={
+                    processedChartData.tempPoints.length > 1
+                      ? (Math.max(screenWidth, processedChartData.tempPoints.length * 40) / (processedChartData.tempPoints.length - 1)) * 0.8
+                      : 50
+                  }
+                  initialSpacing={10}
+                  endSpacing={10}
+                />
+              </ScrollView>
+            </View>
+          )}
 
           {/* Rainfall Chart */}
-          <View className="bg-white p-3 rounded-xl my-4">
-            <Text className="text-center text-lg font-rmedium mb-2">Rain Water Height</Text>
-            <ScrollView horizontal>
-              <LineChart
-                data={formatDataForChart(filteredData.rain || [], "#0096FF")}
-                width={screenWidth * 1.5}
-                height={250}
-                yAxisSuffix="mm"
-                xAxisLabelRotation={45}
-                areaChart
-                hideRules
-                startFillColor={"rgba(0, 150, 255, 0.3)"}
-                endFillColor={"rgba(0, 150, 255, 0.05)"}
-                startOpacity={0.9}
-                endOpacity={0.2}
-              />
-            </ScrollView>
-          </View>
+          {processedChartData.rainPoints.length > 0 && (
+            <View className="bg-white p-3 rounded-xl my-4 shadow-md">
+              <Text className="text-center text-lg font-bold mb-2 text-gray-700">Rain (mm)</Text>
+              <ScrollView horizontal>
+                <LineChart
+                  data={processedChartData.rainPoints}
+                  width={Math.max(screenWidth, processedChartData.rainPoints.length * 40)}
+                  height={220}
+                  yAxisSuffix="mm"
+                  xAxisLabelRotation={processedChartData.rainPoints.length > 10 ? 45 : 0}
+                  curved
+                  areaChart
+                  hideRules
+                  startFillColor="rgba(0, 150, 255, 0.3)"
+                  endFillColor="rgba(0, 150, 255, 0.05)"
+                  startOpacity={0.8}
+                  endOpacity={0.1}
+                  color="#0096FF"
+                  noOfSections={4}
+                  yAxisTextStyle={{ color: "gray" }}
+                  spacing={
+                    processedChartData.rainPoints.length > 1
+                      ? (Math.max(screenWidth, processedChartData.rainPoints.length * 40) / (processedChartData.rainPoints.length - 1)) * 0.8
+                      : 50
+                  }
+                  initialSpacing={10}
+                  endSpacing={10}
+                />
+              </ScrollView>
+            </View>
+          )}
 
-          {/* Precipitation Chart */}
-          <View className="bg-white p-3 rounded-xl mb-16">
-            <Text className="text-center text-lg font-rmedium mb-2">Chance of Rain</Text>
-            <ScrollView horizontal>
-              <LineChart
-                data={formatDataForChart(filteredData.precipitationProbability || [], "#0096FF")}
-                width={screenWidth * 1.5}
-                height={250}
-                yAxisSuffix="%"
-                xAxisLabelRotation={45}
-                areaChart
-                hideRules
-                startFillColor={"rgba(0, 150, 255, 0.3)"}
-                endFillColor={"rgba(0, 150, 255, 0.05)"}
-                startOpacity={0.9}
-                endOpacity={0.2}
-              />
-            </ScrollView>
-          </View>
+          {/* Precipitation Probability Chart */}
+          {processedChartData.precipPoints.length > 0 && (
+            <View className="bg-white p-3 rounded-xl mb-16 shadow-md">
+              <Text className="text-center text-lg font-bold mb-2 text-gray-700">Chance of Rain (%)</Text>
+              <ScrollView horizontal>
+                <LineChart
+                  data={processedChartData.precipPoints}
+                  width={Math.max(screenWidth, processedChartData.precipPoints.length * 40)}
+                  height={220}
+                  yAxisSuffix="%"
+                  xAxisLabelRotation={processedChartData.precipPoints.length > 10 ? 45 : 0}
+                  curved
+                  areaChart
+                  hideRules
+                  startFillColor="rgba(76, 175, 80, 0.3)"
+                  endFillColor="rgba(76, 175, 80, 0.05)"
+                  startOpacity={0.8}
+                  endOpacity={0.1}
+                  color="#4CAF50"
+                  noOfSections={4}
+                  yAxisTextStyle={{ color: "gray" }}
+                  spacing={
+                    processedChartData.precipPoints.length > 1
+                      ? (Math.max(screenWidth, processedChartData.precipPoints.length * 40) / (processedChartData.precipPoints.length - 1)) * 0.8
+                      : 50
+                  }
+                  initialSpacing={10}
+                  endSpacing={10}
+                />
+              </ScrollView>
+            </View>
+          )}
         </View>
       )}
+      <View className="h-5" />
     </ScrollView>
   );
 };

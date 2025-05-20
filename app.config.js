@@ -21,7 +21,7 @@ export default ({ config }) => ({
     package: "dev.expo.tanaw",
     googleServicesFile: "./google-services.json",
     notification: {
-      icon: "./assets/images/notification-icon.png",
+      icon: "./assets/images/tanaw-logo-circle.png",
       color: "#ffffff",
       androidCollapsedTitle: "Tanaw",
     }

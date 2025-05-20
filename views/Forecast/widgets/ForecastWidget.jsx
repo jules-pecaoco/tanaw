@@ -35,8 +35,8 @@ const ForecastWidget = ({ data }) => {
   return (
     <>
       {/* HOURLY FORECAST */}
-      <View className="flex flex-col items-center justify-around bg-white w-[95%] p-4 gap-3 rounded-xl">
-        <View className="flex flex-row items-center w-full gap-3">
+      <View className="flex flex-col items-start justify-around bg-white w-[95%] p-4 gap-3 rounded-xl mb-3">
+        <View className="flex flex-row items-center w-full gap-3 justify-start">
           <MaterialCommunityIcons name="clock-time-eight-outline" size={24} color="black" />
           <Text className="font-rregular text-md">Hourly Forecast</Text>
         </View>
@@ -59,7 +59,7 @@ const ForecastWidget = ({ data }) => {
       {/* /* DAY FORECAST */}
       <FlatList
         showsVerticalScrollIndicator={false}
-        className="w-full flex"
+        className="w-full flex-1"
         data={data?.userWeatherOneCall?.daily}
         renderItem={({ item }) => {
           const label = formatDateTime(item.time).date;

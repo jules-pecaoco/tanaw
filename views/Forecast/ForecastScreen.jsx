@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 // API Services
 import { fetchOneCallWeather } from "@/services/openweather";
+import useHazardReports from "@/hooks/useHazardReports";
 
 // Components
 import CustomButton from "@/views/components/CustomButton";
@@ -14,6 +15,7 @@ import useLocation from "@/hooks/useLocation";
 
 const ForecastScreen = () => {
   const { location } = useLocation();
+  const { reports, isLoading } = useHazardReports();
   const [currentLocation, setCurrentLocation] = useState(() => {
     if (location) {
       return { latitude: location.latitude, longitude: location.longitude };
@@ -94,7 +96,7 @@ const ForecastScreen = () => {
           ) : active == "analytics" ? (
             <AnalyticsWidget data={{}} />
           ) : active == "userreport" ? (
-            <UserReportWidget data={{}} />
+            <UserReportWidget reports={reports} />
           ) : null}
         </View>
       </View>

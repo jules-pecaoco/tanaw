@@ -1,14 +1,11 @@
-import { View, Text, TouchableOpacity } from "react-native";
-import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, RefreshControl } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-// Context
 import useNotification from "@/hooks/useNotification";
-
-// Service
 import { clearAllNotifications, fetchNotifications } from "@/services/sqlite";
 import { isWeatherTaskRegistered } from "@/services/weatherTaskManager";
-
-// Components
 import NotificationWidget from "./widgets/NotificationWidget";
 
 const NotificationScreen = () => {
@@ -16,7 +13,7 @@ const NotificationScreen = () => {
   const [notificationData, setNotificationData] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     setRefreshing(true);
     try {
       const notifications = await getNotificationFromDatabase();
@@ -26,11 +23,11 @@ const NotificationScreen = () => {
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [getNotificationFromDatabase]);
 
   useEffect(() => {
     loadNotifications();
-  }, []);
+  }, [loadNotifications]);
 
   const handleClearAllNotifications = async () => {
     await cancelAllNotifications();
@@ -53,28 +50,30 @@ const NotificationScreen = () => {
     const isoDate = notificationDate.toISOString();
     await setNotification(
       "Extreme Caution Alert",
-      "This is Alert for Extreme Caution",
+      "This is an Alert for Extreme Caution. Please take necessary precautions immediately.",
       { offsetHours: 0, data: { type: "alert", weatherType: "heat" } },
       isoDate
     );
   };
 
   return (
-    <View className="h-full bg-white">
-      <View className="w-full bg-white py-5">
-        <Text className="text-center font-rmedium text-3xl">Notifications</Text>
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="bg-white px-4 py-5 items-center justify-center">
+        <Text className="font-rmedium text-2xl text-gray-800">Notifications</Text>
       </View>
-      <View className="h-full bg-gray-200 gap-5 flex justify-start items-center">
-        <View className="w-[95%] h-[90%] flex flex-col gap-5 mt-5">
-          <NotificationWidget notificationData={notificationData} />
-        </View>
+
+      <View className="flex-1 bg-gray-100 px-3 pt-4">
+        <NotificationWidget notificationData={notificationData} onRefresh={loadNotifications} refreshing={refreshing} />
       </View>
-      <View className="absolute bottom-10 right-10 flex flex-row gap-5">
-        <TouchableOpacity className=" bg-blue-500 p-2 rounded-full" onPress={addNotificationAlert}>
-          <Text className="text-white text-sm">Test Alert</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+
+      <TouchableOpacity
+        className="absolute bottom-6 right-5 bg-red-500 p-4 rounded-full shadow-lg active:bg-red-600"
+        onPress={addNotificationAlert}
+        activeOpacity={0.9}
+      >
+        <MaterialCommunityIcons name="plus" size={24} color="white" />
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 };
 

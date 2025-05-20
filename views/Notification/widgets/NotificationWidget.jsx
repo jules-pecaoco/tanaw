@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, FlatList } from "react-native";
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from "react-native";
 import React, { useState } from "react";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -6,55 +6,86 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { formatDateTime } from "@/utilities/formatDateTime";
 
 const NotificationCard = ({ item, dateLabel }) => {
-  const [press, setPress] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const getIconForWeatherType = (weatherType) => {
+    switch (weatherType?.toLowerCase()) {
+      case "heat":
+        return <MaterialCommunityIcons name="weather-sunny-alert" size={24} color="#FFA500" />;
+      case "rain":
+        return <MaterialCommunityIcons name="weather-pouring" size={24} color="#3B82F6" />;
+      default:
+        return <MaterialCommunityIcons name="bell-ring-outline" size={24} className="text-blue-500" />;
+    }
+  };
+  const iconToRender = getIconForWeatherType(item.data?.weatherType);
 
   return (
-    <>
-      <Text className="font-rregular text-base">
-        {dateLabel.date}, {dateLabel.detailed_time}
-      </Text>
-      <TouchableOpacity activeOpacity={0.7} onPress={() => setPress(!press)}>
-        <View className="bg-white flex flex-col items-center justify-between gap-2 rounded-lg p-5 w-[95%] self-end">
-          <View className="flex flex-row items-center gap-2 w-full justify-between">
-            <View className="flex flex-row items-center gap-2">
-              <MaterialCommunityIcons name="weather-sunny" size={24} color="black" />
-              <Text className="font-rlight text-5xl">|</Text>
-              <Text className="font-rbold text-2xl">{item.title}</Text>
+    <View className="bg-white rounded-xl shadow-sm mx-1 mb-4">
+      <TouchableOpacity activeOpacity={0.8} onPress={() => setExpanded(!expanded)} className="p-4">
+        <View className="flex-row items-center justify-between w-full">
+          <View className="flex-row items-center flex-1 mr-2">
+            <View className="mr-3 p-2 bg-blue-50 rounded-full">{iconToRender}</View>
+
+            <View className="flex-1">
+              <Text className="font-rbold text-base text-gray-800" numberOfLines={2}>
+                {item.title}
+              </Text>
+              <Text className="font-rregular text-xs text-gray-500 mt-1">
+                {dateLabel.date}, {dateLabel.detailed_time}
+              </Text>
             </View>
-            {press ? <Entypo name="chevron-up" size={24} color="black" /> : <Entypo name="chevron-down" size={24} color="black" />}
           </View>
-          {press && (
-            <View className="flex flex-col gap-2 w-full">
-              <Text className="font-rregular text-lg w-full text-justify">{item.body}</Text>
-            </View>
+          {expanded ? (
+            <Entypo name="chevron-up" size={24} className="text-gray-500" />
+          ) : (
+            <Entypo name="chevron-down" size={24} className="text-gray-500" />
           )}
         </View>
+
+        {expanded && (
+          <View className="mt-3 pt-3 border-t border-gray-200">
+            <Text className="font-rregular text-sm text-gray-700 text-justify leading-relaxed">{item.body}</Text>
+          </View>
+        )}
       </TouchableOpacity>
-    </>
+    </View>
   );
 };
 
-const NotificationWidget = ({ notificationData }) => {
-  console.log("Notification Data Widget:", notificationData);
+const NotificationWidget = ({ notificationData, onRefresh, refreshing }) => {
+  if (!notificationData) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#3B82F6" />
+      </View>
+    );
+  }
+
+  const activeNotifications = notificationData
+    .filter((item) => new Date(item.timestamp).getTime() <= new Date().getTime())
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  const renderItem = ({ item }) => {
+    const dateLabel = formatDateTime(item.timestamp);
+    return <NotificationCard item={item} dateLabel={dateLabel} />;
+  };
+
   return (
     <FlatList
+      data={activeNotifications}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={renderItem}
       showsVerticalScrollIndicator={false}
-      data={notificationData}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => {
-        const dateLabel = formatDateTime(item.timestamp);
-        console.log(dateLabel.detailed_time);
-        // only render a component that is before or on the current date and time
-        if (new Date(item.timestamp).getTime() > new Date().getTime()) {
-          return null;
-        }
-
-        return (
-          <View className="flex flex-col gap-4 w-full mb-10">
-            <NotificationCard item={item} dateLabel={dateLabel} />
-          </View>
-        );
-      }}
+      contentContainerStyle={{ paddingBottom: 90 }}
+      ListEmptyComponent={
+        <View className="flex-1 justify-center items-center mt-20">
+          <MaterialCommunityIcons name="bell-off-outline" size={48} className="text-gray-400 mb-3" />
+          <Text className="font-rmedium text-lg text-gray-600">No Notifications</Text>
+          <Text className="font-rregular text-sm text-gray-500 mt-1">You're all caught up!</Text>
+        </View>
+      }
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6", "#2563EB"]} tintColor={"#3B82F6"} />}
     />
   );
 };
