@@ -84,7 +84,8 @@ const uploadHazardReport = async (hazardData, imageUri, uniqueIdentifier) => {
       ])
       .select();
 
-    notifyNearbyUsers(hazardData.latitude, hazardData.longitude, uniqueIdentifier);
+    reverseGeocode(hazardData.latitude, hazardData.longitude);
+    notifyNearbyUsers(hazardData.latitude, hazardData.longitude, uniqueIdentifier, hazardData.hazard_type, hazardData.hazard_description, location);
 
     if (error) return { success: false, error };
     return { success: true, data };
@@ -93,11 +94,14 @@ const uploadHazardReport = async (hazardData, imageUri, uniqueIdentifier) => {
   }
 };
 
-const notifyNearbyUsers = async (latitude, longitude, uniqueIdentifier) => {
+const notifyNearbyUsers = async (latitude, longitude, uniqueIdentifier, hazardType, hazardDescription, location) => {
   const body = {
     lat: latitude,
     lon: longitude,
     uuid: uniqueIdentifier,
+    hazard_type: hazardType,
+    hazard_description: hazardDescription,
+    location: location,
   };
 
   const headers = {

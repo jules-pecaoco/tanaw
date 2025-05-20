@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js";
 
 serve(async (req) => {
   // Validate secret from headers
-  const secret = req.headers.get("x-secret-key");
+  const secret = req.headers.get("x-secret-key"); 
   if (secret !== Deno.env.get("NOTIFY_SECRET_KEY")) {
     return new Response("Unauthorized", { status: 401 });
   }
@@ -16,7 +16,7 @@ serve(async (req) => {
     );
 
     // Parse request payload
-    const { lat, lon, uuid } = await req.json();
+    const { lat, lon, uuid, hazard_type, hazard_description, location } = await req.json();
 
     // Query nearby users
     const { data: users, error: usersError } = await supabase
@@ -47,8 +47,19 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             to: user.push_token,
-            title: "📍 Nearby Hazard Report",
-            body: "Someone nearby reported a hazard. Stay alert!",
+            title: `${hazard_type} Hazard Nearby!`,
+            body: `Location: ${location}.`,
+            data: {
+              hazard_type,
+              hazard_description,
+              location,
+            },
+            priority: "high",
+            sound: "default",
+            channelId: "default",
+            vibrate: [0, 250, 250, 250],
+            badge: 1,
+            ttl: 0,
           }),
         });
 
