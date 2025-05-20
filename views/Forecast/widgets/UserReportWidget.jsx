@@ -166,9 +166,8 @@ const HazardAnalyticsWidget = ({ reports: initialReports }) => {
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center p-5 bg-secondary">
+      <View className="flex-1 justify-center items-center p-5 bg-gray-200">
         <ActivityIndicator size="large" color="#0ea5e9" />
-        <Text className="mt-2 text-black">Loading hazard data...</Text>
       </View>
     );
   }

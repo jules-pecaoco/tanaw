@@ -3,18 +3,16 @@ import { View, TextInput, FlatList, Text, TouchableOpacity } from "react-native"
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 import { searchCity, searchCityDetails } from "@/services/mapbox";
-import storage from "@/storage/storage";
 
-const SearchCity = ({ currentLocation, setSearchCityDetails, handleSearchZoom }) => {
+const SearchCity = ({ currentLocation, setSearchCityDetails, handleSearchZoom, token }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
-  const [sessionToken, setSessionToken] = useState(storage.getItem("userID"));
 
   const handleSearch = async (text) => {
     setQuery(text);
 
     if (text.length > 2) {
-      const cityResults = await searchCity(text, currentLocation, sessionToken);
+      const cityResults = await searchCity(text, currentLocation, token);
       setResults(cityResults || []);
     } else {
       setResults([]);
@@ -25,7 +23,7 @@ const SearchCity = ({ currentLocation, setSearchCityDetails, handleSearchZoom })
     setQuery(city);
     setResults(0);
     try {
-      const cityDetailsResults = await searchCityDetails(id, sessionToken);
+      const cityDetailsResults = await searchCityDetails(id, token);
       setSearchCityDetails({
         longitude: cityDetailsResults.geometry.coordinates[0],
         latitude: cityDetailsResults.geometry.coordinates[1],

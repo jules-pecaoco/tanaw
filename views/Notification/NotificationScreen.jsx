@@ -44,7 +44,7 @@ const NotificationScreen = () => {
     console.log("Notification Logs: ", logs);
   };
 
-  const addNotificationAlert = async () => {
+  const addExtremeHeatAlert = async () => {
     const currentDate = new Date();
     const notificationDate = new Date(currentDate.getTime() + 10 * 1000);
     const isoDate = notificationDate.toISOString();
@@ -52,6 +52,18 @@ const NotificationScreen = () => {
       "Extreme Caution Alert",
       "This is an Alert for Extreme Caution. Please take necessary precautions immediately.",
       { offsetHours: 0, data: { type: "alert", weatherType: "heat" } },
+      isoDate
+    );
+  };
+
+  const addExtremeRainAlert = async () => {
+    const currentDate = new Date();
+    const notificationDate = new Date(currentDate.getTime() + 10 * 1000);
+    const isoDate = notificationDate.toISOString();
+    await setNotification(
+      "Extreme Rainfall Alert",
+      "This is an Alert for Extreme Rainfall. Please take necessary precautions immediately.",
+      { offsetHours: 0, data: { type: "alert", weatherType: "rain" } },
       isoDate
     );
   };
@@ -68,10 +80,17 @@ const NotificationScreen = () => {
 
       <TouchableOpacity
         className="absolute bottom-6 right-5 bg-red-500 p-4 rounded-full shadow-lg active:bg-red-600"
-        onPress={addNotificationAlert}
+        onPress={addExtremeHeatAlert}
         activeOpacity={0.9}
       >
-        <MaterialCommunityIcons name="plus" size={24} color="white" />
+        <MaterialCommunityIcons name="alert" size={24} color="white" />
+      </TouchableOpacity>
+      <TouchableOpacity
+        className="absolute bottom-6 right-24 bg-blue-500 p-4 rounded-full shadow-lg active:bg-blue-600"
+        onPress={addExtremeRainAlert}
+        activeOpacity={0.9}
+      >
+        <MaterialCommunityIcons name="alert" size={24} color="white" />
       </TouchableOpacity>
     </SafeAreaView>
   );

@@ -102,20 +102,17 @@ const fetchDirections = async (origin, destination, profile = "driving") => {
     const endLng = destination.longitude;
     const endLat = destination.latitude;
 
-    const waypoints = `${startLng},${startLat};${endLng},${endLat}`; 
-    const response = await axios.get(
-      `${MAPBOX_DIRECTIONS_URL}/${profile}/${waypoints}`, 
-      {
-        params: {
-          alternatives: false,
-          geometries: "geojson",
-          language: "en",
-          overview: "full",
-          steps: false,
-          access_token: MAPBOX_PUBLIC_TOKEN, 
-        },
-      }
-    );
+    const waypoints = `${startLng},${startLat};${endLng},${endLat}`;
+    const response = await axios.get(`${MAPBOX_DIRECTIONS_URL}/${profile}/${waypoints}`, {
+      params: {
+        alternatives: false,
+        geometries: "geojson",
+        language: "en",
+        overview: "full",
+        steps: false,
+        access_token: MAPBOX_PUBLIC_TOKEN,
+      },
+    });
 
     if (response.data.routes && response.data.routes.length > 0) {
       const route = response.data.routes[0];

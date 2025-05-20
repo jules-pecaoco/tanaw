@@ -337,7 +337,7 @@ const RadarScreen = () => {
       {/* SEARCH */}
       {state.activeBottomSheet === "search" && (
         <View className="absolute top-10 left-5 right-0 z-10 w-[90%]">
-          <SearchCity currentLocation={currentLocation} setSearchCityDetails={setSearchCityDetails} handleSearchZoom={handleSearchZoom} />
+          <SearchCity currentLocation={currentLocation} setSearchCityDetails={setSearchCityDetails} handleSearchZoom={handleSearchZoom} token={uniqueIdentifier} />
         </View>
       )}
 

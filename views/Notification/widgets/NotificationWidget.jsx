@@ -82,7 +82,6 @@ const NotificationWidget = ({ notificationData, onRefresh, refreshing }) => {
         <View className="flex-1 justify-center items-center mt-20">
           <MaterialCommunityIcons name="bell-off-outline" size={48} className="text-gray-400 mb-3" />
           <Text className="font-rmedium text-lg text-gray-600">No Notifications</Text>
-          <Text className="font-rregular text-sm text-gray-500 mt-1">You're all caught up!</Text>
         </View>
       }
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6", "#2563EB"]} tintColor={"#3B82F6"} />}

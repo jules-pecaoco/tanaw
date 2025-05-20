@@ -27,12 +27,6 @@ const CameraWidget = ({ onImageCaptured, imageUri }) => {
     setCameraType(cameraType === "back" ? "front" : "back");
   };
 
-  // Retry photo
-  const retakePhoto = () => {
-    onImageCaptured(null);
-  };
-
-
   // If no image is captured and camera is not visible, show button to open camera
   if ((!imageUri && !permission?.granted) || !openCamera) {
     const onClick = () => {
@@ -57,9 +51,7 @@ const CameraWidget = ({ onImageCaptured, imageUri }) => {
             <Ionicons name="close" size={24} color="white" />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity className="absolute bottom-4 right-4 bg-black/60 p-2.5 rounded" onPress={retakePhoto}>
-          <Text className="text-white">Retake</Text>
-        </TouchableOpacity>
+        
       </View>
     );
   }
