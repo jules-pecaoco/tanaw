@@ -16,6 +16,7 @@ import useLocation from "@/hooks/useLocation";
 const ForecastScreen = () => {
   const { location } = useLocation();
   const { reports, reportsIsLoading, reportsError } = useHazardReports();
+
   const [currentLocation, setCurrentLocation] = useState(() => {
     if (location) {
       return { latitude: location.latitude, longitude: location.longitude };
@@ -35,9 +36,12 @@ const ForecastScreen = () => {
     staleTime: 1000 * 60 * 60 * 3, //3 hours
     gcTime: 1000 * 60 * 60 * 6, //6 hours
   });
+  
 
   if (isLoadingUserWeatherOneCall) return <ActivityIndicator size="large" color="#FF8C00" className="flex-1" />;
   console.log("User Weather OneCall: ", userWeatherOneCall);
+
+
 
   return (
     <View className="flex-1 bg-white">
@@ -90,7 +94,7 @@ const ForecastScreen = () => {
         </View>
 
         {/* FILTERS */}
-        <View className="flex-1">
+        <>
           {active == "forecast" ? (
             <ForecastWidget data={{ userWeatherOneCall }} />
           ) : active == "analytics" ? (
@@ -98,7 +102,7 @@ const ForecastScreen = () => {
           ) : active == "userreport" ? (
             <UserReportWidget reports={reports} loading={reportsIsLoading} error={reportsError} />
           ) : null}
-        </View>
+        </>
       </View>
     </View>
   );

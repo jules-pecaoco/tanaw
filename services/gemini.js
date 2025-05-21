@@ -24,9 +24,27 @@ Each object must include:
 If the image is invalid or unrelated to natural hazards (e.g. blurry, crowd scene, unrelated indoor activity), 
 return a JSON object with:
 - "valid": false,
-- "invalid_reason": string describing the issue (e.g., "blurred image", "unrelated content", "crowd scene").
+- "invalid_reason": string describing the issue.
 
-Respond with strictly valid JSON enclosed in triple backticks.
+**Example of analyzing an image and finding a flood:**
+\`\`\`json
+[
+  {
+    "hazard_type": "Flooding",
+    "hazard_sub_type": "Urban street flooding",
+    "hazard_description": "The image shows a city street submerged in murky water. Cars are partially underwater, and water levels reach near the ground floor of buildings.",
+    "confidence_level": "High"
+  }
+]
+\`\`\`
+
+**Example of analyzing a blurry image:**
+\`\`\`json
+{
+  "valid": false,
+  "invalid_reason_code": "BLURRY_IMAGE",
+  "invalid_reason_description": "Image is too blurry to analyze."
+}
 `;
 
     const payload = {
