@@ -21,10 +21,10 @@ export default ({ config }) => ({
     package: "dev.expo.tanaw",
     googleServicesFile: "./google-services.json",
     notification: {
-      icon: "./assets/images/tanaw-logo-circle.png",
-      color: "#ffffff",
+      icon: "./assets/images/tanaw-logo-notification.png",
+      color: "#F47C25",
       androidCollapsedTitle: "Tanaw",
-    }
+    },
   },
   web: {
     bundler: "metro",

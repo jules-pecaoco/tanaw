@@ -16,17 +16,12 @@ serve(async (req) => {
     );
 
     // Parse request payload
-    const { lat, lon, uuid, hazard_type } = await req.json();
+    const { type, weatherType } = await req.json();
 
     // Query nearby users
     const { data: users, error: usersError } = await supabase
       .from("users_identifier")
-      .select("*")
-      .neq("uuid", uuid)
-      .lt("latitude", lat + 0.05)
-      .gt("latitude", lat - 0.05)
-      .lt("longitude", lon + 0.05)
-      .gt("longitude", lon - 0.05);
+      .select("*");
 
     if (usersError) {
       console.error("Error querying users:", usersError);
@@ -47,10 +42,11 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             to: user.push_token,
-            title: `${hazard_type} Hazard Nearby!`,
-            body: `A ${hazard_type} hazard has been detected nearby. Please be cautious!`,
+            title: `Weather Alert!`,
+            body: `Weather Alert: ${weatherType.toUpperCase()}, `,
             data: {
-              hazard_type,
+              type: type,
+              weatherType: weatherType,
             },
             priority: "high",
             sound: "default",

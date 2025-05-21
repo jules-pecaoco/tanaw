@@ -298,7 +298,6 @@ const useNotification = () => {
     }
   }, []);
 
-
   const sendNotificationIfNeeded = useCallback(
     async (data) => {
       try {
