@@ -79,7 +79,7 @@ const NotificationScreen = () => {
       </View>
 
       <TouchableOpacity
-        className="absolute bottom-6 right-5 bg-red-500 p-4 rounded-full shadow-lg active:bg-red-600"
+        className="absolute bottom-6 right-5 bg-primary p-4 rounded-full shadow-lg active:bg-primary"
         onPress={addExtremeHeatAlert}
         activeOpacity={0.9}
       >

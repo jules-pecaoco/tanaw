@@ -35,6 +35,7 @@ import SearchCity from "./widgets/SearchCity";
 import HazardMarker from "./widgets/UserReport/UserReportedHazardMarker";
 import RouteDisplay from "./widgets/RouteDisplay";
 import RainViewerTimestampSlider from "./widgets/RainViewerTimestampSlider";
+import LegendList from "./widgets//LegendList/LegendList";
 
 const RadarScreen = () => {
   // ref
@@ -334,10 +335,20 @@ const RadarScreen = () => {
 
   return (
     <View className="relative flex-1">
+      {/* LEGEND */}
+      <View className="absolute top-10 left-[5%] z-10  max-h-[40%] w-[90%]">
+        <LegendList appState={state} />
+      </View>
+
       {/* SEARCH */}
       {state.activeBottomSheet === "search" && (
         <View className="absolute top-10 left-5 right-0 z-10 w-[90%]">
-          <SearchCity currentLocation={currentLocation} setSearchCityDetails={setSearchCityDetails} handleSearchZoom={handleSearchZoom} token={uniqueIdentifier} />
+          <SearchCity
+            currentLocation={currentLocation}
+            setSearchCityDetails={setSearchCityDetails}
+            handleSearchZoom={handleSearchZoom}
+            token={uniqueIdentifier}
+          />
         </View>
       )}
 
@@ -381,7 +392,7 @@ const RadarScreen = () => {
       {state.weatherLayer.type === "Rain" && <RainViewerTimestampSlider timestamps={rainViewerData} onTimestampChange={handleTimestampChange} />}
 
       {/* SIDE BUTTONS */}
-      <View className="absolute bottom-[20%] right-10 flex justify-between flex-col gap-6">
+      <View className="absolute bottom-[13%] right-10 flex justify-between flex-col gap-6">
         <SideButtons onPress={() => handleActiveBottomSheet("hazards")} iconName="layers" isActive={state.activeBottomSheet === "hazards"} />
         <SideButtons
           onPress={() => handleActiveBottomSheet("facilities")}

@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { formatDateTime, convertUnixToISO } from "@/utilities/formatDateTime";
 
 const RainViewerTimestampSlider = ({ timestamps, onTimestampChange }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    setCurrentIndex(0);
-    onTimestampChange(`https://tilecache.rainviewer.com${timestamps[0].path}/256/{z}/{x}/{y}/2/1_1.png`);
-  }, []);
+    if (timestamps.length > 0) {
+      setCurrentIndex(0);
+      onTimestampChange(`https://tilecache.rainviewer.com${timestamps[0].path}/256/{z}/{x}/{y}/2/1_1.png`);
+    }
+  }, [timestamps, onTimestampChange]);
 
   const handlePrev = useCallback(() => {
     if (currentIndex > 0) {
@@ -16,7 +18,7 @@ const RainViewerTimestampSlider = ({ timestamps, onTimestampChange }) => {
       setCurrentIndex(newIndex);
       onTimestampChange(`https://tilecache.rainviewer.com${timestamps[newIndex].path}/256/{z}/{x}/{y}/2/1_1.png`);
     }
-  }, [currentIndex]);
+  }, [currentIndex, timestamps, onTimestampChange]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < timestamps.length - 1) {
@@ -24,49 +26,40 @@ const RainViewerTimestampSlider = ({ timestamps, onTimestampChange }) => {
       setCurrentIndex(newIndex);
       onTimestampChange(`https://tilecache.rainviewer.com${timestamps[newIndex].path}/256/{z}/{x}/{y}/2/1_1.png`);
     }
-  }, [currentIndex]);
+  }, [currentIndex, timestamps, onTimestampChange]);
+
+  if (!timestamps || timestamps.length === 0) {
+    return null;
+  }
 
   return (
-    <View className="absolute bottom-20 right-[21%] flex-row items-center">
-      <TouchableOpacity style={styles.button} onPress={handleNext} disabled={currentIndex === timestamps.length - 1}>
-        <Text style={styles.buttonText}>{"<"}</Text>
+    <View className="absolute bottom-[5%] left-5 right-5 flex-row items-center justify-center rounded-full py-2 px-4 shadow-lg">
+      <TouchableOpacity
+        className={`h-10 w-10 rounded-full bg-black/50 items-center justify-center ${
+          currentIndex === timestamps.length - 1 ? "opacity-50" : "active:bg-blue-600"
+        }`}
+        onPress={handleNext}
+        disabled={currentIndex === timestamps.length - 1}
+        activeOpacity={0.8}
+      >
+        <Text className="text-white text-xl font-bold">{"<"}</Text>
       </TouchableOpacity>
-      <View style={styles.timestampContainer}>
-        <Text style={styles.timestampText}>
+      <View className="mx-4 py-1 px-4 bg-black/50 rounded-full">
+        <Text className="text-white text-base font-medium text-center">
           {timestamps.length > 0 ? formatDateTime(convertUnixToISO(timestamps[currentIndex].time)).detailed_time : "Loading..."}
         </Text>
       </View>
-      <TouchableOpacity style={styles.button} onPress={handlePrev} disabled={currentIndex === 0}>
-        <Text style={styles.buttonText}>{">"}</Text>
+
+      <TouchableOpacity
+        className={`h-10 w-10 rounded-full bg-black/50 items-center justify-center ${currentIndex === 0 ? "opacity-50" : "active:bg-blue-600"}`}
+        onPress={handlePrev}
+        disabled={currentIndex === 0}
+        activeOpacity={0.8}
+      >
+        <Text className="text-white text-xl font-bold">{">"}</Text>
       </TouchableOpacity>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  timestampContainer: {
-    marginHorizontal: 10,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    borderRadius: 5,
-  },
-  timestampText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "white",
-  },
-  button: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    borderRadius: 5,
-    padding: 10,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-});
 
 export default RainViewerTimestampSlider;

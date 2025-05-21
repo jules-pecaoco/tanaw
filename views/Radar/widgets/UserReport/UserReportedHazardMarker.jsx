@@ -4,26 +4,27 @@ import { MarkerView, PointAnnotation } from "@rnmapbox/maps";
 import { MaterialIcons } from "@expo/vector-icons";
 
 const hazardIcons = {
-  flood: {
-    icon: <MaterialIcons name="flood" size={30} color="#2196F3" />,
-    color: "#2196F3",
-  },
-  fire: {
-    icon: <MaterialIcons name="local-fire-department" size={30} color="#FF5722" />,
-    color: "#FF5722",
-  },
-  storm: {
-    icon: <MaterialIcons name="thunderstorm" size={30} color="#9C27B0" />,
-    color: "#9C27B0",
-  },
-  landslide: {
-    icon: <MaterialIcons name="landslide" size={30} color="#795548" />,
-    color: "#795548",
-  },
-  earthquake: {
-    icon: <MaterialIcons name="landslide" size={30} color="#607D8B" />,
-    color: "#607D8B",
-  },
+  // flood: {
+  //   icon: <MaterialIcons name="flood" size={30} color="#2196F3" />,
+  //   color: "#2196F3",
+  // },
+  // fire: {
+  //   icon: <MaterialIcons name="local-fire-department" size={30} color="#FF5722" />,
+  //   color: "#FF5722",
+  // },
+  // storm: {
+  //   icon: <MaterialIcons name="thunderstorm" size={30} color="#9C27B0" />,
+  //   color: "#9C27B0",
+  // },
+  // landslide: {
+  //   icon: <MaterialIcons name="landslide" size={30} color="#795548" />,
+  //   color: "#795548",
+  // },
+  // earthquake: {
+  //   icon: <MaterialIcons name="landslide" size={30} color="#607D8B" />,
+  //   color: "#607D8B",
+  // },
+  //SORRI NA PO
   other: {
     icon: <MaterialIcons name="warning" size={30} color="#FF9800" />,
     color: "#FF9800",

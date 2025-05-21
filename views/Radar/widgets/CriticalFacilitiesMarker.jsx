@@ -7,9 +7,9 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { fetchGoogleFacilityById } from "@/services/google";
 
 const facilityColors = {
-  Hospitals: "pink",
-  FireStations: "red",
-  EvacSites: "brown",
+  Hospitals: "#333dff",
+  FireStations: "#ff4e33",
+  EvacSites: "#754406",
 };
 
 const FacilityMarker = ({ facility, type, setFacilitiesInformation, onPress, source }) => {
