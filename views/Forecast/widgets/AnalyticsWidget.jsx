@@ -225,8 +225,8 @@ const AnalyticsWidget = () => {
 
   if (error) {
     return (
-      <View className="flex-1 justify-center items-center p-5 bg-gray-100">
-        <Text className="text-red-500 font-bold text-center">Error: {error}</Text>
+      <View className="flex-1 justify-center items-center p-5 bg-gray-200">
+        <Text className="text-red-500 font-rbold text-center">Error: {error}</Text>
         <Text className="text-gray-600 text-center mt-2">
           Could not load weather data for {selectedCity}. Please try again or select a different city.
         </Text>
@@ -238,7 +238,7 @@ const AnalyticsWidget = () => {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-gray-200 px-4 pt-12">
-      <View className="bg-white rounded-lg mb-4 shadow-md">
+      <View className="bg-white rounded-xl mb-4 shadow-md">
         <Picker
           selectedValue={selectedCity}
           onValueChange={(itemValue) => setSelectedCity(itemValue)}
@@ -252,20 +252,20 @@ const AnalyticsWidget = () => {
       </View>
       {/* Date Range Selector Section */}
       <View className="bg-white p-4 rounded-xl my-4 shadow-md">
-        <Text className="text-center text-lg font-bold mb-4 text-gray-700">Date Range Selector</Text>
+        <Text className="text-center text-lg font-rbold mb-4 text-gray-700">Date Range Selector</Text>
 
         <View className="flex-row justify-center mb-4">
           <TouchableOpacity
-            className={`px-4 py-2 mx-2 rounded-lg ${filterMode === "preset" ? "bg-orange-500" : "bg-gray-300"}`}
+            className={`px-4 py-2 mx-2 rounded-xl ${filterMode === "preset" ? "bg-primary" : "bg-gray-200"}`}
             onPress={() => setFilterMode("preset")}
           >
-            <Text className={`font-semibold ${filterMode === "preset" ? "text-white" : "text-gray-700"}`}>Preset</Text>
+            <Text className={`font-rsemibold ${filterMode === "preset" ? "text-white" : "text-gray-700"}`}>Preset</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            className={`px-4 py-2 mx-2 rounded-lg ${filterMode === "custom" ? "bg-orange-500" : "bg-gray-300"}`}
+            className={`px-4 py-2 mx-2 rounded-xl ${filterMode === "custom" ? "bg-primary" : "bg-gray-300"}`}
             onPress={() => setFilterMode("custom")}
           >
-            <Text className={`font-semibold ${filterMode === "custom" ? "text-white" : "text-gray-700"}`}>Custom</Text>
+            <Text className={`font-rsemibold ${filterMode === "custom" ? "text-white" : "text-gray-700"}`}>Custom</Text>
           </TouchableOpacity>
         </View>
 
@@ -279,11 +279,11 @@ const AnalyticsWidget = () => {
             ].map((range) => (
               <TouchableOpacity
                 key={range.value}
-                className={`px-3 py-2 m-1 rounded-lg ${presetRange === range.value ? "bg-blue-500" : "bg-gray-200"}`}
+                className={`px-3 py-2 m-1 rounded-xl ${presetRange === range.value ? "bg-primary" : "bg-gray-200"}`}
                 onPress={() => setPresetRange(range.value)}
                 disabled={!minDataDate || !maxDataDate} // Disable if no data loaded
               >
-                <Text className={`font-semibold ${presetRange === range.value ? "text-white" : "text-gray-700"}`}>{range.label}</Text>
+                <Text className={`font-rsemibold ${presetRange === range.value ? "text-white" : "text-gray-700"}`}>{range.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -292,8 +292,8 @@ const AnalyticsWidget = () => {
         {filterMode === "custom" && (
           <View className="mb-2">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="font-semibold text-gray-700">Start Date:</Text>
-              <TouchableOpacity onPress={() => setShowStartDatePicker(true)} className="px-4 py-2 bg-gray-200 rounded-lg">
+              <Text className="font-rsemibold text-gray-700">Start Date:</Text>
+              <TouchableOpacity onPress={() => setShowStartDatePicker(true)} className="px-4 py-2 bg-gray-200 rounded-xl">
                 <Text className="text-gray-800">{formatDateForDisplay(startDate)}</Text>
               </TouchableOpacity>
             </View>
@@ -308,8 +308,8 @@ const AnalyticsWidget = () => {
               />
             )}
             <View className="flex-row justify-between items-center">
-              <Text className="font-semibold text-gray-700">End Date:</Text>
-              <TouchableOpacity onPress={() => setShowEndDatePicker(true)} className="px-4 py-2 bg-gray-200 rounded-lg">
+              <Text className="font-rsemibold text-gray-700">End Date:</Text>
+              <TouchableOpacity onPress={() => setShowEndDatePicker(true)} className="px-4 py-2 bg-gray-200 rounded-xl">
                 <Text className="text-gray-800">{formatDateForDisplay(endDate)}</Text>
               </TouchableOpacity>
             </View>
@@ -326,7 +326,7 @@ const AnalyticsWidget = () => {
           </View>
         )}
 
-        <View className="bg-gray-100 p-2 rounded-lg mt-3">
+        <View className="bg-gray-200 p-2 rounded-xl mt-3">
           <Text className="text-center text-sm text-gray-600">
             Showing data: {formatDateForDisplay(startDate)} to {formatDateForDisplay(endDate)}
           </Text>
@@ -336,36 +336,36 @@ const AnalyticsWidget = () => {
         {["hourly", "daily"].map((type) => (
           <TouchableOpacity
             key={type}
-            className={`px-4 py-2 mx-2 rounded-lg ${selectedRangeType === type ? "bg-orange-500" : "bg-orange-300"}`}
+            className={`px-4 py-2 mx-2 rounded-xl ${selectedRangeType === type ? "bg-primary" : "bg-secondary"}`}
             onPress={() => setSelectedRangeType(type)}
           >
-            <Text className="font-semibold text-lg text-white">{type.charAt(0).toUpperCase() + type.slice(1)} Data</Text>
+            <Text className="font-rsemibold text-lg text-white">{type.charAt(0).toUpperCase() + type.slice(1)} Data</Text>
           </TouchableOpacity>
         ))}
       </View>
       <View className="bg-white p-3 rounded-xl my-4 shadow-md">
-        <Text className="text-center text-lg font-bold mb-2 text-gray-700">Data Summary</Text>
+        <Text className="text-center text-lg font-rbold mb-2 text-gray-700">Data Summary</Text>
         <View className="flex-row justify-around">
           <View className="items-center">
-            <Text className="font-semibold text-gray-600">Data Points</Text>
-            <Text className="text-lg font-bold text-orange-600">{processedChartData.totalPoints}</Text>
+            <Text className="font-rsemibold text-gray-600">Data Points</Text>
+            <Text className="text-lg font-rbold text-orange-600">{processedChartData.totalPoints}</Text>
           </View>
           <View className="items-center">
-            <Text className="font-semibold text-gray-600">Duration</Text>
-            <Text className="text-lg font-bold text-orange-600">{getRangeDurationDisplay()}</Text>
+            <Text className="font-rsemibold text-gray-600">Duration</Text>
+            <Text className="text-lg font-rbold text-orange-600">{getRangeDurationDisplay()}</Text>
           </View>
         </View>
       </View>
       {noDataForCriteria ? (
         <View className="bg-white p-4 rounded-xl my-4 items-center justify-center h-64 shadow-md">
-          <Text className="text-lg font-semibold text-red-500">No data available for selected criteria.</Text>
+          <Text className="text-lg font-rsemibold text-red-500">No data available for selected criteria.</Text>
         </View>
       ) : (
         <View>
           {/* Temperature Chart */}
           {processedChartData.tempPoints.length > 0 && (
             <View className="bg-white p-3 rounded-xl my-4 shadow-md">
-              <Text className="text-center text-lg font-bold mb-2 text-gray-700">Temperature (°C)</Text>
+              <Text className="text-center text-lg font-rbold mb-2 text-gray-700">Temperature (°C)</Text>
               <ScrollView horizontal>
                 <LineChart
                   data={processedChartData.tempPoints}
@@ -398,7 +398,7 @@ const AnalyticsWidget = () => {
           {/* Rainfall Chart */}
           {processedChartData.rainPoints.length > 0 && (
             <View className="bg-white p-3 rounded-xl my-4 shadow-md">
-              <Text className="text-center text-lg font-bold mb-2 text-gray-700">Rain (mm)</Text>
+              <Text className="text-center text-lg font-rbold mb-2 text-gray-700">Rain (mm)</Text>
               <ScrollView horizontal>
                 <LineChart
                   data={processedChartData.rainPoints}
@@ -431,7 +431,7 @@ const AnalyticsWidget = () => {
           {/* Precipitation Probability Chart */}
           {processedChartData.precipPoints.length > 0 && (
             <View className="bg-white p-3 rounded-xl mb-16 shadow-md">
-              <Text className="text-center text-lg font-bold mb-2 text-gray-700">Chance of Rain (%)</Text>
+              <Text className="text-center text-lg font-rbold mb-2 text-gray-700">Chance of Rain (%)</Text>
               <ScrollView horizontal>
                 <LineChart
                   data={processedChartData.precipPoints}

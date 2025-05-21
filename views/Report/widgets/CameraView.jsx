@@ -44,21 +44,20 @@ const CameraWidget = ({ onImageCaptured, imageUri }) => {
   // If image is captured, show preview
   if (imageUri) {
     return (
-      <View className="w-full rounded-lg overflow-hidden relative" style={{ height: 600 }}>
+      <View className="w-full rounded-xl overflow-hidden relative" style={{ height: 600 }}>
         <Image source={{ uri: imageUri }} className="w-full h-full" />
         <View className="absolute top-0 right-0 left-0 flex-row justify-between p-4">
           <TouchableOpacity className="bg-black/60 p-2.5 rounded" onPress={() => setOpenCamera(false)}>
             <Ionicons name="close" size={24} color="white" />
           </TouchableOpacity>
         </View>
-        
       </View>
     );
   }
 
   // Show camera view
   return (
-    <View className="flex-1 w-full rounded-lg">
+    <View className="flex-1 w-full rounded-xl">
       {permission === null && <Text>Requesting camera permission...</Text>}
 
       {permission === false && <Text>No access to camera</Text>}

@@ -36,27 +36,27 @@ const RainViewerTimestampSlider = ({ timestamps, onTimestampChange }) => {
     <View className="absolute bottom-[5%] left-5 right-5 flex-row items-center justify-center rounded-full py-2 px-4 shadow-lg">
       <TouchableOpacity
         className={`h-10 w-10 rounded-full bg-black/50 items-center justify-center ${
-          currentIndex === timestamps.length - 1 ? "opacity-50" : "active:bg-blue-600"
+          currentIndex === timestamps.length - 1 ? "opacity-50" : "active:bg-primary"
         }`}
         onPress={handleNext}
         disabled={currentIndex === timestamps.length - 1}
         activeOpacity={0.8}
       >
-        <Text className="text-white text-xl font-bold">{"<"}</Text>
+        <Text className="text-white text-xl font-rbold">{"<"}</Text>
       </TouchableOpacity>
       <View className="mx-4 py-1 px-4 bg-black/50 rounded-full">
-        <Text className="text-white text-base font-medium text-center">
+        <Text className="text-white text-base font-rmedium text-center">
           {timestamps.length > 0 ? formatDateTime(convertUnixToISO(timestamps[currentIndex].time)).detailed_time : "Loading..."}
         </Text>
       </View>
 
       <TouchableOpacity
-        className={`h-10 w-10 rounded-full bg-black/50 items-center justify-center ${currentIndex === 0 ? "opacity-50" : "active:bg-blue-600"}`}
+        className={`h-10 w-10 rounded-full bg-black/50 items-center justify-center ${currentIndex === 0 ? "opacity-50" : "active:bg-primary"}`}
         onPress={handlePrev}
         disabled={currentIndex === 0}
         activeOpacity={0.8}
       >
-        <Text className="text-white text-xl font-bold">{">"}</Text>
+        <Text className="text-white text-xl font-rbold">{">"}</Text>
       </TouchableOpacity>
     </View>
   );

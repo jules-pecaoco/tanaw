@@ -15,7 +15,7 @@ import useLocation from "@/hooks/useLocation";
 
 const ForecastScreen = () => {
   const { location } = useLocation();
-  const { reports, isLoading } = useHazardReports();
+  const { reports, reportsIsLoading, reportsError } = useHazardReports();
   const [currentLocation, setCurrentLocation] = useState(() => {
     if (location) {
       return { latitude: location.latitude, longitude: location.longitude };
@@ -96,7 +96,7 @@ const ForecastScreen = () => {
           ) : active == "analytics" ? (
             <AnalyticsWidget data={{}} />
           ) : active == "userreport" ? (
-            <UserReportWidget reports={reports} />
+            <UserReportWidget reports={reports} loading={reportsIsLoading} error={reportsError} />
           ) : null}
         </View>
       </View>

@@ -9,7 +9,7 @@ const ALL_CITIES_LABEL = "All Cities";
 
 const getDayKey = (date) => date.toISOString().split("T")[0];
 
-const HazardAnalyticsWidget = ({ reports: initialReports }) => {
+const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, reportsError }) => {
   const screenWidth = Dimensions.get("window").width - 40;
 
   const [allHazards, setAllHazards] = useState([]);
@@ -164,10 +164,21 @@ const HazardAnalyticsWidget = ({ reports: initialReports }) => {
     });
   };
 
-  if (isLoading) {
+  if (reportsIsLoading) {
     return (
       <View className="flex-1 justify-center items-center p-5 bg-gray-200">
         <ActivityIndicator size="large" color="#0ea5e9" />
+      </View>
+    );
+  }
+
+  if (reportsError) {
+    return (
+      <View className="flex-1 justify-center items-center p-5 bg-gray-200">
+        <Text className="text-red-500 font-rbold text-center">Error: {reportsError}</Text>
+        <Text className="text-gray-600 text-center mt-2">
+          Could not load userdata data. Please try again or select a different city.
+        </Text>
       </View>
     );
   }
@@ -181,7 +192,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports }) => {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-gray-200 p-3">
-      <View className="bg-white rounded-lg mb-4 shadow">
+      <View className="bg-white rounded-xl mb-4 shadow">
         {availableCities.length > 0 && (
           <Picker selectedValue={selectedCity} onValueChange={(itemValue) => setSelectedCity(itemValue)} style={{ height: 50, width: "100%" }}>
             {availableCities.map((city) => (
@@ -196,13 +207,13 @@ const HazardAnalyticsWidget = ({ reports: initialReports }) => {
 
         <View className="flex-row justify-center mb-3">
           <TouchableOpacity
-            className={`px-4 py-2 mx-1 rounded-lg ${filterMode === "preset" ? "bg-primary" : "bg-neutral-200"}`}
+            className={`px-4 py-2 mx-1 rounded-xl ${filterMode === "preset" ? "bg-primary" : "bg-neutral-200"}`}
             onPress={() => setFilterMode("preset")}
           >
             <Text className={`font-rmedium ${filterMode === "preset" ? "text-white" : "text-neutral-700"}`}>Preset</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            className={`px-4 py-2 mx-1 rounded-lg ${filterMode === "custom" ? "bg-primary" : "bg-neutral-200"}`}
+            className={`px-4 py-2 mx-1 rounded-xl ${filterMode === "custom" ? "bg-primary" : "bg-neutral-200"}`}
             onPress={() => setFilterMode("custom")}
           >
             <Text className={`font-rmedium ${filterMode === "custom" ? "text-white" : "text-neutral-700"}`}>Custom</Text>
@@ -219,7 +230,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports }) => {
             ].map((range) => (
               <TouchableOpacity
                 key={range.value}
-                className={`px-3 py-2 m-1 rounded-lg ${presetRange === range.value ? "bg-primary" : "bg-neutral-100"}`}
+                className={`px-3 py-2 m-1 rounded-xl ${presetRange === range.value ? "bg-primary" : "bg-neutral-100"}`}
                 onPress={() => setPresetRange(range.value)}
               >
                 <Text className={`font-rmedium ${presetRange === range.value ? "text-white" : "text-neutral-700"}`}>{range.label}</Text>
@@ -232,7 +243,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports }) => {
           <View className="mb-2">
             <View className="flex-row justify-between items-center mb-3">
               <Text className="font-rmedium text-black">Start Date:</Text>
-              <TouchableOpacity onPress={() => setShowStartDatePicker(true)} className="px-3 py-2 bg-neutral-200 rounded-lg">
+              <TouchableOpacity onPress={() => setShowStartDatePicker(true)} className="px-3 py-2 bg-neutral-200 rounded-xl">
                 <Text className="text-black">{formatDateForDisplay(startDate)}</Text>
               </TouchableOpacity>
             </View>
@@ -248,7 +259,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports }) => {
             )}
             <View className="flex-row justify-between items-center mb-3">
               <Text className="font-rmedium text-black">End Date:</Text>
-              <TouchableOpacity onPress={() => setShowEndDatePicker(true)} className="px-3 py-2 bg-neutral-200 rounded-lg">
+              <TouchableOpacity onPress={() => setShowEndDatePicker(true)} className="px-3 py-2 bg-neutral-200 rounded-xl">
                 <Text className="text-black">{formatDateForDisplay(endDate)}</Text>
               </TouchableOpacity>
             </View>
@@ -264,7 +275,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports }) => {
             )}
           </View>
         )}
-        <View className="bg-neutral-100 p-2 rounded-lg mt-2">
+        <View className="bg-neutral-100 p-2 rounded-xl mt-2">
           <Text className="text-center text-sm text-neutral-600">
             {formatDateForDisplay(startDate)} - {formatDateForDisplay(endDate)}
           </Text>

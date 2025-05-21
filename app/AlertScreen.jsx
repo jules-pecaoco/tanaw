@@ -48,7 +48,7 @@ const WeatherAlert = () => {
         </View>
 
         {/* Alert Title */}
-        <Text className="text-white text-3xl font-bold text-center">{data.title || "Weather Alert"}</Text>
+        <Text className="text-white text-3xl font-rbold text-center">{data.title || "Weather Alert"}</Text>
 
         {/* Alert Message */}
         <Text className="text-white text-center mt-6 text-base">
@@ -58,8 +58,8 @@ const WeatherAlert = () => {
 
       {/* Action Button */}
       <View className="p-6">
-        <TouchableOpacity className="bg-white py-4 rounded-lg items-center" onPress={router.back}>
-          <Text className="font-bold text-lg" style={{ color: alertStyles.backgroundColor }}>
+        <TouchableOpacity className="bg-white py-4 rounded-xl items-center" onPress={router.back}>
+          <Text className="font-rbold text-lg" style={{ color: alertStyles.backgroundColor }}>
             Dismiss
           </Text>
         </TouchableOpacity>

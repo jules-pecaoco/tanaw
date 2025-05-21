@@ -35,15 +35,6 @@ const NotificationScreen = () => {
     loadNotifications();
   };
 
-  const notificationLogs = async () => {
-    const logs = await getPendingNotifications();
-    const sqliteLogs = await fetchNotifications();
-    const weatherTaskRegistered = await isWeatherTaskRegistered();
-    console.log("Weather Task Registered: ", weatherTaskRegistered);
-    console.log("Sqlites Notifications: ", sqliteLogs);
-    console.log("Notification Logs: ", logs);
-  };
-
   const addExtremeHeatAlert = async () => {
     const currentDate = new Date();
     const notificationDate = new Date(currentDate.getTime() + 10 * 1000);
@@ -69,30 +60,9 @@ const NotificationScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="bg-white px-4 py-5 items-center justify-center">
-        <Text className="font-rmedium text-2xl text-gray-800">Notifications</Text>
-      </View>
-
-      <View className="flex-1 bg-gray-100 px-3 pt-4">
-        <NotificationWidget notificationData={notificationData} onRefresh={loadNotifications} refreshing={refreshing} />
-      </View>
-
-      <TouchableOpacity
-        className="absolute bottom-6 right-5 bg-primary p-4 rounded-full shadow-lg active:bg-primary"
-        onPress={addExtremeHeatAlert}
-        activeOpacity={0.9}
-      >
-        <MaterialCommunityIcons name="alert" size={24} color="white" />
-      </TouchableOpacity>
-      <TouchableOpacity
-        className="absolute bottom-6 right-24 bg-blue-500 p-4 rounded-full shadow-lg active:bg-blue-600"
-        onPress={addExtremeRainAlert}
-        activeOpacity={0.9}
-      >
-        <MaterialCommunityIcons name="alert" size={24} color="white" />
-      </TouchableOpacity>
-    </SafeAreaView>
+    <View className="bg-gray-200 h-full flex items-center justify-center">
+      <NotificationWidget notificationData={notificationData} onRefresh={loadNotifications} refreshing={refreshing} />
+    </View>
   );
 };
 

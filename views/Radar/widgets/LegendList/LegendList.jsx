@@ -14,7 +14,7 @@ const LegendItem = ({ item }) => {
   return (
     <View className="flex-col items-start gap-2">
       <View className="flex-1 justify-center">
-        <Text className="text-sm text-gray-800 font-medium">{item.label}</Text>
+        <Text className="text-sm text-gray-800 font-rmedium">{item.label}</Text>
         {item.interactive && (
           <View className="flex-row items-center mt-0.5 gap-3">
             {interactiveIcon}
@@ -67,16 +67,20 @@ const LegendList = ({ appState }) => {
 
   return (
     <>
-      <TouchableOpacity onPress={toggleVisibility} className="flex-row items-center bg-black/70 py-2 px-3 rounded-lg self-start mb-1">
+      <TouchableOpacity onPress={toggleVisibility} className="flex-row items-center bg-black/70 py-2 px-3 rounded-xl self-start mb-1">
         <MaterialIcons name={isVisible ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={24} color="#FFFFFF" />
-        <Text className="text-white font-bold ml-1">Map Legend ({Object.values(activeLegends).flat().length})</Text>
+        <Text className="text-white font-rbold ml-1">Map Legend ({Object.values(activeLegends).flat().length})</Text>
       </TouchableOpacity>
 
       {isVisible && Object.keys(activeLegends).length > 0 && (
-        <ScrollView className="bg-white/90 rounded-lg p-2.5 border border-gray-300" contentContainerStyle={{ paddingBottom: 10 }}>
+        <ScrollView
+          className="bg-white/90 rounded-xl p-2.5 border border-gray-300"
+          contentContainerStyle={{ paddingBottom: 10 }}
+          showsVerticalScrollIndicator={false}
+        >
           {Object.entries(activeLegends).map(([category, items]) => (
             <View key={category}>
-              <Text className="text-base font-bold mb-2 text-gray-800 border-b border-gray-200 pb-1">{category}</Text>
+              <Text className="text-base font-rbold mb-2 text-gray-800 border-b border-gray-200 pb-1">{category}</Text>
               {items.map((item) => {
                 return <LegendItem key={item.id} item={item} />;
               })}
@@ -86,7 +90,7 @@ const LegendList = ({ appState }) => {
       )}
 
       {isVisible && Object.keys(activeLegends).length === 0 && (
-        <View className="bg-white/90 rounded-lg p-2.5 border border-gray-300">
+        <View className="bg-white/90 rounded-xl p-2.5 border border-gray-300">
           <Text className="text-center p-2.5 text-gray-500 italic">No active layers with legends.</Text>
         </View>
       )}

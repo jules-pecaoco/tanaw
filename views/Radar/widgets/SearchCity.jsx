@@ -49,7 +49,7 @@ const SearchCity = ({ currentLocation, setSearchCityDetails, handleSearchZoom, t
             renderItem={({ item }) => {
               return (
                 <TouchableOpacity onPress={() => handleSearchCityDetail(item.mapbox_id, item.name)} className="p-3 border-b border-gray-200">
-                  <Text className="text-base font-medium">{item.name}</Text>
+                  <Text className="text-base font-rmedium">{item.name}</Text>
                   <Text className="text-sm text-gray-600">{item.context?.region?.name || ""}</Text>
                 </TouchableOpacity>
               );

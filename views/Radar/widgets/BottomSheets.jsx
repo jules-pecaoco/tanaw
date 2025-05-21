@@ -33,7 +33,7 @@ const SheetButton = ({ title, onPress, isactive, customStyle, children }) => {
       onPress={onPress}
       className={`${
         isactive ? "border border-primary border-solid" : ""
-      } ${customStyle} p-5 bg-white rounded-lg shadow-lg flex justify-center items-center border-[1px]`}
+      } ${customStyle} p-5 bg-white rounded-xl shadow-lg flex justify-center items-center border-[1px]`}
     >
       {children}
       {title && <Text className="text-xs">{title}</Text>}
@@ -55,7 +55,7 @@ const SourcesButton = ({ title, onPress, isactive, customStyle, children, toolti
         onPress={onPress}
         className={`${
           isactive ? "border border-primary border-solid" : ""
-        } ${customStyle} p-5 bg-white rounded-lg shadow-lg flex justify-center items-center border-[1px]`}
+        } ${customStyle} p-5 bg-white rounded-xl shadow-lg flex justify-center items-center border-[1px]`}
       >
         {/* Info icon in top right corner */}
         {tooltipContent && (
@@ -73,7 +73,7 @@ const SourcesButton = ({ title, onPress, isactive, customStyle, children, toolti
         <View className="absolute top-12 right-0 bg-white p-3 rounded-md shadow-md border border-gray-200 z-20 w-48">
           <Text className="text-xs text-gray-700">{tooltipContent}</Text>
           <TouchableOpacity onPress={toggleTooltip} className="absolute top-1 right-1">
-            <Text className="text-xs font-bold text-gray-500">✕</Text>
+            <Text className="text-xs font-rbold text-gray-500">✕</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -295,15 +295,15 @@ const FacilitiesMarkerBottomSheet = React.forwardRef(
         animateOnMount={true}
       >
         <BottomSheetView className="flex-1 p-5">
-          <Text className="text-2xl font-bold mb-5 text-[#F47C25]">Agencies Information</Text>
-          <View className="bg-white p-2 rounded-lg">
-            <Text className="text-black font-bold">{data.name}</Text>
+          <Text className="text-2xl font-rbold mb-5 text-[#F47C25]">Agencies Information</Text>
+          <View className="bg-white p-2 rounded-xl">
+            <Text className="text-black font-rbold">{data.name}</Text>
             <Text className="text-black mb-2">{data.phone}</Text>
             {isCurrentRouteActive && hasClickedGetDirections && !routeIsLoading && routeError === null && (
               <View className="mt-2 mb-2">
-                <Text className="text-black font-bold">Direction Detail:</Text>
-                <Text className="text-black font-bold">Distance: {distance} km</Text>
-                <Text className="text-black font-bold">Duration: {duration} minutes</Text>
+                <Text className="text-black font-rbold">Direction Detail:</Text>
+                <Text className="text-black font-rbold">Distance: {distance} km</Text>
+                <Text className="text-black font-rbold">Duration: {duration} minutes</Text>
               </View>
             )}
             <View>
@@ -346,7 +346,7 @@ const UserReportBottomSheet = React.forwardRef(({ item, handleSheetChanges }, re
       animateOnMount={true}
     >
       <BottomSheetView className="flex-1 p-5">
-        <View className="bg-white rounded-lg shadow-sm mb-4 overflow-hidden">
+        <View className="bg-white rounded-xl shadow-sm mb-4 overflow-hidden">
           {/* Hazard Image */}
           {item.image_path && <Image source={{ uri: getImageUrl(item.image_path) }} className="w-full h-48" resizeMode="cover" />}
 
@@ -356,7 +356,7 @@ const UserReportBottomSheet = React.forwardRef(({ item, handleSheetChanges }, re
             <View className="flex-column mb-2">
               <View className="flex-row items-center justify-between w-full mb-2">
                 <View style={{ backgroundColor: badgeColor }} className="px-3 py-1 rounded-full flex-row items-center">
-                  <Text className={`font-medium ${textColorClass}`}>{item.hazard_type.charAt(0).toUpperCase() + item.hazard_type.slice(1)}</Text>
+                  <Text className={`font-rmedium ${textColorClass}`}>{item.hazard_type.charAt(0).toUpperCase() + item.hazard_type.slice(1)}</Text>
                 </View>
                 <Text className="text-gray-500 text-sm">{getTimeAgo(item.created_at)}</Text>
               </View>

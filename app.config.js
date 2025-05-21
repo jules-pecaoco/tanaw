@@ -3,9 +3,9 @@ export default ({ config }) => ({
   ...config,
   name: "Tanaw",
   slug: "tanaw",
-  version: "0.9.8",
+  version: "0.9.85",
   orientation: "portrait",
-  icon: "./assets/images/tanaw-logo.png",
+  icon: "./assets/images/tanaw-app-icon.png",
   scheme: "myapp",
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
@@ -15,7 +15,7 @@ export default ({ config }) => ({
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: "./assets/images/tanaw-logo.png",
+      foregroundImage: "./assets/images/tanaw-app-icon.png",
       backgroundColor: "#ffffff",
     },
     package: "dev.expo.tanaw",
@@ -29,14 +29,14 @@ export default ({ config }) => ({
   web: {
     bundler: "metro",
     output: "static",
-    favicon: "./assets/images/tanaw-logo.png",
+    favicon: "./assets/images/tanaw-app-icon.png",
   },
   plugins: [
     "expo-router",
     [
       "expo-splash-screen",
       {
-        image: "./assets/images/tanaw-logo.png",
+        image: "./assets/images/tanaw-app-icon.png",
         imageWidth: 200,
         resizeMode: "contain",
         backgroundColor: "#ffffff",
@@ -49,6 +49,7 @@ export default ({ config }) => ({
       },
     ],
     "expo-sqlite",
+    // "expo-audio",
   ],
   experiments: {
     typedRoutes: true,

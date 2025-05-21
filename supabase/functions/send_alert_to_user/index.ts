@@ -2,12 +2,6 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js";
 
 serve(async (req) => {
-  // Validate secret from headers
-  const secret = req.headers.get("x-secret-key"); 
-  if (secret !== Deno.env.get("NOTIFY_SECRET_KEY")) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
   try {
     // Create Supabase client using secrets
     const supabase = createClient(
@@ -43,7 +37,7 @@ serve(async (req) => {
           body: JSON.stringify({
             to: user.push_token,
             title: `Weather Alert!`,
-            body: `Weather Alert: ${weatherType.toUpperCase()}, `,
+            body: `There is an ${weatherType === "heat" ? "Extreme Heat" : "Extreme Rain"} detected at your location.`,
             data: {
               type: type,
               weatherType: weatherType,
@@ -59,16 +53,14 @@ serve(async (req) => {
 
         if (!expoResponse.ok) {
           const errorBody = await expoResponse.json();
-          console.error("Error sending push notification to", user.push_token, ":", errorBody);
-          // Optionally, you could keep track of failed notifications and report them back.
+          console.error("Error sending alert to", user.push_token, ":", errorBody);
         }
       } catch (error) {
-        console.error("Error sending push notification:", error);
-        // Optionally, handle individual notification failures (e.g., log them).
+        console.error("Error sending alert:", error);
       }
     }
 
-    return new Response("Push sent to nearby users");
+    return new Response("Alert sent to nearby users");
   } catch (error) {
     console.error("An unexpected error occurred:", error);
     return new Response("Internal server error", { status: 500 });

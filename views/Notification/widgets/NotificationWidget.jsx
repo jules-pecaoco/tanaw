@@ -79,12 +79,12 @@ const NotificationWidget = ({ notificationData, onRefresh, refreshing }) => {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 90 }}
       ListEmptyComponent={
-        <View className="flex-1 justify-center items-center mt-20">
+        <View className="flex-1 justify-center items-center mt-40">
           <MaterialCommunityIcons name="bell-off-outline" size={48} className="text-gray-400 mb-3" />
           <Text className="font-rmedium text-lg text-gray-600">No Notifications</Text>
         </View>
       }
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6", "#2563EB"]} tintColor={"#3B82F6"} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#F47C25"]} tintColor={"#F47C25"} />}
     />
   );
 };

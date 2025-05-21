@@ -45,7 +45,7 @@ const PermissionScreen = ({
             handlePress={handlePress}
             title={buttonText}
             containerStyles="h-fit w-10/12"
-            textStyles="bg-white text-center py-3 rounded-xl font-semibold"
+            textStyles="bg-white text-center py-3 rounded-xl font-rsemibold"
           />
         </View>
       </View>

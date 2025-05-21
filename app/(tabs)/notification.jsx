@@ -1,14 +1,16 @@
 import React from "react";
 
 import NotificationScreen from "@/views/Notification/NotificationScreen";
-import { SafeAreaView } from "react-native";
+import { SafeAreaView, View, Text } from "react-native";
 
 const Notification = () => {
-
   return (
-    <SafeAreaView className="flex-1">
-      <NotificationScreen  />
-    </SafeAreaView>
+    <View>
+      <View className="w-full bg-white py-5">
+        <Text className="text-center font-rmedium text-3xl">Notifications</Text>
+      </View>
+      <NotificationScreen />
+    </View>
   );
 };
 
