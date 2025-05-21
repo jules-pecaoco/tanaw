@@ -10,6 +10,7 @@ const CHART_TOP_PADDING = 15;
 const CHART_X_AXIS_LABEL_AREA_HEIGHT = 40;
 const X_AXIS_SPACING_PER_ITEM = 50;
 const DEFAULT_CHART_HORIZONTAL_PADDING = 15;
+const LOGICAL_TODAY_OFFSET_DAYS = 7; // New constant for the 7-day offset
 
 const yAxisTextStyleGlobal = { color: "gray", fontSize: 10 };
 const xAxisLabelTextStyleGlobal = { color: "gray", fontSize: 10, height: CHART_X_AXIS_LABEL_AREA_HEIGHT - 10 };
@@ -35,10 +36,8 @@ const FixedYAxisLabels = ({ containerHeight, paddingTop, paddingBottom, maxValue
       }
       return lbls.reverse();
     }
-
     const generatedLabels = [];
     const step = (maxValue - minValue) / noOfSections;
-
     for (let i = 0; i <= noOfSections; i++) {
       let val = minValue + i * step;
       if (i === 0) val = minValue;
@@ -51,7 +50,6 @@ const FixedYAxisLabels = ({ containerHeight, paddingTop, paddingBottom, maxValue
   if (labels.length === 0) {
     return <View style={{ width: Y_AXIS_WIDTH, height: containerHeight }} />;
   }
-
   return (
     <View
       style={{
@@ -74,10 +72,9 @@ const FixedYAxisLabels = ({ containerHeight, paddingTop, paddingBottom, maxValue
 
 const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange, cities }) => {
   const screenWidth = Dimensions.get("window").width - 40;
-
   const [selectedRangeType, setSelectedRangeType] = useState("hourly");
-  const [minDataDate, setMinDataDate] = useState(null);
-  const [maxDataDate, setMaxDataDate] = useState(null);
+  const [minDataDate, setMinDataDate] = useState(null); // Actual earliest date in data
+  const [maxDataDate, setMaxDataDate] = useState(null); // Actual latest date in data
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
@@ -86,54 +83,62 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
   const [presetRange, setPresetRange] = useState("3days");
 
   useEffect(() => {
-    const todayAtMidnight = new Date();
-    todayAtMidnight.setHours(0, 0, 0, 0);
+    const systemTodayAtMidnight = new Date();
+    systemTodayAtMidnight.setHours(0, 0, 0, 0);
 
     if (rawData) {
       let firstDateCandidate, lastDateCandidate;
-
       if (rawData.daily?.time && rawData.daily.time.length > 0) {
         firstDateCandidate = parseYYYYMMDDToLocalMidnight(rawData.daily.time[0]);
         lastDateCandidate = parseYYYYMMDDToLocalMidnight(rawData.daily.time[rawData.daily.time.length - 1]);
       } else if (rawData.hourly?.time && rawData.hourly.time.length > 0) {
         const firstHourlyFullDate = new Date(rawData.hourly.time[0]);
         firstDateCandidate = new Date(firstHourlyFullDate.getFullYear(), firstHourlyFullDate.getMonth(), firstHourlyFullDate.getDate(), 0, 0, 0, 0);
-
         const lastHourlyFullDate = new Date(rawData.hourly.time[rawData.hourly.time.length - 1]);
         lastDateCandidate = new Date(lastHourlyFullDate.getFullYear(), lastHourlyFullDate.getMonth(), lastHourlyFullDate.getDate(), 0, 0, 0, 0);
       }
 
       if (firstDateCandidate && lastDateCandidate && !isNaN(firstDateCandidate.getTime()) && !isNaN(lastDateCandidate.getTime())) {
-        setMinDataDate(new Date(firstDateCandidate));
-        setMaxDataDate(new Date(lastDateCandidate));
+        const actualMinData = new Date(firstDateCandidate);
+        const actualMaxData = new Date(lastDateCandidate);
+        setMinDataDate(actualMinData);
+        setMaxDataDate(actualMaxData);
 
-        let sDate = new Date(lastDateCandidate);
-        sDate.setDate(lastDateCandidate.getDate() - 2);
-        let eDate = new Date(lastDateCandidate);
+        // Determine the logical start for the default view (actualMinData + offset)
+        let logicalInitialViewStart = new Date(actualMinData);
+        logicalInitialViewStart.setDate(actualMinData.getDate() + LOGICAL_TODAY_OFFSET_DAYS);
+        logicalInitialViewStart.setHours(0, 0, 0, 0);
 
-        sDate = sDate < firstDateCandidate ? new Date(firstDateCandidate) : sDate;
-        sDate = sDate > lastDateCandidate ? new Date(lastDateCandidate) : sDate;
+        // Default view is "3days" from this logicalInitialViewStart
+        let sDate = new Date(logicalInitialViewStart);
+        let eDate = new Date(logicalInitialViewStart);
+        eDate.setDate(logicalInitialViewStart.getDate() + 2); // For 3 days total
 
-        eDate = eDate > lastDateCandidate ? new Date(lastDateCandidate) : eDate;
-        eDate = eDate < firstDateCandidate ? new Date(firstDateCandidate) : eDate;
+        // Clamp sDate and eDate to the actual available data range [actualMinData, actualMaxData]
+        sDate = sDate < actualMinData ? new Date(actualMinData) : sDate;
+        sDate = sDate > actualMaxData ? new Date(actualMaxData) : sDate;
+
+        eDate = eDate < actualMinData ? new Date(actualMinData) : eDate;
+        eDate = eDate > actualMaxData ? new Date(actualMaxData) : eDate;
 
         if (sDate > eDate) {
+          // If clamping made start after end, set to a single day (eDate)
           sDate = new Date(eDate);
         }
 
         setStartDate(sDate);
         setEndDate(eDate);
       } else {
-        setMinDataDate(new Date(todayAtMidnight));
-        setMaxDataDate(new Date(todayAtMidnight));
-        setStartDate(new Date(todayAtMidnight));
-        setEndDate(new Date(todayAtMidnight));
+        setMinDataDate(new Date(systemTodayAtMidnight));
+        setMaxDataDate(new Date(systemTodayAtMidnight));
+        setStartDate(new Date(systemTodayAtMidnight));
+        setEndDate(new Date(systemTodayAtMidnight));
       }
     } else {
-      setMinDataDate(new Date(todayAtMidnight));
-      setMaxDataDate(new Date(todayAtMidnight));
-      setStartDate(new Date(todayAtMidnight));
-      setEndDate(new Date(todayAtMidnight));
+      setMinDataDate(new Date(systemTodayAtMidnight));
+      setMaxDataDate(new Date(systemTodayAtMidnight));
+      setStartDate(new Date(systemTodayAtMidnight));
+      setEndDate(new Date(systemTodayAtMidnight));
     }
   }, [rawData]);
 
@@ -142,37 +147,43 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
       return;
     }
 
-    let newStartCalc = new Date(minDataDate);
-    let newEndCalc = new Date(maxDataDate);
-    const dataContextLatestDay = new Date(maxDataDate);
+    // Define the user's logical "Today" (actual start of data + offset)
+    let logicalTodayForPresets = new Date(minDataDate);
+    logicalTodayForPresets.setDate(minDataDate.getDate() + LOGICAL_TODAY_OFFSET_DAYS);
+    logicalTodayForPresets.setHours(0, 0, 0, 0);
+
+    let newStartCalc = new Date(minDataDate); // Default for 'all'
+    let newEndCalc = new Date(maxDataDate); // Default for 'all'
 
     switch (presetRange) {
-      case "today":
-        newStartCalc = new Date(dataContextLatestDay);
-        newEndCalc = new Date(dataContextLatestDay);
+      case "today": // User's "Today"
+        newStartCalc = new Date(logicalTodayForPresets);
+        newEndCalc = new Date(logicalTodayForPresets);
         break;
-      case "3days":
-        newStartCalc = new Date(dataContextLatestDay);
-        newStartCalc.setDate(dataContextLatestDay.getDate() - 2);
-        newEndCalc = new Date(dataContextLatestDay);
+      case "3days": // 3 days starting from user's "Today"
+        newStartCalc = new Date(logicalTodayForPresets);
+        newEndCalc = new Date(logicalTodayForPresets);
+        newEndCalc.setDate(logicalTodayForPresets.getDate() + 2);
         break;
-      case "week":
-        newStartCalc = new Date(dataContextLatestDay);
-        newStartCalc.setDate(dataContextLatestDay.getDate() - 6);
-        newEndCalc = new Date(dataContextLatestDay);
+      case "week": // 7 days starting from user's "Today"
+        newStartCalc = new Date(logicalTodayForPresets);
+        newEndCalc = new Date(logicalTodayForPresets);
+        newEndCalc.setDate(logicalTodayForPresets.getDate() + 6);
         break;
       case "all":
+        // newStartCalc and newEndCalc are already minDataDate and maxDataDate
         break;
     }
 
     newStartCalc.setHours(0, 0, 0, 0);
     newEndCalc.setHours(0, 0, 0, 0);
 
+    // Clamp calculated dates to the *actual* available data range [minDataDate, maxDataDate]
     let finalStartDate = newStartCalc < minDataDate ? new Date(minDataDate) : newStartCalc;
     finalStartDate = finalStartDate > maxDataDate ? new Date(maxDataDate) : finalStartDate;
 
-    let finalEndDate = newEndCalc > maxDataDate ? new Date(maxDataDate) : newEndCalc;
-    finalEndDate = finalEndDate < minDataDate ? new Date(minDataDate) : finalEndDate;
+    let finalEndDate = newEndCalc < minDataDate ? new Date(minDataDate) : newEndCalc;
+    finalEndDate = finalEndDate > maxDataDate ? new Date(maxDataDate) : finalEndDate;
 
     if (finalStartDate > finalEndDate) {
       finalStartDate = new Date(finalEndDate);
@@ -194,7 +205,6 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
     ) {
       return baseReturn;
     }
-
     const source = selectedRangeType === "hourly" ? rawData.hourly : rawData.daily;
     if (!source || !source.time || source.time.length === 0) return baseReturn;
 
@@ -204,19 +214,14 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
     const filteredIndices = [];
     source.time.forEach((timeStr, index) => {
       let itemDate;
-      if (selectedRangeType === "hourly") {
-        itemDate = new Date(timeStr);
-      } else {
-        itemDate = parseYYYYMMDDToLocalMidnight(timeStr);
-      }
-
+      if (selectedRangeType === "hourly") itemDate = new Date(timeStr);
+      else itemDate = parseYYYYMMDDToLocalMidnight(timeStr);
       if (!isNaN(itemDate.getTime()) && itemDate >= filterStart && itemDate <= filterEnd) {
         filteredIndices.push(index);
       }
     });
 
     if (filteredIndices.length === 0) return baseReturn;
-
     const tempValues = [],
       rainValues = [],
       precipValues = [],
@@ -234,7 +239,6 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
       yAxisSuffix: yAxisSuffixText,
       labelTextStyle: { ...xAxisLabelTextStyleGlobal },
     });
-
     const getMinMax = (values, defaultMin = 0, defaultMax = 10, allowNegativeMin = false) => {
       if (!values || values.length === 0) return { min: defaultMin, max: defaultMax, dataPresent: false };
       let minVal = values[0],
@@ -244,7 +248,6 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
         if (v > maxVal) maxVal = v;
       });
       if (!allowNegativeMin && minVal < 0) minVal = 0;
-
       if (minVal === maxVal) {
         if (minVal === 0 && defaultMax > 0) return { min: 0, max: defaultMax, dataPresent: true };
         if (minVal === 0 && defaultMax <= 0) return { min: 0, max: 1, dataPresent: true };
@@ -252,7 +255,6 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
       }
       return { min: minVal, max: maxVal, dataPresent: true };
     };
-
     const tempStats = getMinMax(tempValues, -5, 30, true);
     const rainStats = getMinMax(rainValues, 0, 10, false);
     const precipStats = getMinMax(precipValues, 0, 100, false);
@@ -260,7 +262,6 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
       precipStats.min = 0;
       precipStats.max = 100;
     }
-
     return {
       tempPoints: tempValues.map((value, i) => ({ value, label: timeLabels[i], ...commonDataPointProps("#FF8C00", "°C") })),
       rainPoints: rainValues.map((value, i) => ({ value, label: timeLabels[i], ...commonDataPointProps("#0096FF", "mm") })),
@@ -277,7 +278,6 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
     if (selectedDate && minDataDate && endDate && !isNaN(minDataDate.getTime()) && !isNaN(endDate.getTime())) {
       let newStartDate = new Date(selectedDate);
       newStartDate.setHours(0, 0, 0, 0);
-
       if (newStartDate < minDataDate) newStartDate = new Date(minDataDate);
       if (newStartDate > endDate) newStartDate = new Date(endDate);
       setStartDate(newStartDate);
@@ -288,7 +288,6 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
     if (selectedDate && maxDataDate && startDate && !isNaN(maxDataDate.getTime()) && !isNaN(startDate.getTime())) {
       let newEndDate = new Date(selectedDate);
       newEndDate.setHours(0, 0, 0, 0);
-
       if (newEndDate > maxDataDate) newEndDate = new Date(maxDataDate);
       if (newEndDate < startDate) newEndDate = new Date(startDate);
       setEndDate(newEndDate);
@@ -320,9 +319,7 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
       pointerColor: "dimgray",
       radius: 8,
       pointerLabelComponent: (items) => {
-        if (!items || items.length === 0 || !items[0] || items[0].value === undefined) {
-          return null;
-        }
+        if (!items || items.length === 0 || !items[0] || items[0].value === undefined) return null;
         const item = items[0];
         return (
           <View style={styles.tooltipContainer}>
@@ -354,12 +351,10 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
 
   const commonLineChartProps = (dataPoints, stats, color, startFill, endFill) => {
     const numPoints = dataPoints.length;
-
-    let chartRenderWidth;
-    let currentInitialSpacing = DEFAULT_CHART_HORIZONTAL_PADDING;
-    let currentEndSpacing = DEFAULT_CHART_HORIZONTAL_PADDING;
-    let pointSpacing = X_AXIS_SPACING_PER_ITEM;
-
+    let chartRenderWidth,
+      currentInitialSpacing = DEFAULT_CHART_HORIZONTAL_PADDING,
+      currentEndSpacing = DEFAULT_CHART_HORIZONTAL_PADDING,
+      pointSpacing = X_AXIS_SPACING_PER_ITEM;
     if (numPoints === 0) {
       chartRenderWidth = scrollableChartAreaWidth;
       currentInitialSpacing = 0;
@@ -376,7 +371,6 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
       const idealContentWidth = currentInitialSpacing + pointSpacing * (numPoints - 1) + currentEndSpacing;
       chartRenderWidth = Math.max(scrollableChartAreaWidth, idealContentWidth);
     }
-
     return {
       data: dataPoints,
       width: chartRenderWidth,
@@ -560,7 +554,6 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
               </ScrollView>
             </View>
           </View>
-
           <View className="bg-white p-3 rounded-xl my-4 shadow-md">
             <Text className="text-center text-lg font-rbold mb-2 text-gray-700">Rain (mm)</Text>
             <View style={styles.chartRowContainer}>
@@ -587,7 +580,6 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
               </ScrollView>
             </View>
           </View>
-
           <View className="bg-white p-3 rounded-xl mb-16 shadow-md">
             <Text className="text-center text-lg font-rbold mb-2 text-gray-700">Chance of Rain (%)</Text>
             <View style={styles.chartRowContainer}>
@@ -622,17 +614,9 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
 };
 
 const styles = StyleSheet.create({
-  chartRowContainer: {
-    flexDirection: "row",
-    marginTop: 8,
-  },
-  chartScrollView: {
-    flex: 1,
-  },
-  yAxisLabelText: {
-    textAlign: "right",
-    paddingRight: 5,
-  },
+  chartRowContainer: { flexDirection: "row", marginTop: 8 },
+  chartScrollView: { flex: 1 },
+  yAxisLabelText: { textAlign: "right", paddingRight: 5 },
   tooltipContainer: {
     backgroundColor: "rgba(0, 0, 0, 0.8)",
     paddingHorizontal: 12,
@@ -644,16 +628,8 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  tooltipValue: {
-    color: "white",
-    fontSize: 15,
-    fontWeight: "bold",
-  },
-  tooltipLabel: {
-    color: "lightgray",
-    fontSize: 12,
-    marginTop: 3,
-  },
+  tooltipValue: { color: "white", fontSize: 15, fontWeight: "bold" },
+  tooltipLabel: { color: "lightgray", fontSize: 12, marginTop: 3 },
   chartPlaceholderContainer: {
     alignItems: "center",
     justifyContent: "center",
@@ -662,12 +638,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     padding: 20,
   },
-  chartPlaceholderText: {
-    color: "#6c757d",
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
-  },
+  chartPlaceholderText: { color: "#6c757d", fontSize: 15, textAlign: "center", lineHeight: 22 },
 });
 
 export default AnalyticsWidget;
