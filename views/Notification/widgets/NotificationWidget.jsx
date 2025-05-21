@@ -79,7 +79,7 @@ const NotificationWidget = ({ notificationData, onRefresh, refreshing }) => {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 90 }}
       ListEmptyComponent={
-        <View className="flex-1 justify-center items-center mt-50">
+        <View className="flex-1 justify-center items-center mt-52">
           <MaterialCommunityIcons name="bell-off-outline" size={48} className="text-gray-400 mb-3" />
           <Text className="font-rmedium text-lg text-gray-600">No Notifications</Text>
         </View>

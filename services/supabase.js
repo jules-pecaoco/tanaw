@@ -85,8 +85,6 @@ const uploadHazardReport = async (hazardData, imageUri, uniqueIdentifier) => {
       .select();
 
     await notifyNearbyUsers(hazardData.latitude, hazardData.longitude, uniqueIdentifier, hazardData.hazard_type);
-
-    if (error) return { success: false, error };
     return { success: true, data };
   } catch (error) {
     return { success: false, error: { message: "Unexpected error occurred" } };
@@ -109,7 +107,6 @@ const notifyNearbyUsers = async (latitude, longitude, uniqueIdentifier, hazardTy
 
   try {
     const response = axios.post("https://dyankftudmfpxqwqkynf.supabase.co/functions/v1/notify_nearby_users", body, { headers });
-    console.log("Notification response:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error notifying nearby users:", error);
