@@ -84,8 +84,8 @@ const uploadHazardReport = async (hazardData, imageUri, uniqueIdentifier) => {
       ])
       .select();
 
-    reverseGeocode(hazardData.latitude, hazardData.longitude);
-    notifyNearbyUsers(hazardData.latitude, hazardData.longitude, uniqueIdentifier, hazardData.hazard_type, hazardData.hazard_description, location);
+    await reverseGeocode(hazardData.latitude, hazardData.longitude);
+    await notifyNearbyUsers(hazardData.latitude, hazardData.longitude, uniqueIdentifier, hazardData.hazard_type, hazardData.hazard_description, location);
 
     if (error) return { success: false, error };
     return { success: true, data };
