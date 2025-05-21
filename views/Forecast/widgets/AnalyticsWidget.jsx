@@ -4,39 +4,31 @@ import { LineChart } from "react-native-gifted-charts";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
-import { fetchWeatherData } from "@/services/openmeteo";
-
-// Hardcoded cities (assuming this is correct)
-const cities = {
-  "Bacolod City": { lat: 10.6765, lon: 122.9509 },
-  "Bago City": { lat: 10.5333, lon: 122.8333 },
-  "Cadiz City": { lat: 10.95, lon: 123.3 },
-  "Escalante City": { lat: 10.8333, lon: 123.5 },
-  "Himamaylan City": { lat: 10.1, lon: 122.8667 },
-  "Kabankalan City": { lat: 9.9833, lon: 122.8167 },
-  "La Carlota City": { lat: 10.4167, lon: 122.9167 },
-  "Sagay City": { lat: 10.9, lon: 123.4167 },
-  "San Carlos City": { lat: 10.4333, lon: 123.4167 },
-  "Silay City": { lat: 10.8, lon: 122.9667 },
-  "Sipalay City": { lat: 9.75, lon: 122.4 },
-  "Talisay City": { lat: 10.7333, lon: 122.9667 },
-  "Victorias City": { lat: 10.9, lon: 123.0833 },
-};
-
 const Y_AXIS_WIDTH = 50;
 const CHART_HEIGHT = 220;
-const CHART_TOP_PADDING = 15; // Adjusted slightly, fine-tune as needed
-const CHART_X_AXIS_SPACE = 40; // Adjusted slightly, for X-axis label room
+const CHART_TOP_PADDING = 15;
+const CHART_X_AXIS_LABEL_AREA_HEIGHT = 40;
+const X_AXIS_SPACING_PER_ITEM = 50;
+const DEFAULT_CHART_HORIZONTAL_PADDING = 15;
 
 const yAxisTextStyleGlobal = { color: "gray", fontSize: 10 };
-const xAxisLabelTextStyleGlobal = { color: "gray", fontSize: 10, height: CHART_X_AXIS_SPACE - 10 }; // Give some height
+const xAxisLabelTextStyleGlobal = { color: "gray", fontSize: 10, height: CHART_X_AXIS_LABEL_AREA_HEIGHT - 10 };
 
-// FixedYAxisLabels Component (No changes from previous working version)
+const parseYYYYMMDDToLocalMidnight = (dateStr) => {
+  if (!dateStr || typeof dateStr !== "string") return new Date();
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return new Date(dateStr);
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date(dateStr);
+  return new Date(year, month, day, 0, 0, 0, 0);
+};
+
 const FixedYAxisLabels = ({ containerHeight, paddingTop, paddingBottom, maxValue, minValue = 0, noOfSections, yAxisSuffix, textStyle }) => {
   const labels = useMemo(() => {
     if (maxValue === undefined || maxValue === null || noOfSections === 0 || minValue === undefined || minValue === null) return [];
     if (maxValue === minValue) {
-      // Handle case where min and max are the same
       const lbls = [];
       for (let i = 0; i <= noOfSections; i++) {
         lbls.push(maxValue);
@@ -49,10 +41,8 @@ const FixedYAxisLabels = ({ containerHeight, paddingTop, paddingBottom, maxValue
 
     for (let i = 0; i <= noOfSections; i++) {
       let val = minValue + i * step;
-      // Ensure last label is exactly maxValue, first is minValue
       if (i === 0) val = minValue;
       else if (i === noOfSections) val = maxValue;
-
       generatedLabels.push(Number.isInteger(val) ? val : parseFloat(val.toFixed(1)));
     }
     return generatedLabels.reverse();
@@ -70,7 +60,6 @@ const FixedYAxisLabels = ({ containerHeight, paddingTop, paddingBottom, maxValue
         paddingTop: paddingTop,
         paddingBottom: paddingBottom,
         justifyContent: "space-between",
-        // backgroundColor: 'lightyellow' // For debugging alignment
       }}
     >
       {labels.map((labelValue, index) => (
@@ -83,137 +72,147 @@ const FixedYAxisLabels = ({ containerHeight, paddingTop, paddingBottom, maxValue
   );
 };
 
-// Placeholder for No Data / Flat Data
-const ChartPlaceholder = ({ message, height = CHART_HEIGHT }) => (
-  <View style={[styles.chartPlaceholderContainer, { height }]}>
-    <Text style={styles.chartPlaceholderText}>{message}</Text>
-  </View>
-);
-
-const checkChartDataStatus = (points, unit = "", name = "Data") => {
-  if (!points || points.length === 0) {
-    return { isEmpty: true, isFlat: false, message: `No ${name.toLowerCase()} available for the selected criteria.` };
-  }
-  // Check if all *numeric* values are 0. Some chart libraries might add non-numeric stuff.
-  const numericValues = points.map((p) => p.value).filter((v) => typeof v === "number");
-  if (numericValues.length === 0 && points.length > 0) {
-    // Contains points, but no numeric values (unlikely for this setup)
-    return { isEmpty: true, isFlat: false, message: `Invalid ${name.toLowerCase()} for the selected criteria.` };
-  }
-  if (numericValues.length > 0 && numericValues.every((v) => v === 0)) {
-    return { isEmpty: false, isFlat: true, message: `${name} is uniformly 0${unit}.` };
-  }
-  return { isEmpty: false, isFlat: false, message: "" };
-};
-
-const AnalyticsWidget = () => {
+const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange, cities }) => {
   const screenWidth = Dimensions.get("window").width - 40;
 
-  const [rawData, setRawData] = useState(null);
-  const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const [selectedCity, setSelectedCity] = useState("Bacolod City");
   const [selectedRangeType, setSelectedRangeType] = useState("hourly");
-
   const [minDataDate, setMinDataDate] = useState(null);
   const [maxDataDate, setMaxDataDate] = useState(null);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-
   const [filterMode, setFilterMode] = useState("preset");
   const [presetRange, setPresetRange] = useState("3days");
 
-  // Fetching data effect (no changes from previous, assuming it's correct)
   useEffect(() => {
-    const loadWeatherData = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const weatherData = await fetchWeatherData(selectedCity, cities[selectedCity].lat, cities[selectedCity].lon);
-        setRawData(weatherData);
-        if (weatherData?.daily?.time && weatherData.daily.time.length > 0) {
-          const firstDate = new Date(weatherData.daily.time[0]);
-          const lastDate = new Date(weatherData.daily.time[weatherData.daily.time.length - 1]);
-          setMinDataDate(firstDate);
-          setMaxDataDate(lastDate);
-          const threeDaysAgo = new Date(lastDate);
-          threeDaysAgo.setDate(lastDate.getDate() - 2);
-          setStartDate(threeDaysAgo < firstDate ? new Date(firstDate) : threeDaysAgo);
-          setEndDate(new Date(lastDate));
-        } else if (weatherData?.hourly?.time && weatherData.hourly.time.length > 0) {
-          const firstHourlyDateStr = weatherData.hourly.time[0].split("T")[0];
-          const lastHourlyDateStr = weatherData.hourly.time[weatherData.hourly.time.length - 1].split("T")[0];
-          const firstDate = new Date(firstHourlyDateStr);
-          const lastDate = new Date(lastHourlyDateStr);
-          setMinDataDate(firstDate);
-          setMaxDataDate(lastDate);
-          const threeDaysAgo = new Date(lastDate);
-          threeDaysAgo.setDate(lastDate.getDate() - 2);
-          setStartDate(threeDaysAgo < firstDate ? new Date(firstDate) : threeDaysAgo);
-          setEndDate(new Date(lastDate));
-        } else {
-          const today = new Date();
-          setMinDataDate(today);
-          setMaxDataDate(today);
-          setStartDate(today);
-          setEndDate(today);
-        }
-      } catch (err) {
-        console.error("Error fetching weather data:", err);
-        setError(err.message || "Failed to fetch weather data");
-        setRawData(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadWeatherData();
-  }, [selectedCity]);
+    const todayAtMidnight = new Date();
+    todayAtMidnight.setHours(0, 0, 0, 0);
 
-  // Preset range effect (no changes)
+    if (rawData) {
+      let firstDateCandidate, lastDateCandidate;
+
+      if (rawData.daily?.time && rawData.daily.time.length > 0) {
+        firstDateCandidate = parseYYYYMMDDToLocalMidnight(rawData.daily.time[0]);
+        lastDateCandidate = parseYYYYMMDDToLocalMidnight(rawData.daily.time[rawData.daily.time.length - 1]);
+      } else if (rawData.hourly?.time && rawData.hourly.time.length > 0) {
+        const firstHourlyFullDate = new Date(rawData.hourly.time[0]);
+        firstDateCandidate = new Date(firstHourlyFullDate.getFullYear(), firstHourlyFullDate.getMonth(), firstHourlyFullDate.getDate(), 0, 0, 0, 0);
+
+        const lastHourlyFullDate = new Date(rawData.hourly.time[rawData.hourly.time.length - 1]);
+        lastDateCandidate = new Date(lastHourlyFullDate.getFullYear(), lastHourlyFullDate.getMonth(), lastHourlyFullDate.getDate(), 0, 0, 0, 0);
+      }
+
+      if (firstDateCandidate && lastDateCandidate && !isNaN(firstDateCandidate.getTime()) && !isNaN(lastDateCandidate.getTime())) {
+        setMinDataDate(new Date(firstDateCandidate));
+        setMaxDataDate(new Date(lastDateCandidate));
+
+        let sDate = new Date(lastDateCandidate);
+        sDate.setDate(lastDateCandidate.getDate() - 2);
+        let eDate = new Date(lastDateCandidate);
+
+        sDate = sDate < firstDateCandidate ? new Date(firstDateCandidate) : sDate;
+        sDate = sDate > lastDateCandidate ? new Date(lastDateCandidate) : sDate;
+
+        eDate = eDate > lastDateCandidate ? new Date(lastDateCandidate) : eDate;
+        eDate = eDate < firstDateCandidate ? new Date(firstDateCandidate) : eDate;
+
+        if (sDate > eDate) {
+          sDate = new Date(eDate);
+        }
+
+        setStartDate(sDate);
+        setEndDate(eDate);
+      } else {
+        setMinDataDate(new Date(todayAtMidnight));
+        setMaxDataDate(new Date(todayAtMidnight));
+        setStartDate(new Date(todayAtMidnight));
+        setEndDate(new Date(todayAtMidnight));
+      }
+    } else {
+      setMinDataDate(new Date(todayAtMidnight));
+      setMaxDataDate(new Date(todayAtMidnight));
+      setStartDate(new Date(todayAtMidnight));
+      setEndDate(new Date(todayAtMidnight));
+    }
+  }, [rawData]);
+
   useEffect(() => {
-    if (!minDataDate || !maxDataDate || filterMode !== "preset") return;
-    let newStart = new Date(minDataDate);
-    let newEnd = new Date(maxDataDate);
-    const dataContextEndDate = new Date(maxDataDate);
+    if (!minDataDate || !maxDataDate || filterMode !== "preset" || isNaN(minDataDate.getTime()) || isNaN(maxDataDate.getTime())) {
+      return;
+    }
+
+    let newStartCalc = new Date(minDataDate);
+    let newEndCalc = new Date(maxDataDate);
+    const dataContextLatestDay = new Date(maxDataDate);
+
     switch (presetRange) {
       case "today":
-        newStart = new Date(dataContextEndDate);
-        newEnd = new Date(dataContextEndDate);
+        newStartCalc = new Date(dataContextLatestDay);
+        newEndCalc = new Date(dataContextLatestDay);
         break;
       case "3days":
-        newStart = new Date(dataContextEndDate);
-        newStart.setDate(dataContextEndDate.getDate() - 2);
-        newEnd = new Date(dataContextEndDate);
+        newStartCalc = new Date(dataContextLatestDay);
+        newStartCalc.setDate(dataContextLatestDay.getDate() - 2);
+        newEndCalc = new Date(dataContextLatestDay);
         break;
       case "week":
-        newStart = new Date(dataContextEndDate);
-        newStart.setDate(dataContextEndDate.getDate() - 6);
-        newEnd = new Date(dataContextEndDate);
+        newStartCalc = new Date(dataContextLatestDay);
+        newStartCalc.setDate(dataContextLatestDay.getDate() - 6);
+        newEndCalc = new Date(dataContextLatestDay);
         break;
       case "all":
         break;
     }
-    setStartDate(newStart < minDataDate ? new Date(minDataDate) : newStart);
-    setEndDate(newEnd > maxDataDate ? new Date(maxDataDate) : newEnd);
+
+    newStartCalc.setHours(0, 0, 0, 0);
+    newEndCalc.setHours(0, 0, 0, 0);
+
+    let finalStartDate = newStartCalc < minDataDate ? new Date(minDataDate) : newStartCalc;
+    finalStartDate = finalStartDate > maxDataDate ? new Date(maxDataDate) : finalStartDate;
+
+    let finalEndDate = newEndCalc > maxDataDate ? new Date(maxDataDate) : newEndCalc;
+    finalEndDate = finalEndDate < minDataDate ? new Date(minDataDate) : finalEndDate;
+
+    if (finalStartDate > finalEndDate) {
+      finalStartDate = new Date(finalEndDate);
+    }
+
+    setStartDate(finalStartDate);
+    setEndDate(finalEndDate);
   }, [presetRange, filterMode, minDataDate, maxDataDate]);
 
-  // Data processing
   const processedChartData = useMemo(() => {
     const baseReturn = { tempPoints: [], rainPoints: [], precipPoints: [], totalPoints: 0, tempStats: {}, rainStats: {}, precipStats: {} };
-    if (!rawData || (!rawData.hourly?.time && !rawData.daily?.time)) return baseReturn;
+    if (
+      !rawData ||
+      (!rawData.hourly?.time && !rawData.daily?.time) ||
+      !startDate ||
+      !endDate ||
+      isNaN(startDate.getTime()) ||
+      isNaN(endDate.getTime())
+    ) {
+      return baseReturn;
+    }
+
     const source = selectedRangeType === "hourly" ? rawData.hourly : rawData.daily;
     if (!source || !source.time || source.time.length === 0) return baseReturn;
 
-    const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-    const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999);
+    const filterStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 0, 0, 0, 0);
+    const filterEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999);
 
     const filteredIndices = [];
     source.time.forEach((timeStr, index) => {
-      const itemDate = new Date(timeStr);
-      if (itemDate >= startDay && itemDate <= endDay) filteredIndices.push(index);
+      let itemDate;
+      if (selectedRangeType === "hourly") {
+        itemDate = new Date(timeStr);
+      } else {
+        itemDate = parseYYYYMMDDToLocalMidnight(timeStr);
+      }
+
+      if (!isNaN(itemDate.getTime()) && itemDate >= filterStart && itemDate <= filterEnd) {
+        filteredIndices.push(index);
+      }
     });
 
     if (filteredIndices.length === 0) return baseReturn;
@@ -227,14 +226,13 @@ const AnalyticsWidget = () => {
       rainValues.push(source.rain?.[index] ?? 0);
       precipValues.push(source.precipitation_probability?.[index] ?? source.precipitationProbability?.[index] ?? 0);
       const timeStr = source.time[index];
-      timeLabels.push(selectedRangeType === "hourly" ? timeStr.split("T")[1].slice(0, 5) : timeStr.split("T")[0].slice(5));
+      timeLabels.push(selectedRangeType === "hourly" ? timeStr.split("T")[1].slice(0, 5) : timeStr.slice(5));
     });
 
     const commonDataPointProps = (dataPointColor, yAxisSuffixText) => ({
       dataPointColor,
       yAxisSuffix: yAxisSuffixText,
-      // These labelTextStyles are for the X-AXIS LABELS associated with this data point
-      labelTextStyle: { ...xAxisLabelTextStyleGlobal }, // Use global style for consistency
+      labelTextStyle: { ...xAxisLabelTextStyleGlobal },
     });
 
     const getMinMax = (values, defaultMin = 0, defaultMax = 10, allowNegativeMin = false) => {
@@ -245,12 +243,11 @@ const AnalyticsWidget = () => {
         if (v < minVal) minVal = v;
         if (v > maxVal) maxVal = v;
       });
-      if (!allowNegativeMin && minVal < 0) minVal = 0; // e.g. for rain
+      if (!allowNegativeMin && minVal < 0) minVal = 0;
 
-      // Ensure a visible range if all values are the same
       if (minVal === maxVal) {
-        if (minVal === 0) return { min: 0, max: defaultMax, dataPresent: true }; // All zeros, show default range
-        // All same non-zero value, create a small range around it
+        if (minVal === 0 && defaultMax > 0) return { min: 0, max: defaultMax, dataPresent: true };
+        if (minVal === 0 && defaultMax <= 0) return { min: 0, max: 1, dataPresent: true };
         return { min: minVal - (Math.abs(minVal * 0.1) || 1), max: maxVal + (Math.abs(maxVal * 0.1) || 1), dataPresent: true };
       }
       return { min: minVal, max: maxVal, dataPresent: true };
@@ -258,8 +255,7 @@ const AnalyticsWidget = () => {
 
     const tempStats = getMinMax(tempValues, -5, 30, true);
     const rainStats = getMinMax(rainValues, 0, 10, false);
-    const precipStats = getMinMax(precipValues, 0, 100, false); // technically min should be 0, max 100 always for prob.
-    // Overwrite precipStats if data is present, as it must be 0-100
+    const precipStats = getMinMax(precipValues, 0, 100, false);
     if (precipStats.dataPresent) {
       precipStats.min = 0;
       precipStats.max = 100;
@@ -278,49 +274,53 @@ const AnalyticsWidget = () => {
 
   const onStartDateChange = (event, selectedDate) => {
     setShowStartDatePicker(false);
-    if (selectedDate) {
-      const newStartDate = selectedDate < minDataDate ? new Date(minDataDate) : selectedDate;
-      setStartDate(newStartDate > endDate ? new Date(endDate) : newStartDate);
+    if (selectedDate && minDataDate && endDate && !isNaN(minDataDate.getTime()) && !isNaN(endDate.getTime())) {
+      let newStartDate = new Date(selectedDate);
+      newStartDate.setHours(0, 0, 0, 0);
+
+      if (newStartDate < minDataDate) newStartDate = new Date(minDataDate);
+      if (newStartDate > endDate) newStartDate = new Date(endDate);
+      setStartDate(newStartDate);
     }
   };
   const onEndDateChange = (event, selectedDate) => {
     setShowEndDatePicker(false);
-    if (selectedDate) {
-      const newEndDate = selectedDate > maxDataDate ? new Date(maxDataDate) : selectedDate;
-      setEndDate(newEndDate < startDate ? new Date(startDate) : newEndDate);
+    if (selectedDate && maxDataDate && startDate && !isNaN(maxDataDate.getTime()) && !isNaN(startDate.getTime())) {
+      let newEndDate = new Date(selectedDate);
+      newEndDate.setHours(0, 0, 0, 0);
+
+      if (newEndDate > maxDataDate) newEndDate = new Date(maxDataDate);
+      if (newEndDate < startDate) newEndDate = new Date(startDate);
+      setEndDate(newEndDate);
     }
   };
   const formatDateForDisplay = (date) => {
-    if (!date) return "N/A";
+    if (!date || isNaN(date.getTime())) return "N/A";
     return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
   };
   const getRangeDurationDisplay = () => {
-    if (!startDate || !endDate || !minDataDate || !maxDataDate) return "0 days";
-    const diffTime = Math.abs(endDate - startDate);
+    if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return "0 days";
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     return `${diffDays} day${diffDays === 1 ? "" : "s"}`;
   };
 
-  // Common Pointer Configuration
   const pointerConfig = useMemo(
     () => ({
-      // Memoize pointerConfig as well
       activatePointersOnLongPress: true,
-      activatePointersDelay: 150, // Slightly faster activation
-      persistPointer: true, // Should make it stay after long press
-      pointerVanishDelay: 3000, // How long it stays after finger lift
+      activatePointersDelay: 150,
+      persistPointer: true,
+      pointerVanishDelay: 3000,
       autoAdjustPointerLabelPosition: true,
       pointerLabelWidth: 120,
       pointerLabelHeight: 60,
-      pointerStripHeight: CHART_HEIGHT - CHART_TOP_PADDING - CHART_X_AXIS_SPACE, // Full height of plot area
+      pointerStripHeight: CHART_HEIGHT - CHART_TOP_PADDING - CHART_X_AXIS_LABEL_AREA_HEIGHT,
       pointerStripColor: "lightgray",
       pointerStripWidth: 1,
       pointerColor: "dimgray",
-      radius: 8, // Slightly larger touch radius
+      radius: 8,
       pointerLabelComponent: (items) => {
-        // console.log('Pointer items:', JSON.stringify(items)); // DEBUG: Check if this logs for all charts
         if (!items || items.length === 0 || !items[0] || items[0].value === undefined) {
-          // console.log('Pointer: No items or invalid item[0]');
           return null;
         }
         const item = items[0];
@@ -335,83 +335,89 @@ const AnalyticsWidget = () => {
         );
       },
     }),
-    [CHART_HEIGHT, CHART_TOP_PADDING, CHART_X_AXIS_SPACE]
-  ); // Dependencies if any values change
+    [CHART_HEIGHT, CHART_TOP_PADDING, CHART_X_AXIS_LABEL_AREA_HEIGHT]
+  );
 
   if (isLoading) return <ActivityIndicator size="large" color="#FF8C00" />;
   if (error)
     return (
       <View className="flex-1 justify-center items-center p-5 bg-gray-200">
-        {" "}
-        <Text className="text-red-500 font-rbold text-center">Error: {error}</Text>{" "}
+        <Text className="text-red-500 font-rbold text-center">Error: {error}</Text>
         <Text className="text-gray-600 text-center mt-2">
-          {" "}
-          Could not load weather data for {selectedCity}. Please try again or select a different city.{" "}
-        </Text>{" "}
+          Could not load weather data for {selectedCity}. Please try again or select a different city.
+        </Text>
       </View>
     );
 
-  const noDataForAllCriteria = processedChartData.totalPoints === 0; // Overall check
+  const noDataForAllCriteria = processedChartData.totalPoints === 0;
   const scrollableChartAreaWidth = screenWidth - Y_AXIS_WIDTH;
 
-  // Individual chart data status
-  const tempStatus = checkChartDataStatus(processedChartData.tempPoints, "°C", "Temperature data");
-  const rainStatus = checkChartDataStatus(processedChartData.rainPoints, "mm", "Rain data");
-  const precipStatus = checkChartDataStatus(processedChartData.precipPoints, "%", "Precipitation data");
+  const commonLineChartProps = (dataPoints, stats, color, startFill, endFill) => {
+    const numPoints = dataPoints.length;
 
-  const commonLineChartProps = (dataPoints, stats, color, startFill, endFill) => ({
-    data: dataPoints,
-    width: Math.max(scrollableChartAreaWidth, dataPoints.length * 40), // Auto-scroll if content exceeds view
-    height: CHART_HEIGHT,
+    let chartRenderWidth;
+    let currentInitialSpacing = DEFAULT_CHART_HORIZONTAL_PADDING;
+    let currentEndSpacing = DEFAULT_CHART_HORIZONTAL_PADDING;
+    let pointSpacing = X_AXIS_SPACING_PER_ITEM;
 
-    // Y-Axis managed by FixedYAxisLabels, but chart needs scale
-    maxValue: stats.max,
-    mostNegativeValue: stats.min < 0 ? stats.min : undefined, // Only if min is actually negative
-    minValue: stats.min >= 0 ? stats.min : undefined, // Only if min is zero or positive
-    noOfSections: 4, // Should match FixedYAxisLabels
+    if (numPoints === 0) {
+      chartRenderWidth = scrollableChartAreaWidth;
+      currentInitialSpacing = 0;
+      currentEndSpacing = 0;
+      pointSpacing = 0;
+    } else if (numPoints === 1) {
+      chartRenderWidth = scrollableChartAreaWidth;
+      currentInitialSpacing = Math.max(DEFAULT_CHART_HORIZONTAL_PADDING, (scrollableChartAreaWidth - X_AXIS_SPACING_PER_ITEM) / 2);
+      currentEndSpacing = chartRenderWidth - currentInitialSpacing - X_AXIS_SPACING_PER_ITEM;
+      currentEndSpacing = Math.max(DEFAULT_CHART_HORIZONTAL_PADDING, currentEndSpacing);
+      chartRenderWidth = Math.max(scrollableChartAreaWidth, currentInitialSpacing + X_AXIS_SPACING_PER_ITEM + currentEndSpacing);
+      pointSpacing = X_AXIS_SPACING_PER_ITEM;
+    } else {
+      const idealContentWidth = currentInitialSpacing + pointSpacing * (numPoints - 1) + currentEndSpacing;
+      chartRenderWidth = Math.max(scrollableChartAreaWidth, idealContentWidth);
+    }
 
-    // Hide internal Y-axis visuals
-    hideYAxisText: true,
-    yAxisThickness: 0,
-    yAxisColor: "transparent",
-
-    // X-Axis visuals (ensure line and labels are attempted to be drawn)
-    xAxisThickness: 0.5,
-    xAxisColor: "lightgray",
-    xAxisLabelTextStyle: xAxisLabelTextStyleGlobal, // Global style for X-axis labels
-    xAxisLabelRotation: dataPoints.length > 10 ? 45 : 0,
-    xAxisIndicesHeight: 5, // Small ticks on x-axis
-    xAxisIndicesColor: "lightgray",
-
-    curved: true,
-    areaChart: true,
-    hideRules: true, // Hides vertical grid lines, horizontal are still controlled by sections if rules are not hidden
-    rulesType: "solid", // For horizontal section lines
-    rulesColor: "rgba(200,200,200,0.2)", // Light horizontal lines
-
-    startFillColor: startFill,
-    endFillColor: endFill,
-    startOpacity: 0.8,
-    endOpacity: 0.1,
-    color: color,
-
-    initialSpacing: dataPoints.length === 1 ? scrollableChartAreaWidth / 2 - 20 : 15, // Center single point / default initial
-    endSpacing: 15,
-    // Let the library auto-calculate spacing based on width and number of points
-    // remove `spacing` prop unless specific control is needed and auto doesn't work well.
-
-    pointerConfig: pointerConfig, // Interactive tooltips
-    isAnimated: false, // Try disabling animation if tooltips are jumpy
-    animationDuration: 150, // If animated, keep it short
-  });
+    return {
+      data: dataPoints,
+      width: chartRenderWidth,
+      height: CHART_HEIGHT,
+      maxValue: stats.max,
+      mostNegativeValue: stats.min < 0 ? stats.min : undefined,
+      minValue: stats.min >= 0 ? stats.min : 0,
+      noOfSections: 4,
+      hideYAxisText: true,
+      yAxisThickness: 0,
+      yAxisColor: "transparent",
+      xAxisThickness: 0.5,
+      xAxisColor: "lightgray",
+      xAxisLabelTextStyle: xAxisLabelTextStyleGlobal,
+      xAxisLabelRotation: numPoints > chartRenderWidth / (X_AXIS_SPACING_PER_ITEM * 0.7) ? 45 : 0,
+      xAxisIndicesHeight: 5,
+      xAxisIndicesColor: "lightgray",
+      curved: true,
+      areaChart: true,
+      hideRules: true,
+      rulesType: "solid",
+      rulesColor: "rgba(200,200,200,0.2)",
+      startFillColor: startFill,
+      endFillColor: endFill,
+      startOpacity: 0.8,
+      endOpacity: 0.1,
+      color: color,
+      spacing: pointSpacing,
+      initialSpacing: currentInitialSpacing,
+      endSpacing: currentEndSpacing,
+      pointerConfig: pointerConfig,
+      isAnimated: false,
+    };
+  };
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} className="bg-gray-200 w-[100%] px-4">
-      {/* City Picker & Date Range UI (no changes from previous) */}
       <View className="bg-white rounded-xl mb-4 shadow-md">
         <Picker
           selectedValue={selectedCity}
-          onValueChange={(itemValue) => setSelectedCity(itemValue)}
+          onValueChange={(itemValue) => onCityChange(itemValue)}
           style={{ height: 50, width: "100%" }}
           itemStyle={{ fontFamily: "System" }}
         >
@@ -448,7 +454,7 @@ const AnalyticsWidget = () => {
                 key={range.value}
                 className={`px-3 py-2 m-1 rounded-xl ${presetRange === range.value ? "bg-primary" : "bg-gray-200"}`}
                 onPress={() => setPresetRange(range.value)}
-                disabled={!minDataDate || !maxDataDate}
+                disabled={!minDataDate || !maxDataDate || isNaN(minDataDate.getTime()) || isNaN(maxDataDate.getTime())}
               >
                 <Text className={`font-rsemibold ${presetRange === range.value ? "text-white" : "text-gray-700"}`}>{range.label}</Text>
               </TouchableOpacity>
@@ -465,12 +471,12 @@ const AnalyticsWidget = () => {
             </View>
             {showStartDatePicker && (
               <DateTimePicker
-                value={startDate}
+                value={startDate && !isNaN(startDate.getTime()) ? startDate : new Date()}
                 mode="date"
                 display="default"
                 onChange={onStartDateChange}
-                minimumDate={minDataDate}
-                maximumDate={endDate}
+                minimumDate={minDataDate && !isNaN(minDataDate.getTime()) ? minDataDate : undefined}
+                maximumDate={endDate && !isNaN(endDate.getTime()) ? endDate : undefined}
               />
             )}
             <View className="flex-row justify-between items-center">
@@ -481,20 +487,19 @@ const AnalyticsWidget = () => {
             </View>
             {showEndDatePicker && (
               <DateTimePicker
-                value={endDate}
+                value={endDate && !isNaN(endDate.getTime()) ? endDate : new Date()}
                 mode="date"
                 display="default"
                 onChange={onEndDateChange}
-                minimumDate={startDate}
-                maximumDate={maxDataDate}
+                minimumDate={startDate && !isNaN(startDate.getTime()) ? startDate : undefined}
+                maximumDate={maxDataDate && !isNaN(maxDataDate.getTime()) ? maxDataDate : undefined}
               />
             )}
           </View>
         )}
         <View className="bg-gray-200 p-2 rounded-xl mt-3">
           <Text className="text-center text-sm text-gray-600">
-            {" "}
-            Showing data: {formatDateForDisplay(startDate)} to {formatDateForDisplay(endDate)}{" "}
+            Showing data: {formatDateForDisplay(startDate)} to {formatDateForDisplay(endDate)}
           </Text>
         </View>
       </View>
@@ -523,106 +528,91 @@ const AnalyticsWidget = () => {
         </View>
       </View>
 
-      {noDataForAllCriteria ? ( // If NO data for ANY chart based on current criteria
+      {noDataForAllCriteria ? (
         <View className="bg-white p-4 rounded-xl my-4 items-center justify-center h-64 shadow-md">
           <Text className="text-lg font-rsemibold text-red-500">No data available for selected city or date range.</Text>
         </View>
       ) : (
         <View>
-          {/* Temperature Chart */}
           <View className="bg-white p-3 rounded-xl my-4 shadow-md">
             <Text className="text-center text-lg font-rbold mb-2 text-gray-700">Temperature (°C)</Text>
-            {tempStatus.isEmpty || tempStatus.isFlat ? (
-              <ChartPlaceholder message={tempStatus.message} />
-            ) : (
-              <View style={styles.chartRowContainer}>
-                <FixedYAxisLabels
-                  containerHeight={CHART_HEIGHT}
-                  paddingTop={CHART_TOP_PADDING}
-                  paddingBottom={CHART_X_AXIS_SPACE}
-                  maxValue={processedChartData.tempStats.max}
-                  minValue={processedChartData.tempStats.min}
-                  noOfSections={4}
-                  yAxisSuffix="°C"
-                  textStyle={yAxisTextStyleGlobal}
+            <View style={styles.chartRowContainer}>
+              <FixedYAxisLabels
+                containerHeight={CHART_HEIGHT}
+                paddingTop={CHART_TOP_PADDING}
+                paddingBottom={CHART_X_AXIS_LABEL_AREA_HEIGHT}
+                maxValue={processedChartData.tempStats.max}
+                minValue={processedChartData.tempStats.min}
+                noOfSections={4}
+                yAxisSuffix="°C"
+                textStyle={yAxisTextStyleGlobal}
+              />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chartScrollView}>
+                <LineChart
+                  {...commonLineChartProps(
+                    processedChartData.tempPoints,
+                    processedChartData.tempStats,
+                    "#FF8C00",
+                    "rgba(255, 140, 0, 0.3)",
+                    "rgba(255, 140, 0, 0.05)"
+                  )}
                 />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chartScrollView}>
-                  <LineChart
-                    {...commonLineChartProps(
-                      processedChartData.tempPoints,
-                      processedChartData.tempStats,
-                      "#FF8C00",
-                      "rgba(255, 140, 0, 0.3)",
-                      "rgba(255, 140, 0, 0.05)"
-                    )}
-                  />
-                </ScrollView>
-              </View>
-            )}
+              </ScrollView>
+            </View>
           </View>
 
-          {/* Rainfall Chart */}
           <View className="bg-white p-3 rounded-xl my-4 shadow-md">
             <Text className="text-center text-lg font-rbold mb-2 text-gray-700">Rain (mm)</Text>
-            {rainStatus.isEmpty || rainStatus.isFlat ? (
-              <ChartPlaceholder message={rainStatus.message} />
-            ) : (
-              <View style={styles.chartRowContainer}>
-                <FixedYAxisLabels
-                  containerHeight={CHART_HEIGHT}
-                  paddingTop={CHART_TOP_PADDING}
-                  paddingBottom={CHART_X_AXIS_SPACE}
-                  maxValue={processedChartData.rainStats.max}
-                  minValue={processedChartData.rainStats.min}
-                  noOfSections={4}
-                  yAxisSuffix="mm"
-                  textStyle={yAxisTextStyleGlobal}
+            <View style={styles.chartRowContainer}>
+              <FixedYAxisLabels
+                containerHeight={CHART_HEIGHT}
+                paddingTop={CHART_TOP_PADDING}
+                paddingBottom={CHART_X_AXIS_LABEL_AREA_HEIGHT}
+                maxValue={processedChartData.rainStats.max}
+                minValue={processedChartData.rainStats.min}
+                noOfSections={4}
+                yAxisSuffix="mm"
+                textStyle={yAxisTextStyleGlobal}
+              />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chartScrollView}>
+                <LineChart
+                  {...commonLineChartProps(
+                    processedChartData.rainPoints,
+                    processedChartData.rainStats,
+                    "#0096FF",
+                    "rgba(0, 150, 255, 0.3)",
+                    "rgba(0, 150, 255, 0.05)"
+                  )}
                 />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chartScrollView}>
-                  <LineChart
-                    {...commonLineChartProps(
-                      processedChartData.rainPoints,
-                      processedChartData.rainStats,
-                      "#0096FF",
-                      "rgba(0, 150, 255, 0.3)",
-                      "rgba(0, 150, 255, 0.05)"
-                    )}
-                  />
-                </ScrollView>
-              </View>
-            )}
+              </ScrollView>
+            </View>
           </View>
 
-          {/* Precipitation Probability Chart */}
           <View className="bg-white p-3 rounded-xl mb-16 shadow-md">
             <Text className="text-center text-lg font-rbold mb-2 text-gray-700">Chance of Rain (%)</Text>
-            {precipStatus.isEmpty || precipStatus.isFlat ? (
-              <ChartPlaceholder message={precipStatus.message} />
-            ) : (
-              <View style={styles.chartRowContainer}>
-                <FixedYAxisLabels
-                  containerHeight={CHART_HEIGHT}
-                  paddingTop={CHART_TOP_PADDING}
-                  paddingBottom={CHART_X_AXIS_SPACE}
-                  maxValue={processedChartData.precipStats.max}
-                  minValue={processedChartData.precipStats.min}
-                  noOfSections={4}
-                  yAxisSuffix="%"
-                  textStyle={yAxisTextStyleGlobal}
+            <View style={styles.chartRowContainer}>
+              <FixedYAxisLabels
+                containerHeight={CHART_HEIGHT}
+                paddingTop={CHART_TOP_PADDING}
+                paddingBottom={CHART_X_AXIS_LABEL_AREA_HEIGHT}
+                maxValue={processedChartData.precipStats.max}
+                minValue={processedChartData.precipStats.min}
+                noOfSections={4}
+                yAxisSuffix="%"
+                textStyle={yAxisTextStyleGlobal}
+              />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chartScrollView}>
+                <LineChart
+                  {...commonLineChartProps(
+                    processedChartData.precipPoints,
+                    processedChartData.precipStats,
+                    "#4CAF50",
+                    "rgba(76, 175, 80, 0.3)",
+                    "rgba(76, 175, 80, 0.05)"
+                  )}
                 />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chartScrollView}>
-                  <LineChart
-                    {...commonLineChartProps(
-                      processedChartData.precipPoints,
-                      processedChartData.precipStats,
-                      "#4CAF50",
-                      "rgba(76, 175, 80, 0.3)",
-                      "rgba(76, 175, 80, 0.05)"
-                    )}
-                  />
-                </ScrollView>
-              </View>
-            )}
+              </ScrollView>
+            </View>
           </View>
         </View>
       )}
@@ -634,7 +624,6 @@ const AnalyticsWidget = () => {
 const styles = StyleSheet.create({
   chartRowContainer: {
     flexDirection: "row",
-    // height: CHART_HEIGHT, // Height is implicitly defined by children
     marginTop: 8,
   },
   chartScrollView: {
@@ -645,16 +634,14 @@ const styles = StyleSheet.create({
     paddingRight: 5,
   },
   tooltipContainer: {
-    backgroundColor: "rgba(0, 0, 0, 0.8)", // Darker tooltip
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 6,
-    // Shadow for tooltip (iOS)
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    // Elevation for tooltip (Android)
     elevation: 5,
   },
   tooltipValue: {
@@ -663,21 +650,20 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   tooltipLabel: {
-    color: "lightgray", // Lighter secondary text
+    color: "lightgray",
     fontSize: 12,
     marginTop: 3,
   },
   chartPlaceholderContainer: {
-    // height: CHART_HEIGHT, // Set by prop
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f8f9fa", // Lighter placeholder background
+    backgroundColor: "#f8f9fa",
     borderRadius: 8,
-    marginVertical: 10, // Consistent with chart card margins
+    marginVertical: 10,
     padding: 20,
   },
   chartPlaceholderText: {
-    color: "#6c757d", // Bootstrap's muted text color
+    color: "#6c757d",
     fontSize: 15,
     textAlign: "center",
     lineHeight: 22,

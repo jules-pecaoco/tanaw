@@ -49,7 +49,7 @@ const fetchWeatherData = async (selectedCity) => {
       time: daily.time,
       rain: daily.rain_sum,
       precipitationProbability: daily.precipitation_probability_max,
-      temperature80m: hourly.temperature_80m,
+      temperature80m: daily.temperature_2m_max,
     },
     initialSelectedDay: daily.time[0],
   };

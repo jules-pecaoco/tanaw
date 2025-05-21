@@ -60,7 +60,7 @@ const NotificationScreen = () => {
   };
 
   return (
-    <View className="bg-gray-200 h-full flex items-center justify-center">
+    <View className="bg-gray-200 h-full flex items-center justify-center mt-4 px-4">
       <NotificationWidget notificationData={notificationData} onRefresh={loadNotifications} refreshing={refreshing} />
     </View>
   );

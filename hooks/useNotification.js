@@ -126,6 +126,7 @@ const useNotification = () => {
       console.log("Notification received Background:", data);
 
       if (data.data.type === "alert") {
+        saveNotification(data.title, data.body, new Date());
         router.push({
           pathname: "/AlertScreen",
           params: { data: JSON.stringify(data) },

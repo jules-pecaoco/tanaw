@@ -145,7 +145,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
 
     let newStart = new Date(minDataDate);
     let newEnd = new Date(maxDataDate);
-    const todayInDataSetContext = new Date(maxDataDate); // Base preset calculations on the latest data point
+    const todayInDataSetContext = new Date(maxDataDate); 
 
     switch (presetRange) {
       case "today":
@@ -374,7 +374,6 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
                 mode="date"
                 display="default"
                 onChange={onStartDateChange}
-                minimumDate={minDataDate}
                 maximumDate={endDate || maxDataDate} // Ensure max is valid
               />
             )}
