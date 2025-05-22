@@ -7,7 +7,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 const ALL_CITIES_VALUE = "ALL_CITIES";
 const ALL_CITIES_LABEL = "All Cities";
 
-const getDayKey = (date) => date.toISOString().split("T")[0];
+const getDayKey = (date) => date.toISOString().split("T")[0]; // Returns YYYY-MM-DD from UTC representation
 
 const Y_AXIS_WIDTH = 40;
 const CHART_HEIGHT = 220;
@@ -39,7 +39,6 @@ const FixedYAxisLabels = ({ containerHeight, paddingTop, paddingBottom, maxValue
       if (Number.isInteger(minValue) && Number.isInteger(maxValue) && Number.isInteger(step)) {
         val = Math.round(val);
       } else if (Number.isInteger(val)) {
-        /* keep as integer */
       } else {
         const diff = Math.abs(maxValue - minValue);
         if (diff > 0 && diff < noOfSections * 2) val = parseFloat(val.toFixed(1));
@@ -86,22 +85,37 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
     const processedHazards = initialReports
       .map((hazard) => ({ ...hazard, createdAtDate: new Date(hazard.created_at) }))
       .sort((a, b) => a.createdAtDate - b.createdAtDate);
+
     setAllHazards(processedHazards);
     const cities = [...new Set(processedHazards.map((h) => h.name.city))].filter(Boolean).sort();
     setAvailableCities([{ label: ALL_CITIES_LABEL, value: ALL_CITIES_VALUE }, ...cities.map((city) => ({ label: city, value: city }))]);
     setSelectedCity(ALL_CITIES_VALUE);
 
     if (processedHazards.length > 0) {
-      const firstDate = new Date(processedHazards[0].createdAtDate);
+      const utcDayKeys = [...new Set(processedHazards.map((h) => getDayKey(h.createdAtDate)))].sort();
+      const minUtcDayKey = utcDayKeys[0];
+      const maxUtcDayKey = utcDayKeys[utcDayKeys.length - 1];
+
+      const [minYear, minMonth, minDay] = minUtcDayKey.split("-").map(Number);
+      const firstDate = new Date(minYear, minMonth - 1, minDay);
       firstDate.setHours(0, 0, 0, 0);
-      const lastDate = new Date(processedHazards[processedHazards.length - 1].createdAtDate);
+
+      const [maxYear, maxMonth, maxDay] = maxUtcDayKey.split("-").map(Number);
+      const lastDate = new Date(maxYear, maxMonth - 1, maxDay);
       lastDate.setHours(0, 0, 0, 0);
+
       setMinDataDate(firstDate);
       setMaxDataDate(lastDate);
+
       let sDate = new Date(lastDate);
-      sDate.setDate(lastDate.getDate() - 29); // Default to 30-day range ending on maxDataDate
+      sDate.setDate(lastDate.getDate() - 29);
       let eDate = new Date(lastDate);
-      sDate = sDate < firstDate ? new Date(firstDate) : sDate; // Clamp to minDataDate
+
+      sDate = sDate < firstDate ? new Date(firstDate) : sDate;
+
+      sDate.setHours(0, 0, 0, 0);
+      eDate.setHours(0, 0, 0, 0);
+
       setStartDate(sDate);
       setEndDate(eDate);
     } else {
@@ -118,27 +132,35 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
   useEffect(() => {
     if (!minDataDate || !maxDataDate || filterMode !== "preset" || isNaN(minDataDate.getTime()) || isNaN(maxDataDate.getTime())) return;
 
-    let newStart = new Date(minDataDate);
-    let newEnd = new Date(maxDataDate);
-    const latestDataDay = new Date(maxDataDate);
+    let newStart, newEnd;
+
+    const actualCurrentDay = new Date();
+    actualCurrentDay.setHours(0, 0, 0, 0);
+
+    const latestDataDay = new Date(maxDataDate); // Local midnight of the latest UTC day with data
 
     switch (presetRange) {
       case "today":
-        newStart = new Date(latestDataDay);
-        newEnd = new Date(latestDataDay);
+        newStart = new Date(actualCurrentDay);
+        newEnd = new Date(actualCurrentDay);
         break;
       case "7days":
         newStart = new Date(latestDataDay);
-        newStart.setDate(latestDataDay.getDate() - 6); // 7 days inclusive
+        newStart.setDate(latestDataDay.getDate() - 6);
         newEnd = new Date(latestDataDay);
         break;
       case "30days":
         newStart = new Date(latestDataDay);
-        newStart.setDate(latestDataDay.getDate() - 29); // Corrected for a 30-day inclusive range
+        newStart.setDate(latestDataDay.getDate() - 29);
         newEnd = new Date(latestDataDay);
         break;
       case "all":
-        // For "all", newStart and newEnd are already minDataDate and maxDataDate from initialization above
+        newStart = new Date(minDataDate);
+        newEnd = new Date(maxDataDate);
+        break;
+      default:
+        newStart = new Date(minDataDate);
+        newEnd = new Date(maxDataDate);
         break;
     }
 
@@ -152,7 +174,6 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
     finalEndDate = finalEndDate < minDataDate ? new Date(minDataDate) : finalEndDate;
 
     if (finalStartDate > finalEndDate) {
-      // Ensure start is not after end
       finalStartDate = new Date(finalEndDate);
     }
 
@@ -165,14 +186,26 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
       return { points: [], total: 0, maxReportValue: 0 };
     }
     const cityFiltered = selectedCity === ALL_CITIES_VALUE ? allHazards : allHazards.filter((h) => h.name.city === selectedCity);
-    const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-    const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999);
 
-    const dateFiltered = cityFiltered.filter((h) => {
-      const hazardDate = h.createdAtDate;
-      // Filter by selected range, data will be empty if outside actual min/max data dates
-      return hazardDate >= startDay && hazardDate <= endDay;
-    });
+    let dateFiltered;
+
+    if (filterMode === "preset" && presetRange === "today") {
+      const localYear = startDate.getFullYear();
+      const localMonth = startDate.getMonth() + 1; // getMonth is 0-indexed
+      const localDay = startDate.getDate();
+      // Target the UTC day that matches the calendar date of the (clamped) local startDate
+      const targetUtcCalendarDayString = `${localYear}-${String(localMonth).padStart(2, "0")}-${String(localDay).padStart(2, "0")}`;
+
+      dateFiltered = cityFiltered.filter((h) => getDayKey(h.createdAtDate) === targetUtcCalendarDayString);
+    } else {
+      const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999);
+
+      dateFiltered = cityFiltered.filter((h) => {
+        const hazardDate = h.createdAtDate;
+        return hazardDate >= startDay && hazardDate <= endDay;
+      });
+    }
 
     if (dateFiltered.length === 0) return { points: [], total: 0, maxReportValue: 0 };
 
@@ -184,7 +217,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
 
     const sortedKeys = Array.from(aggregationMap.keys()).sort((a, b) => new Date(a) - new Date(b));
     const points = sortedKeys.map((key) => {
-      const dateObj = new Date(key + "T00:00:00Z"); // Use UTC to avoid timezone issues with getUTCMonth/Date
+      const dateObj = new Date(key + "T00:00:00Z");
       const label = `${String(dateObj.getUTCMonth() + 1).padStart(2, "0")}-${String(dateObj.getUTCDate()).padStart(2, "0")}`;
       return { value: aggregationMap.get(key), label: label, date: key, dataPointColor: "#0ea5e9" };
     });
@@ -192,7 +225,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
     const reportValues = points.map((p) => p.value);
     const actualMax = reportValues.length > 0 ? Math.max(0, ...reportValues) : 0;
     return { points, total: dateFiltered.length, maxReportValue: actualMax };
-  }, [dataProcessing, allHazards, selectedCity, startDate, endDate]);
+  }, [dataProcessing, allHazards, selectedCity, startDate, endDate, filterMode, presetRange]); // Added filterMode and presetRange
 
   const { points: chartDataPoints, maxReportValue, total: totalReportsInView } = filteredAndAggregatedData;
 
@@ -202,7 +235,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
       let newStartDate = new Date(selectedDate);
       newStartDate.setHours(0, 0, 0, 0);
       if (endDate && !isNaN(endDate.getTime()) && newStartDate > endDate) {
-        newStartDate = new Date(endDate); // Ensure start is not after end
+        newStartDate = new Date(endDate);
       }
       setStartDate(newStartDate);
     }
@@ -214,7 +247,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
       let newEndDate = new Date(selectedDate);
       newEndDate.setHours(0, 0, 0, 0);
       if (startDate && !isNaN(startDate.getTime()) && newEndDate < startDate) {
-        newEndDate = new Date(startDate); // Ensure end is not before start
+        newEndDate = new Date(startDate);
       }
       setEndDate(newEndDate);
     }
@@ -273,13 +306,13 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
   const getRangeDurationDisplay = () => {
     if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return "0 days";
     const diffTime = Math.abs(endDate - startDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 for inclusive days
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     return `${diffDays} day${diffDays === 1 ? "" : "s"}`;
   };
 
   const scrollableChartContainerWidth = screenWidth - Y_AXIS_WIDTH;
   const yAxisLabels_maxValue = maxReportValue;
-  const lineChart_maxValue = maxReportValue === 0 ? NO_OF_SECTIONS : maxReportValue; // Ensure chart doesn't break if max is 0
+  const lineChart_maxValue = maxReportValue === 0 ? NO_OF_SECTIONS : maxReportValue;
   const numPoints = chartDataPoints.length;
 
   let chartRenderWidth,
@@ -317,7 +350,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
       </View>
 
       <View className="bg-white rounded-xl p-4 mb-4 shadow">
-        <Text className="text-center text-lg font-rmedium mb-3 text-black">Date Range</Text>
+        <Text className="text-center text-lg font-rbold mb-3 text-black">Date Range</Text>
         <View className="flex-row justify-center mb-3">
           <TouchableOpacity
             className={`px-4 py-2 mx-1 rounded-xl ${filterMode === "preset" ? "bg-primary" : "bg-neutral-200"}`}
@@ -368,7 +401,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
                 display="default"
                 onChange={onStartDateChange}
                 maximumDate={endDate && !isNaN(endDate.getTime()) ? endDate : undefined}
-                minimumDate={minDataDate && !isNaN(minDataDate.getTime()) ? minDataDate : undefined} // Added minimumDate constraint
+                minimumDate={minDataDate && !isNaN(minDataDate.getTime()) ? minDataDate : undefined}
               />
             )}
             <View className="flex-row justify-between items-center mb-3">
@@ -384,7 +417,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
                 display="default"
                 onChange={onEndDateChange}
                 minimumDate={startDate && !isNaN(startDate.getTime()) ? startDate : undefined}
-                maximumDate={maxDataDate && !isNaN(maxDataDate.getTime()) ? maxDataDate : undefined} // Added maximumDate constraint
+                maximumDate={maxDataDate && !isNaN(maxDataDate.getTime()) ? maxDataDate : undefined}
               />
             )}
           </View>
@@ -397,7 +430,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
       </View>
 
       <View className="bg-white rounded-xl p-4 mb-4 shadow">
-        <Text className="text-center text-lg font-rmedium mb-3 text-black">Summary</Text>
+        <Text className="text-center text-lg font-rbold mb-3 text-black">Summary</Text>
         <View className="flex-row justify-around">
           <View className="items-center">
             <Text className="font-rmedium text-black">Total Reports</Text>
@@ -416,7 +449,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
         </View>
       ) : (
         <View className="bg-white rounded-xl p-4 mb-4 shadow">
-          <Text className="text-center text-lg font-rmedium mb-3 text-black">Report Trends (Daily)</Text>
+          <Text className="text-center text-lg font-rbold mb-3 text-black">Report Trends (Daily)</Text>
           <View style={styles.chartRowContainer}>
             <FixedYAxisLabels
               containerHeight={CHART_HEIGHT}

@@ -421,19 +421,19 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
         </Picker>
       </View>
       <View className="bg-white p-4 rounded-xl my-4 shadow-md">
-        <Text className="text-center text-lg font-rbold mb-4 text-gray-700">Date Range Selector</Text>
+        <Text className="text-center text-lg font-rbold mb-4 text-gray-700">Date Range</Text>
         <View className="flex-row justify-center mb-4">
           <TouchableOpacity
             className={`px-4 py-2 mx-2 rounded-xl ${filterMode === "preset" ? "bg-primary" : "bg-gray-200"}`}
             onPress={() => setFilterMode("preset")}
           >
-            <Text className={`font-rsemibold ${filterMode === "preset" ? "text-white" : "text-gray-700"}`}>Preset</Text>
+            <Text className={`font-rmedium ${filterMode === "preset" ? "text-white" : "text-gray-700"}`}>Preset</Text>
           </TouchableOpacity>
           <TouchableOpacity
             className={`px-4 py-2 mx-2 rounded-xl ${filterMode === "custom" ? "bg-primary" : "bg-gray-200"}`}
             onPress={() => setFilterMode("custom")}
           >
-            <Text className={`font-rsemibold ${filterMode === "custom" ? "text-white" : "text-gray-700"}`}>Custom</Text>
+            <Text className={`font-rmedium ${filterMode === "custom" ? "text-white" : "text-gray-700"}`}>Custom</Text>
           </TouchableOpacity>
         </View>
         {filterMode === "preset" && (
@@ -442,7 +442,7 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
               { label: "Today", value: "today" },
               { label: "3 Days", value: "3days" },
               { label: "1 Week", value: "week" },
-              { label: "All Data", value: "all" },
+              { label: "All", value: "all" },
             ].map((range) => (
               <TouchableOpacity
                 key={range.value}
@@ -450,7 +450,7 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
                 onPress={() => setPresetRange(range.value)}
                 disabled={!minDataDate || !maxDataDate || isNaN(minDataDate.getTime()) || isNaN(maxDataDate.getTime())}
               >
-                <Text className={`font-rsemibold ${presetRange === range.value ? "text-white" : "text-gray-700"}`}>{range.label}</Text>
+                <Text className={`font-rmedium ${presetRange === range.value ? "text-white" : "text-gray-700"}`}>{range.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -458,7 +458,7 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
         {filterMode === "custom" && (
           <View className="mb-2">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="font-rsemibold text-gray-700">Start Date:</Text>
+              <Text className="font-rmedium text-gray-700">Start Date:</Text>
               <TouchableOpacity onPress={() => setShowStartDatePicker(true)} className="px-4 py-2 bg-gray-200 rounded-xl">
                 <Text className="text-gray-800">{formatDateForDisplay(startDate)}</Text>
               </TouchableOpacity>
@@ -474,7 +474,7 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
               />
             )}
             <View className="flex-row justify-between items-center">
-              <Text className="font-rsemibold text-gray-700">End Date:</Text>
+              <Text className="font-rmedium text-gray-700">End Date:</Text>
               <TouchableOpacity onPress={() => setShowEndDatePicker(true)} className="px-4 py-2 bg-gray-200 rounded-xl">
                 <Text className="text-gray-800">{formatDateForDisplay(endDate)}</Text>
               </TouchableOpacity>
@@ -493,7 +493,7 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
         )}
         <View className="bg-gray-200 p-2 rounded-xl mt-3">
           <Text className="text-center text-sm text-gray-600">
-            Showing data: {formatDateForDisplay(startDate)} to {formatDateForDisplay(endDate)}
+            {formatDateForDisplay(startDate)} to {formatDateForDisplay(endDate)}
           </Text>
         </View>
       </View>
@@ -504,7 +504,7 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
             className={`px-4 py-2 mx-2 rounded-xl ${selectedRangeType === type ? "bg-primary" : "bg-secondary"}`}
             onPress={() => setSelectedRangeType(type)}
           >
-            <Text className="font-rsemibold text-lg text-white">{type.charAt(0).toUpperCase() + type.slice(1)} Data</Text>
+            <Text className="font-rmedium text-lg text-white">{type.charAt(0).toUpperCase() + type.slice(1)} Data</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -512,11 +512,11 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
         <Text className="text-center text-lg font-rbold mb-2 text-gray-700">Data Summary</Text>
         <View className="flex-row justify-around">
           <View className="items-center">
-            <Text className="font-rsemibold text-gray-600">Data Points</Text>
+            <Text className="font-rmedium text-gray-600">Data Points</Text>
             <Text className="text-lg font-rbold text-orange-600">{processedChartData.totalPoints}</Text>
           </View>
           <View className="items-center">
-            <Text className="font-rsemibold text-gray-600">Duration</Text>
+            <Text className="font-rmedium text-gray-600">Duration</Text>
             <Text className="text-lg font-rbold text-orange-600">{getRangeDurationDisplay()}</Text>
           </View>
         </View>
@@ -524,7 +524,7 @@ const AnalyticsWidget = ({ rawData, isLoading, error, selectedCity, onCityChange
 
       {noDataForAllCriteria ? (
         <View className="bg-white p-4 rounded-xl my-4 items-center justify-center h-64 shadow-md">
-          <Text className="text-lg font-rsemibold text-red-500">No data available for selected city or date range.</Text>
+          <Text className="text-lg font-rmedium text-red-500">No data available for selected city or date range.</Text>
         </View>
       ) : (
         <View>
