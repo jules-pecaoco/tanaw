@@ -49,7 +49,9 @@ const FixedYAxisLabels = ({ containerHeight, paddingTop, paddingBottom, maxValue
     }
     return generatedLabels.reverse();
   }, [maxValue, minValue, noOfSections]);
+
   if (labels.length === 0) return <View style={{ width: Y_AXIS_WIDTH, height: containerHeight }} />;
+
   return (
     <View
       style={{ width: Y_AXIS_WIDTH, height: containerHeight, paddingTop: paddingTop, paddingBottom: paddingBottom, justifyContent: "space-between" }}
@@ -97,9 +99,9 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
       setMinDataDate(firstDate);
       setMaxDataDate(lastDate);
       let sDate = new Date(lastDate);
-      sDate.setDate(lastDate.getDate() - 29);
+      sDate.setDate(lastDate.getDate() - 29); // Default to 30-day range ending on maxDataDate
       let eDate = new Date(lastDate);
-      sDate = sDate < firstDate ? new Date(firstDate) : sDate;
+      sDate = sDate < firstDate ? new Date(firstDate) : sDate; // Clamp to minDataDate
       setStartDate(sDate);
       setEndDate(eDate);
     } else {
@@ -115,9 +117,11 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
 
   useEffect(() => {
     if (!minDataDate || !maxDataDate || filterMode !== "preset" || isNaN(minDataDate.getTime()) || isNaN(maxDataDate.getTime())) return;
+
     let newStart = new Date(minDataDate);
     let newEnd = new Date(maxDataDate);
     const latestDataDay = new Date(maxDataDate);
+
     switch (presetRange) {
       case "today":
         newStart = new Date(latestDataDay);
@@ -125,26 +129,33 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
         break;
       case "7days":
         newStart = new Date(latestDataDay);
-        newStart.setDate(latestDataDay.getDate() - 6);
+        newStart.setDate(latestDataDay.getDate() - 6); // 7 days inclusive
         newEnd = new Date(latestDataDay);
         break;
       case "30days":
         newStart = new Date(latestDataDay);
-        newStart.setDate(latestDataDay.getDate() - 30);
+        newStart.setDate(latestDataDay.getDate() - 29); // Corrected for a 30-day inclusive range
         newEnd = new Date(latestDataDay);
         break;
       case "all":
+        // For "all", newStart and newEnd are already minDataDate and maxDataDate from initialization above
         break;
     }
+
     newStart.setHours(0, 0, 0, 0);
     newEnd.setHours(0, 0, 0, 0);
+
     let finalStartDate = newStart < minDataDate ? new Date(minDataDate) : newStart;
     finalStartDate = finalStartDate > maxDataDate ? new Date(maxDataDate) : finalStartDate;
+
     let finalEndDate = newEnd > maxDataDate ? new Date(maxDataDate) : newEnd;
     finalEndDate = finalEndDate < minDataDate ? new Date(minDataDate) : finalEndDate;
+
     if (finalStartDate > finalEndDate) {
+      // Ensure start is not after end
       finalStartDate = new Date(finalEndDate);
     }
+
     setStartDate(finalStartDate);
     setEndDate(finalEndDate);
   }, [presetRange, filterMode, minDataDate, maxDataDate]);
@@ -164,17 +175,20 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
     });
 
     if (dateFiltered.length === 0) return { points: [], total: 0, maxReportValue: 0 };
+
     const aggregationMap = new Map();
     dateFiltered.forEach((hazard) => {
       const key = getDayKey(hazard.createdAtDate);
       aggregationMap.set(key, (aggregationMap.get(key) || 0) + 1);
     });
+
     const sortedKeys = Array.from(aggregationMap.keys()).sort((a, b) => new Date(a) - new Date(b));
     const points = sortedKeys.map((key) => {
-      const dateObj = new Date(key + "T00:00:00Z");
+      const dateObj = new Date(key + "T00:00:00Z"); // Use UTC to avoid timezone issues with getUTCMonth/Date
       const label = `${String(dateObj.getUTCMonth() + 1).padStart(2, "0")}-${String(dateObj.getUTCDate()).padStart(2, "0")}`;
       return { value: aggregationMap.get(key), label: label, date: key, dataPointColor: "#0ea5e9" };
     });
+
     const reportValues = points.map((p) => p.value);
     const actualMax = reportValues.length > 0 ? Math.max(0, ...reportValues) : 0;
     return { points, total: dateFiltered.length, maxReportValue: actualMax };
@@ -193,6 +207,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
       setStartDate(newStartDate);
     }
   };
+
   const onEndDateChange = (event, selectedDate) => {
     setShowEndDatePicker(false);
     if (selectedDate) {
@@ -204,6 +219,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
       setEndDate(newEndDate);
     }
   };
+
   const formatDateForDisplay = (date) => {
     if (!date || isNaN(date.getTime())) return "";
     return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
@@ -245,6 +261,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
         <ActivityIndicator size="large" color="#0ea5e9" />
       </View>
     );
+
   if (reportsError)
     return (
       <View className="flex-1 justify-center items-center bg-gray-200">
@@ -256,18 +273,20 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
   const getRangeDurationDisplay = () => {
     if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return "0 days";
     const diffTime = Math.abs(endDate - startDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 for inclusive days
     return `${diffDays} day${diffDays === 1 ? "" : "s"}`;
   };
 
   const scrollableChartContainerWidth = screenWidth - Y_AXIS_WIDTH;
   const yAxisLabels_maxValue = maxReportValue;
-  const lineChart_maxValue = maxReportValue === 0 ? NO_OF_SECTIONS : maxReportValue;
+  const lineChart_maxValue = maxReportValue === 0 ? NO_OF_SECTIONS : maxReportValue; // Ensure chart doesn't break if max is 0
   const numPoints = chartDataPoints.length;
+
   let chartRenderWidth,
     currentInitialSpacing = DEFAULT_CHART_HORIZONTAL_PADDING,
     currentEndSpacing = DEFAULT_CHART_HORIZONTAL_PADDING,
     pointSpacing = X_AXIS_SPACING_PER_ITEM;
+
   if (numPoints === 0) {
     chartRenderWidth = scrollableChartContainerWidth;
     currentInitialSpacing = 0;
@@ -296,6 +315,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
           </Picker>
         )}
       </View>
+
       <View className="bg-white rounded-xl p-4 mb-4 shadow">
         <Text className="text-center text-lg font-rmedium mb-3 text-black">Date Range</Text>
         <View className="flex-row justify-center mb-3">
@@ -312,6 +332,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
             <Text className={`font-rmedium ${filterMode === "custom" ? "text-white" : "text-neutral-700"}`}>Custom</Text>
           </TouchableOpacity>
         </View>
+
         {filterMode === "preset" && (
           <View className="flex-row flex-wrap justify-center mb-2">
             {[
@@ -331,6 +352,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
             ))}
           </View>
         )}
+
         {filterMode === "custom" && (
           <View className="mb-2">
             <View className="flex-row justify-between items-center mb-3">
@@ -346,6 +368,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
                 display="default"
                 onChange={onStartDateChange}
                 maximumDate={endDate && !isNaN(endDate.getTime()) ? endDate : undefined}
+                minimumDate={minDataDate && !isNaN(minDataDate.getTime()) ? minDataDate : undefined} // Added minimumDate constraint
               />
             )}
             <View className="flex-row justify-between items-center mb-3">
@@ -361,6 +384,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
                 display="default"
                 onChange={onEndDateChange}
                 minimumDate={startDate && !isNaN(startDate.getTime()) ? startDate : undefined}
+                maximumDate={maxDataDate && !isNaN(maxDataDate.getTime()) ? maxDataDate : undefined} // Added maximumDate constraint
               />
             )}
           </View>
@@ -371,6 +395,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
           </Text>
         </View>
       </View>
+
       <View className="bg-white rounded-xl p-4 mb-4 shadow">
         <Text className="text-center text-lg font-rmedium mb-3 text-black">Summary</Text>
         <View className="flex-row justify-around">
@@ -384,6 +409,7 @@ const HazardAnalyticsWidget = ({ reports: initialReports, reportsIsLoading, repo
           </View>
         </View>
       </View>
+
       {chartDataPoints.length === 0 ? (
         <View className="bg-white rounded-xl p-4 mb-4 shadow items-center justify-center h-64">
           <Text className="text-md font-rmedium text-red-500">No data for selected criteria.</Text>

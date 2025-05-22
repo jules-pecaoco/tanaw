@@ -3,9 +3,9 @@ export default ({ config }) => ({
   ...config,
   name: "Tanaw",
   slug: "tanaw",
-  version: "0.9.85",
+  version: "1.0.0",
   orientation: "portrait",
-  icon: "./assets/images/tanaw-app-icon.png",
+  icon: "./assets/images/tanaw_app_icon.png",
   scheme: "myapp",
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
@@ -15,13 +15,13 @@ export default ({ config }) => ({
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: "./assets/images/tanaw-app-icon.png",
+      foregroundImage: "./assets/images/tanaw_app_icon.png",
       backgroundColor: "#ffffff",
     },
     package: "dev.expo.tanaw",
     googleServicesFile: "./google-services.json",
     notification: {
-      icon: "./assets/images/tanaw-logo-notification.png",
+      icon: "./assets/images/tanaw_logo_notification.png",
       color: "#F47C25",
       androidCollapsedTitle: "Tanaw",
     },
@@ -29,17 +29,27 @@ export default ({ config }) => ({
   web: {
     bundler: "metro",
     output: "static",
-    favicon: "./assets/images/tanaw-app-icon.png",
+    favicon: "./assets/images/tanaw_app_icon.png",
   },
   plugins: [
     "expo-router",
     [
       "expo-splash-screen",
       {
-        image: "./assets/images/tanaw-app-icon.png",
+        image: "./assets/images/tanaw_app_icon.png",
         imageWidth: 200,
         resizeMode: "contain",
         backgroundColor: "#ffffff",
+      },
+    ],
+    [
+      "expo-notifications",
+      {
+        icon: "./assets/images/tanaw_logo_notification.png",
+        color: "#F47C25",
+        defaultChannel: "default",
+        sounds: ["./assets/sounds/notification_sound.wav"],
+        enableBackgroundRemoteNotifications: false,
       },
     ],
     [
@@ -49,13 +59,12 @@ export default ({ config }) => ({
       },
     ],
     "expo-sqlite",
-    // "expo-audio",
   ],
   experiments: {
     typedRoutes: true,
   },
   splash: {
-    image: "./assets/images/tanaw-logo.png",
+    image: "./assets/images/tanaw_logo.png",
     resizeMode: "contain",
     backgroundColor: "#ffffff",
   },
