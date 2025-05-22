@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { View, Text, TouchableOpacity, SafeAreaView, StatusBar, Vibration, AppState } from "react-native";
+import { View, Text, TouchableOpacity, SafeAreaView, Vibration, AppState } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Audio } from "expo-av";
@@ -163,25 +164,27 @@ const WeatherAlert = () => {
   const alertStyles = getAlertStyles();
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: alertStyles.backgroundColor }}>
-      <StatusBar barStyle="light-content" />
-      <View className="flex-1 items-center justify-center px-6">
-        <View className="w-24 h-24 rounded-full bg-white/20 items-center justify-center mb-8">
-          <View className="w-20 h-20 rounded-full items-center justify-center" style={{ backgroundColor: alertStyles.backgroundColor }}>
-            <Ionicons name={alertStyles.icon} size={40} color={alertStyles.iconColor} />
+    <SafeAreaView className="flex-1">
+
+      <View className="flex-1" style={{ backgroundColor: alertStyles.backgroundColor }}>
+        <View className="flex-1 items-center justify-center px-6">
+          <View className="w-24 h-24 rounded-full bg-white/20 items-center justify-center mb-8">
+            <View className="w-20 h-20 rounded-full items-center justify-center" style={{ backgroundColor: alertStyles.backgroundColor }}>
+              <Ionicons name={alertStyles.icon} size={40} color={alertStyles.iconColor} />
+            </View>
           </View>
-        </View>
-        <Text className="text-white text-3xl font-bold text-center">{data.title || "Weather Alert"}</Text>
-        <Text className="text-white text-center mt-6 text-base">
-          {data.body || "Please check weather conditions and take appropriate precautions."}
-        </Text>
-      </View>
-      <View className="p-6">
-        <TouchableOpacity className="bg-white py-4 rounded-lg items-center" onPress={handleDismiss}>
-          <Text className="font-bold text-lg" style={{ color: alertStyles.backgroundColor }}>
-            Dismiss
+          <Text className="text-white text-3xl font-bold text-center">{data.title || "Weather Alert"}</Text>
+          <Text className="text-white text-center mt-6 text-base">
+            {data.body || "Please check weather conditions and take appropriate precautions."}
           </Text>
-        </TouchableOpacity>
+        </View>
+        <View className="p-6">
+          <TouchableOpacity className="bg-white py-4 rounded-lg items-center" onPress={handleDismiss}>
+            <Text className="font-bold text-lg" style={{ color: alertStyles.backgroundColor }}>
+              Dismiss
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );

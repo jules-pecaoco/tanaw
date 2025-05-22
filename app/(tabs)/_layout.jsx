@@ -20,7 +20,6 @@ const TabIcon = ({ iconName, iconFilled, color, focused, name, customeStyle }) =
 export default function Layout() {
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <StatusBar backgroundColor="#fff" hidden />
       <Tabs
         screenOptions={{
           tabBarShowLabel: false,
